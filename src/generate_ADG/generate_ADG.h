@@ -12,9 +12,4 @@ typedef tuple<int, int> Location;
 typedef vector<tuple<int, int>> Path;
 typedef vector<Path> Paths;
 
-// Parse input
-
-// Build graph
-
-
-
+Graph construct_ADG(char* fileName);
