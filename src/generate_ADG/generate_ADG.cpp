@@ -22,10 +22,10 @@ tuple<Path, int> parse_path(string line) {
   return make_tuple(path, stateCnt);
 }
 
-// Return all paths, stateCnts, and sumStates
-tuple<Paths, vector<int>, int> parse_soln(char* fileName) {
+// Return all paths, accumulated counts of states, and States
+tuple<Paths, vector<int>> parse_soln(char* fileName) {
   Paths paths;
-  vector<int> stateCnts;
+  vector<int> accum_stateCnts;
   int sumStates = 0;
 
   string fileName_string = fileName;
@@ -41,11 +41,45 @@ tuple<Paths, vector<int>, int> parse_soln(char* fileName) {
 
         // Done with the agent
         paths.push_back(path);
-        stateCnts.push_back(stateCnt);
         sumStates += stateCnt;
+        accum_stateCnts.push_back(sumStates);
       }
     }
     file.close();
   }
-  return make_tuple(paths, stateCnts, sumStates);
+  return make_tuple(paths, accum_stateCnts);
+}
+
+int compute_vertex(vector<int> accum_stateCnts, int agent, int state) {
+  return 0;
+}
+
+void add_type1_edges(Graph graph, Paths paths, vector<int> accum_stateCnts) {
+  int agentCnt = paths.size();
+  for (int agent = 0; agent < agentCnt; agent++) {
+    Path path = paths[agent];
+    int stateCnt = path.size();
+    int prev_vertex = -1;
+    
+    for (int state = 0; state < stateCnt; state++) {
+      int curr_vertex = compute_vertex(accum_stateCnts, agent, state);
+      if (prev_vertex >= 0) {
+        set_edge(graph, prev_vertex, curr_vertex);
+      }
+    }
+  }
+}
+
+void add_type2_edges(Graph graph, Paths paths, vector<int> accum_stateCnts) {
+
+}
+
+Graph construct_ADG(char* fileName) {
+  Paths paths, vector<int> accum_stateCnts;
+  tie(paths, accum_stateCnts) = parse_soln(fileName);
+  int sumStates = accum_stateCnts.back();
+
+  Graph graph = new_graph(sumStates, sumStates);
+  add_type1_edges(graph, paths, accum_stateCnts);
+  add_type2_edges(graph, paths, accum_stateCnts);
 }
