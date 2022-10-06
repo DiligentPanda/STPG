@@ -1,0 +1,19 @@
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <stdlib.h>
+
+#include "../graph/graph.h"
+
+using namespace std;
+
+typedef vector<tuple<int, int>> Path;
+typedef vector<Path> Paths;
+
+// Parse input
+
+// Build graph
+
+
+
