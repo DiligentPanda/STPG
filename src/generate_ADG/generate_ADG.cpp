@@ -16,8 +16,8 @@ tuple<Path, int> parse_path(string line) {
     stateCnt ++;
 
     // Create a location tuple and add it to the path
-    tuple<int, int> index = make_tuple(i, j);
-    path.push_back(index);
+    Location location = make_tuple(i, j);
+    path.push_back(location);
   }
   return make_tuple(path, stateCnt);
 }
@@ -51,7 +51,18 @@ tuple<Paths, vector<int>> parse_soln(char* fileName) {
 }
 
 int compute_vertex(vector<int> accum_stateCnts, int agent, int state) {
-  return 0;
+  if (agent == 0) return state; // Accumulated state cnt == 0
+  int accum_stateCnt = accum_stateCnts[agent - 1];
+  return (state + accum_stateCnt);
+}
+
+bool same_locations(Location location1, Location location2) {
+  int i1 = get<0>(location1);
+  int j1 = get<1>(location1);
+  int i2 = get<0>(location2);
+  int j2 = get<1>(location2);
+  
+  return (i1 == i2 && j1 == j2);
 }
 
 void add_type1_edges(Graph graph, Paths paths, vector<int> accum_stateCnts) {
@@ -71,7 +82,32 @@ void add_type1_edges(Graph graph, Paths paths, vector<int> accum_stateCnts) {
 }
 
 void add_type2_edges(Graph graph, Paths paths, vector<int> accum_stateCnts) {
+  int agentCnt = paths.size();
+  // Looping through agents
+  for (int agent1 = 0; agent1 < agentCnt; agent1++) {
+    Path path1 = paths[agent1];
+    int stateCnt1 = path1.size();
+    for (int agent2 = agent1 + 1; agent2 < agentCnt; agent2 ++) {
+      Path path2 = paths[agent2];
+      int stateCnt2 = path2.size();
 
+      // Looping through states
+      for (int state1 = 0; state1 < stateCnt1; state1++) {
+        Location location1 = path1[state1];
+        for (int state2 = 0; state2 < stateCnt2; state2++) {
+          Location location2 = path2[state2];
+
+          if (same_locations(location1, location2)) {
+            // Add a type2 edge
+            int vertex1 = compute_vertex(accum_stateCnts, agent1, state1);
+            int vertex2 = compute_vertex(accum_stateCnts, agent2, state2);
+            if (state1 < state2) set_edge(graph, vertex1, vertex2);
+            else set_edge(graph, vertex2, vertex1);
+          }
+        }
+      }
+    }
+  }
 }
 
 Graph construct_ADG(char* fileName) {
@@ -82,4 +118,6 @@ Graph construct_ADG(char* fileName) {
   Graph graph = new_graph(sumStates, sumStates);
   add_type1_edges(graph, paths, accum_stateCnts);
   add_type2_edges(graph, paths, accum_stateCnts);
+
+  return graph;
 }

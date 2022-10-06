@@ -8,6 +8,7 @@
 
 using namespace std;
 
+typedef tuple<int, int> Location;
 typedef vector<tuple<int, int>> Path;
 typedef vector<Path> Paths;
 
