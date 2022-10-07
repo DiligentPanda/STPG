@@ -52,18 +52,18 @@ edgeType get_edge(Graph graph, int n1, int n2){
     int n = get<1>(graph);
     int m = get<2>(graph);
     if (n1 <= 0 || n1 > n){
-        return;
+        throw std::invalid_argument( "invalid index" );
     }
 
     if (n2 <= 0 || n2 > m){
-        return;
+        throw std::invalid_argument( "invalid index" );
     }
 
 
     return matrix[n1][n2];
 }
 
-void free_graph(Graph graph, int n, int m){
+void free_graph(Graph graph){
     edgeType** matrix = get<0>(graph);
     int n = get<1>(graph);
 

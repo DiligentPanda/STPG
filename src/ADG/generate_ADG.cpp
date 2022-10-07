@@ -12,7 +12,7 @@ tuple<Path, int> parse_path(string line) {
     i = stoi(line.substr(leftPar_pos + 1, comma_pos));
     rightPar_pos = line.find(")");
     j = stoi(line.substr(comma_pos + 1, rightPar_pos));
-    line.erase(0, leftPar_pos + 1);
+    line.erase(0, rightPar_pos + 1);
     stateCnt ++;
 
     // Create a location tuple and add it to the path
@@ -111,7 +111,8 @@ void add_type2_edges(Graph graph, Paths paths, vector<int> accum_stateCnts) {
 }
 
 ADG construct_ADG(char* fileName) {
-  Paths paths, vector<int> accum_stateCnts;
+  Paths paths;
+  vector<int> accum_stateCnts;
   tie(paths, accum_stateCnts) = parse_soln(fileName);
   int sumStates = accum_stateCnts.back();
 
@@ -121,3 +122,24 @@ ADG construct_ADG(char* fileName) {
 
   return make_tuple(graph, paths, accum_stateCnts);
 }
+
+
+// // For testing purpose
+// int main(int argc, char** argv) {
+//   char* fileName = argv[1];
+//   Paths paths;
+//   vector<int> accum_stateCnts;
+//   tie(paths, accum_stateCnts) = parse_soln(fileName);
+  
+//   for (Path path: paths) {
+//     std::cout << "Agent: ";
+//     for (Location location: path) {
+//       std::cout << location.first << ' ' << location.second << "=>";
+//     }
+//     std::cout << "\n";
+//   }
+
+//   for (int stateCnt: accum_stateCnts) {
+//     std::cout << stateCnt << ' ';
+//   }
+// }

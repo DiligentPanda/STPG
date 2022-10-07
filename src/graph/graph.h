@@ -1,5 +1,5 @@
 #include <new>
-#include <stdlib.h>
+#include <stdexcept>
 
 #include "../types.h"
 

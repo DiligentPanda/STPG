@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <stdlib.h>
 
 #include "../graph/graph.h"
 #include "../types.h"

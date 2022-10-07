@@ -1,3 +1,7 @@
+#ifndef   TYPES
+#define   TYPES
+
+#include <stdlib.h>
 #include <tuple>
 #include <vector>
 #include <utility>
@@ -13,4 +17,6 @@ typedef tuple<edgeType**, int, int> Graph;
 typedef pair<int, int> Location;
 typedef vector<Location> Path;
 typedef vector<Path> Paths;
-typedef pair<Graph, Paths, vector<int>> ADG;
+typedef tuple<Graph, Paths, vector<int>> ADG;
+
+#endif
