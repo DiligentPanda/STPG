@@ -16,7 +16,7 @@ tuple<Path, int> parse_path(string line) {
     stateCnt ++;
 
     // Create a location tuple and add it to the path
-    Location location = make_tuple(i, j);
+    Location location = make_pair(i, j);
     path.push_back(location);
   }
   return make_tuple(path, stateCnt);
@@ -57,10 +57,10 @@ int compute_vertex(vector<int> accum_stateCnts, int agent, int state) {
 }
 
 bool same_locations(Location location1, Location location2) {
-  int i1 = get<0>(location1);
-  int j1 = get<1>(location1);
-  int i2 = get<0>(location2);
-  int j2 = get<1>(location2);
+  int i1 = location1.first;
+  int j1 = location1.second;
+  int i2 = location2.first;
+  int j2 = location2.second;
   
   return (i1 == i2 && j1 == j2);
 }
@@ -75,7 +75,7 @@ void add_type1_edges(Graph graph, Paths paths, vector<int> accum_stateCnts) {
     for (int state = 0; state < stateCnt; state++) {
       int curr_vertex = compute_vertex(accum_stateCnts, agent, state);
       if (prev_vertex >= 0) {
-        set_edge(graph, prev_vertex, curr_vertex);
+        set_edge(graph, prev_vertex, curr_vertex, TYPE1_EDGE);
       }
     }
   }
@@ -101,8 +101,8 @@ void add_type2_edges(Graph graph, Paths paths, vector<int> accum_stateCnts) {
             // Add a type2 edge
             int vertex1 = compute_vertex(accum_stateCnts, agent1, state1);
             int vertex2 = compute_vertex(accum_stateCnts, agent2, state2);
-            if (state1 < state2) set_edge(graph, vertex1, vertex2);
-            else set_edge(graph, vertex2, vertex1);
+            if (state1 < state2) set_edge(graph, vertex1, vertex2, TYPE2_EDGE);
+            else set_edge(graph, vertex2, vertex1, TYPE2_EDGE);
           }
         }
       }
@@ -110,7 +110,7 @@ void add_type2_edges(Graph graph, Paths paths, vector<int> accum_stateCnts) {
   }
 }
 
-Graph construct_ADG(char* fileName) {
+ADG construct_ADG(char* fileName) {
   Paths paths, vector<int> accum_stateCnts;
   tie(paths, accum_stateCnts) = parse_soln(fileName);
   int sumStates = accum_stateCnts.back();
@@ -119,5 +119,5 @@ Graph construct_ADG(char* fileName) {
   add_type1_edges(graph, paths, accum_stateCnts);
   add_type2_edges(graph, paths, accum_stateCnts);
 
-  return graph;
+  return make_tuple(graph, paths, accum_stateCnts);
 }
