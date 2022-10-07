@@ -29,6 +29,8 @@ vector<int> get_switchable_inNeib(Graph graph, int v);
 
 vector<int> get_switchable_outNeib(Graph graph, int v);
 
+Graph copy_graph(Graph graph);
+
 void free_graph(Graph graph);
 
 bool dfs(Graph graph);
