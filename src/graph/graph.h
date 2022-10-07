@@ -17,9 +17,9 @@ vector<int> get_inNeighbors(Graph graph, int v);
 
 vector<int> get_outNeighbors(Graph graph, int v);
 
-vector<int> get_type2_inNeighbors(Graph graph, int v);
+vector<int> get_type2_inNeib(Graph graph, int v);
 
-vector<int> get_type2_outNeighbors(Graph graph, int v);
+vector<int> get_type2_outNeib(Graph graph, int v);
 
 void free_graph(Graph graph);
 

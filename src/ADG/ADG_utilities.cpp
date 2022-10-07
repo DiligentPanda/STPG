@@ -47,11 +47,11 @@ void switch_type2_edge(ADG adg, int agent1, int state1, int agent2, int state2) 
   }
 }
 
-vector<pair<int, int>> get_type2_inNeighbors(ADG adg, int agent, int state) {
+vector<pair<int, int>> get_type2_inNeibPair(ADG adg, int agent, int state) {
   Graph graph = get<0>(adg);
   vector<int> accum_stateCnts = get<2>(adg);
   int v = compute_vertex(accum_stateCnts, agent, state);
-  vector<int> inNeighbors_vertex = get_type2_inNeighbors(graph, v);
+  vector<int> inNeighbors_vertex = get_type2_inNeib(graph, v);
 
   vector<pair<int, int>> inNeighbors_pair;
   for (int vertex: inNeighbors_vertex) {
@@ -60,11 +60,11 @@ vector<pair<int, int>> get_type2_inNeighbors(ADG adg, int agent, int state) {
   return inNeighbors_pair;
 }
 
-vector<pair<int, int>> get_type2_outNeighbors(ADG adg, int agent, int state) {
+vector<pair<int, int>> get_type2_outNeibPair(ADG adg, int agent, int state) {
   Graph graph = get<0>(adg);
   vector<int> accum_stateCnts = get<2>(adg);
   int v = compute_vertex(accum_stateCnts, agent, state);
-  vector<int> outNeighbors_vertex = get_type2_outNeighbors(graph, v);
+  vector<int> outNeighbors_vertex = get_type2_outNeib(graph, v);
 
   vector<pair<int, int>> outNeighbors_pair;
   for (int vertex: outNeighbors_vertex) {
