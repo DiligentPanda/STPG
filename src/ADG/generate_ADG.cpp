@@ -123,7 +123,6 @@ ADG construct_ADG(char* fileName) {
   return make_tuple(graph, paths, accum_stateCnts);
 }
 
-
 // // For testing purpose
 // int main(int argc, char** argv) {
 //   char* fileName = argv[1];
@@ -142,4 +141,7 @@ ADG construct_ADG(char* fileName) {
 //   for (int stateCnt: accum_stateCnts) {
 //     std::cout << stateCnt << ' ';
 //   }
+//   ADG adg = construct_ADG(fileName);
+//   std::cout << "agent cnt: " << get_agentCnt(adg) << "\n";
+//   std::cout << "state cnt: " << get_stateCnt(adg, 0) << "\n";
 // }

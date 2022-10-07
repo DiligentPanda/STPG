@@ -19,8 +19,8 @@ bool is_type2_edge(ADG adg, int agent1, int state1, int agent2, int state2);
 void switch_type2_edge(ADG adg, int agent1, int state1, int agent2, int state2);
 
 // Return an vector of agent-state pairs
-vector<int, int> get_type2_inNeighbors(ADG adg, int agent, int state);
+vector<pair<int, int>> get_type2_inNeighbors(ADG adg, int agent, int state);
 
-vector<int, int> get_type2_outNeighbors(ADG adg, int agent, int state);
+vector<pair<int, int>> get_type2_outNeighbors(ADG adg, int agent, int state);
 
 Location get_state_target(ADG adg, int agent, int state);

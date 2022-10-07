@@ -2,7 +2,7 @@
 
 int get_agentCnt(ADG adg) {
   Paths paths = get<1>(adg);
-  paths.size();
+  return paths.size();
 }
 
 int get_stateCnt(ADG adg, int agent) {
@@ -17,34 +17,64 @@ int compute_vertex(vector<int> accum_stateCnts, int agent, int state) {
   return (state + accum_stateCnt);
 }
 
+pair<int, int> compute_agent_state(vector<int> accum_stateCnts, int v) {
+  int agent = 0;
+  int prevStateCnt = 0;
+  for (int stateCnt: accum_stateCnts) {
+    if (v <= stateCnt) return make_pair(agent, v - prevStateCnt);
+    prevStateCnt = stateCnt;
+    agent ++;
+  }
+}
+
 bool is_type2_edge(ADG adg, int agent1, int state1, int agent2, int state2) {
   Graph graph = get<0>(adg);
   vector<int> accum_stateCnts = get<2>(adg);
-  int n1 = compute_vertex(accum_stateCnts, agent1, state1);
-  int n2 = compute_vertex(accum_stateCnts, agent2, state2);
-  return (get_edge(graph, n1, n2) == TYPE2_EDGE);
+  int v1 = compute_vertex(accum_stateCnts, agent1, state1);
+  int v2 = compute_vertex(accum_stateCnts, agent2, state2);
+  return (get_edge(graph, v1, v2) == TYPE2_EDGE);
 }
 
 void switch_type2_edge(ADG adg, int agent1, int state1, int agent2, int state2) {
   Graph graph = get<0>(adg);
   vector<int> accum_stateCnts = get<2>(adg);
-  int n1 = compute_vertex(accum_stateCnts, agent1, state1);
-  int n2 = compute_vertex(accum_stateCnts, agent2, state2);
+  int v1 = compute_vertex(accum_stateCnts, agent1, state1);
+  int v2 = compute_vertex(accum_stateCnts, agent2, state2);
 
-  if (get_edge(graph, n1, n2) == TYPE2_EDGE) {
-    rem_edge(graph, n1, n2);
-    set_edge(graph, n1, n2, TYPE2_EDGE);
+  if (get_edge(graph, v1, v2) == TYPE2_EDGE) {
+    rem_edge(graph, v1, v2);
+    set_edge(graph, v1, v2, TYPE2_EDGE);
   }
 }
 
-vector<int, int> get_type2_inNeighbors(ADG adg, int agent, int state) {
+vector<pair<int, int>> get_type2_inNeighbors(ADG adg, int agent, int state) {
+  Graph graph = get<0>(adg);
+  vector<int> accum_stateCnts = get<2>(adg);
+  int v = compute_vertex(accum_stateCnts, agent, state);
+  vector<int> inNeighbors_vertex = get_type2_inNeighbors(graph, v);
 
+  vector<pair<int, int>> inNeighbors_pair;
+  for (int vertex: inNeighbors_vertex) {
+    inNeighbors_pair.push_back(compute_agent_state(accum_stateCnts, vertex));
+  }
+  return inNeighbors_pair;
 }
 
-vector<int, int> get_type2_outNeighbors(ADG adg, int agent, int state) {
-  
+vector<pair<int, int>> get_type2_outNeighbors(ADG adg, int agent, int state) {
+  Graph graph = get<0>(adg);
+  vector<int> accum_stateCnts = get<2>(adg);
+  int v = compute_vertex(accum_stateCnts, agent, state);
+  vector<int> outNeighbors_vertex = get_type2_outNeighbors(graph, v);
+
+  vector<pair<int, int>> outNeighbors_pair;
+  for (int vertex: outNeighbors_vertex) {
+    outNeighbors_pair.push_back(compute_agent_state(accum_stateCnts, vertex));
+  }
+  return outNeighbors_pair;
 }
 
 Location get_state_target(ADG adg, int agent, int state) {
-
+  Paths paths = get<1>(adg);
+  Path path = paths[agent];
+  return path[state];
 }
