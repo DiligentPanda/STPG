@@ -75,7 +75,7 @@ void add_type1_edges(Graph graph, Paths paths, vector<int> accum_stateCnts) {
     for (int state = 0; state < stateCnt; state++) {
       int curr_vertex = compute_vertex(accum_stateCnts, agent, state);
       if (prev_vertex >= 0) {
-        set_edge(graph, prev_vertex, curr_vertex, TYPE1_EDGE);
+        set_type1_edge(graph, prev_vertex, curr_vertex);
       }
     }
   }
@@ -101,8 +101,8 @@ void add_type2_edges(Graph graph, Paths paths, vector<int> accum_stateCnts) {
             // Add a type2 edge
             int vertex1 = compute_vertex(accum_stateCnts, agent1, state1);
             int vertex2 = compute_vertex(accum_stateCnts, agent2, state2);
-            if (state1 < state2) set_edge(graph, vertex1, vertex2, TYPE2_EDGE);
-            else set_edge(graph, vertex2, vertex1, TYPE2_EDGE);
+            if (state1 < state2) set_type2_switchable_edge(graph, vertex1, vertex2);
+            else set_type2_switchable_edge(graph, vertex2, vertex1);
           }
         }
       }

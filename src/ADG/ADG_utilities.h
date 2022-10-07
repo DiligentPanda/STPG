@@ -15,8 +15,11 @@ int get_stateCnt(ADG adg, int agent);
 // Directed
 bool is_type2_edge(ADG adg, int agent1, int state1, int agent2, int state2);
 
-// Nothing happens if the type2 edge does not exist in the first place
-void switch_type2_edge(ADG adg, int agent1, int state1, int agent2, int state2);
+// Nothing happens if a switchable type2 edge does not exist in the first place
+void fix_type2_edge(ADG adg, int agent1, int state1, int agent2, int state2);
+
+// Nothing happens if a switchable type2 edge does not exist in the first place
+void fix_type2_edge_reversed(ADG adg, int agent1, int state1, int agent2, int state2);
 
 // Return an vector of agent-state pairs
 vector<pair<int, int>> get_type2_inNeibPair(ADG adg, int agent, int state);
@@ -24,3 +27,5 @@ vector<pair<int, int>> get_type2_inNeibPair(ADG adg, int agent, int state);
 vector<pair<int, int>> get_type2_outNeibPair(ADG adg, int agent, int state);
 
 Location get_state_target(ADG adg, int agent, int state);
+
+ADG copy_ADG(ADG adg);

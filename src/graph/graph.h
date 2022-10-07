@@ -13,9 +13,18 @@ void set_type2_nonSwitchable_edge(Graph graph, int n1, int n2);
 
 void set_type2_switchable_edge(Graph graph, int n1, int n2);
 
-void rem_edge(Graph graph, int v1, int v2);
+// Cannot imagine when we'll need this but still have it here
+void rem_type1_edge(Graph graph, int v1, int v2);
 
-edgeType get_edge(Graph graph, int v1, int v2);
+void rem_type2_nonSwitchable_edge(Graph graph, int v1, int v2);
+
+void rem_type2_switchable_edge(Graph graph, int v1, int v2);
+
+bool get_type1_edge(Graph graph, int v1, int v2);
+
+bool get_type2_nonSwitchable_edge(Graph graph, int v1, int v2);
+
+bool get_type2_switchable_edge(Graph graph, int v1, int v2);
 
 vector<int> get_inNeighbors(Graph graph, int v);
 
@@ -34,4 +43,3 @@ Graph copy_graph(Graph graph);
 void free_graph(Graph graph);
 
 bool dfs(Graph graph);
-
