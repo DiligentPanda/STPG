@@ -9,9 +9,6 @@
 using namespace std;
 
 typedef int edgeType;
-const edgeType NULL_EDGE = 0;
-const edgeType TYPE1_EDGE = 1;
-const edgeType TYPE2_EDGE = 2;
 
 typedef tuple<edgeType**, int, int> Graph;
 typedef pair<int, int> Location;
