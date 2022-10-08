@@ -50,12 +50,6 @@ tuple<Paths, vector<int>> parse_soln(char* fileName) {
   return make_tuple(paths, accum_stateCnts);
 }
 
-int compute_vertex(vector<int> accum_stateCnts, int agent, int state) {
-  if (agent == 0) return state; // Accumulated state cnt == 0
-  int accum_stateCnt = accum_stateCnts[agent - 1];
-  return (state + accum_stateCnt);
-}
-
 bool same_locations(Location location1, Location location2) {
   int i1 = location1.first;
   int j1 = location1.second;

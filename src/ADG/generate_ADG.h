@@ -4,6 +4,7 @@
 
 #include "../graph/graph.h"
 #include "../types.h"
+#include "ADG_utilities.h"
 
 using namespace std;
 
