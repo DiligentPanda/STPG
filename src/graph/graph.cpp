@@ -3,37 +3,36 @@
 using namespace std;
 
 Graph new_graph(int n){
-    set<int>* type1GInNeighbors = new set<int>[n];
-    set<int>* type1OutNeighbors = new set<int>[n];
+    set<edgeType>* type1GInNeighbors = new set<edgeType>[n];
+    set<edgeType>* type1OutNeighbors = new set<edgeType>[n];
     subGraph type1G = make_tuple(type1OutNeighbors,type1GInNeighbors);
 
-    set<int>* type2NonSwitchableGInNeighbors = new set<int>[n];
-    set<int>* type2NonSwitchableGOutNeighbors = new set<int>[n];
+    set<edgeType>* type2NonSwitchableGInNeighbors = new set<edgeType>[n];
+    set<edgeType>* type2NonSwitchableGOutNeighbors = new set<edgeType>[n];
     subGraph type2NonSwitchableG = make_tuple(type2NonSwitchableGOutNeighbors, type2NonSwitchableGInNeighbors);
 
-    set<int>* type2SwitchableGInNeighbors = new set<int>[n];
-    set<int>* type2SwitchableGOutNeighbors = new set<int>[n];
+    set<edgeType>* type2SwitchableGInNeighbors = new set<edgeType>[n];
+    set<edgeType>* type2SwitchableGOutNeighbors = new set<edgeType>[n];
     subGraph type2SwitchableG = make_tuple(type2SwitchableGOutNeighbors, type2SwitchableGInNeighbors);
 
     Graph graph = make_tuple(type1G, type2NonSwitchableG, type2SwitchableG, n);
     return graph;
 }
 
-void set_edge(Graph graph, int v1, int v2, edgeType e){
-    edgeType** matrix = get<0>(graph);
-    int n = get<1>(graph);
-    int m = get<2>(graph);
-
-    if (v1 <= 0 || v1 > n){
+void set_type1_edge(Graph graph, int n1, int n2){
+    int graph_size = get<3>(graph);
+    if(n1 < 0 || n1 > graph_size){
+        throw invalid_argument("set_type1_edge invalid n1");
         return;
     }
 
-    if (v2 <= 0 || v2 > m){
+    if(n2 < 0 || n2 > graph_size){
+        throw invalid_argument("set_type1_edge invalid n2");
         return;
     }
 
-    matrix[v1][v2] = e;
-    return;
+    subGraph type1G = get<0>(graph);
+    
 }
 
 void rem_edge(Graph graph, int v1, int v2){
