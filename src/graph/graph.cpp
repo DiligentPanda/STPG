@@ -2,13 +2,21 @@
 
 using namespace std;
 
-Graph new_graph(int n, int m){
-    edgeType** matrix = new edgeType*[n];
-    for(int i = 0; i < n; i++){
-        matrix[i] = new edgeType[m]();
-    }
+Graph new_graph(int n){
+    set<int>* type1GInNeighbors = new set<int>[n];
+    set<int>* type1OutNeighbors = new set<int>[n];
+    subGraph type1G = make_tuple(type1OutNeighbors,type1GInNeighbors);
 
-    return make_tuple(matrix, n, m);
+    set<int>* type2NonSwitchableGInNeighbors = new set<int>[n];
+    set<int>* type2NonSwitchableGOutNeighbors = new set<int>[n];
+    subGraph type2NonSwitchableG = make_tuple(type2NonSwitchableGOutNeighbors, type2NonSwitchableGInNeighbors);
+
+    set<int>* type2SwitchableGInNeighbors = new set<int>[n];
+    set<int>* type2SwitchableGOutNeighbors = new set<int>[n];
+    subGraph type2SwitchableG = make_tuple(type2SwitchableGOutNeighbors, type2SwitchableGInNeighbors);
+
+    Graph graph = make_tuple(type1G, type2NonSwitchableG, type2SwitchableG, n);
+    return graph;
 }
 
 void set_edge(Graph graph, int v1, int v2, edgeType e){

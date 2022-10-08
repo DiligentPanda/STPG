@@ -26,6 +26,8 @@ bool get_type2_nonSwitchable_edge(Graph graph, int v1, int v2);
 
 bool get_type2_switchable_edge(Graph graph, int v1, int v2);
 
+bool get_edge(Graph graph, int v1, int v2);
+
 vector<int> get_inNeighbors(Graph graph, int v);
 
 vector<int> get_outNeighbors(Graph graph, int v);
