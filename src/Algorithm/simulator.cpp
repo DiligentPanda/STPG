@@ -16,7 +16,7 @@ Simulator::Simulator(ADG adg, int *visited_states) {
   states = new_states;
 }
 
-bool Simulator::move(int *moved, int agent, int *timeSpent) {
+bool Simulator::move(int *moved, int agent, int *timeSpent, bool switchCheck) {
   if (moved[agent] == 1) return false;
   moved[agent] = 1;
   int state = states[agent];
@@ -24,9 +24,12 @@ bool Simulator::move(int *moved, int agent, int *timeSpent) {
 
   timeSpent[0] += 1;
   int next_state = state + 1;
-  // Sanity check: no more switchable in neighbors 
-  vector<pair<int, int>> switchables = get_switchable_inNeibPair(adg, agent, next_state);
-  assert(switchables.size() == 0);
+
+  if (switchCheck) {
+    // Sanity check: no more switchable in neighbors 
+    vector<pair<int, int>> switchables = get_switchable_inNeibPair(adg, agent, next_state);
+    assert(switchables.size() == 0);
+  }
 
   vector<pair<int, int>> dependencies = get_nonSwitchable_inNeibPair(adg, agent, next_state);
   for (pair<int, int> dependency: dependencies) {
@@ -37,7 +40,7 @@ bool Simulator::move(int *moved, int agent, int *timeSpent) {
       if (dep_state > states[dep_agent]) {
         return false;
       } else if (dep_state == state[dep_agent]) {
-        if (!move(moved, dep_agent, timeSpent)) {
+        if (!move(moved, dep_agent, timeSpent, switchCheck)) {
           return false;
         }
       }
@@ -48,17 +51,17 @@ bool Simulator::move(int *moved, int agent, int *timeSpent) {
   return true;
 }
 
-int Simulator::step() {
+int Simulator::step(bool switchCheck) {
   int timeSpent[1] = {0};
   int agentCnt = get_agentCnt(adg);
   int moved[agentCnt] = {0};
   for (int agent = 0; agent < agentCnt; agent++) {
-    move(moved, agent, timeSpent);
+    move(moved, agent, timeSpent, switchCheck);
   }
   return timeSpent[0];
 }
 
-pair<pair<int, int>, pair<int, int>> Simulator::detectSwitch() {
+tuple<int, int, int, int> Simulator::detectSwitch() {
   int agentCnt = get_agentCnt(adg);
   int moved[agentCnt] = {0};
   for (int agent = 0; agent < agentCnt; agent++) {
@@ -72,13 +75,13 @@ pair<pair<int, int>, pair<int, int>> Simulator::detectSwitch() {
       
       assert(dep_agent != agent);
       if (dep_state > states[dep_agent]) {
-        return make_pair(make_pair(dep_agent, dep_state), make_pair(agent, next_state));
+        return make_tuple(dep_agent, dep_state, agent, next_state);
       } else {
         fix_type2_edge(adg, dep_agent, dep_state, agent, next_state);
       }
     }
   }
   // No switchable edge detected
-  return make_pair(make_pair(-1, -1), make_pair(-1, -1));
+  return make_tuple(-1, -1, -1, -1);
 }
 

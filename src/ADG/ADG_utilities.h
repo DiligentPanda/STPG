@@ -37,3 +37,8 @@ vector<pair<int, int>> get_nonSwitchable_outNeibPair(ADG adg, int agent, int sta
 Location get_state_target(ADG adg, int agent, int state);
 
 ADG copy_ADG(ADG adg);
+
+// Run DFS
+bool detectCycle(ADG adg, int agent, int state);
+
+void free_underlying_graph(ADG adg);
