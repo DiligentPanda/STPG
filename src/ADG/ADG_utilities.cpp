@@ -91,6 +91,32 @@ vector<pair<int, int>> get_switchable_outNeibPair(ADG adg, int agent, int state)
   return outNeighbors_pair;
 }
 
+vector<pair<int, int>> get_nonSwitchable_inNeibPair(ADG adg, int agent, int state) {
+  Graph graph = get<0>(adg);
+  vector<int> accum_stateCnts = get<2>(adg);
+  int v = compute_vertex(accum_stateCnts, agent, state);
+  vector<int> inNeighbors_vertex = get_nonSwitchable_inNeib(graph, v);
+
+  vector<pair<int, int>> inNeighbors_pair;
+  for (int vertex: inNeighbors_vertex) {
+    inNeighbors_pair.push_back(compute_agent_state(accum_stateCnts, vertex));
+  }
+  return inNeighbors_pair;
+}
+
+vector<pair<int, int>> get_nonSwitchable_outNeibPair(ADG adg, int agent, int state) {
+  Graph graph = get<0>(adg);
+  vector<int> accum_stateCnts = get<2>(adg);
+  int v = compute_vertex(accum_stateCnts, agent, state);
+  vector<int> outNeighbors_vertex = get_nonSwitchable_outNeib(graph, v);
+
+  vector<pair<int, int>> outNeighbors_pair;
+  for (int vertex: outNeighbors_vertex) {
+    outNeighbors_pair.push_back(compute_agent_state(accum_stateCnts, vertex));
+  }
+  return outNeighbors_pair;
+}
+
 vector<pair<int, int>> get_inNeibPair(ADG adg, int agent, int state) {
   Graph graph = get<0>(adg);
   vector<int> accum_stateCnts = get<2>(adg);
