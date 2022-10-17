@@ -3,6 +3,7 @@
         "tuple": "cpp",
         "utility": "cpp",
         "set": "cpp",
-        "stdexcept": "cpp"
+        "stdexcept": "cpp",
+        "vector": "cpp"
     }
 }

@@ -12,6 +12,8 @@ int get_agentCnt(ADG adg);
 
 int get_stateCnt(ADG adg, int agent);
 
+int get_totalStateCnt(ADG adg);
+
 int compute_vertex(vector<int> accum_stateCnts, int agent, int state);
 
 // Directed

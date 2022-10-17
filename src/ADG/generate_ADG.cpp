@@ -5,6 +5,7 @@ tuple<Path, int> parse_path(string line) {
   int i, j, stateCnt = 0;
   size_t comma_pos, leftPar_pos, rightPar_pos;
   Path path;
+  Location prev_location = make_pair(-1, -1);
 
   while ((leftPar_pos = line.find("(")) != string::npos) {
     // Process an index pair
@@ -13,11 +14,14 @@ tuple<Path, int> parse_path(string line) {
     rightPar_pos = line.find(")");
     j = stoi(line.substr(comma_pos + 1, rightPar_pos));
     line.erase(0, rightPar_pos + 1);
-    stateCnt ++;
 
     // Create a location tuple and add it to the path
     Location location = make_pair(i, j);
-    path.push_back(location);
+    if (!same_locations(location, prev_location)) {
+      stateCnt ++;
+      path.push_back(location);
+      prev_location = location;
+    }
   }
   return make_tuple(path, stateCnt);
 }

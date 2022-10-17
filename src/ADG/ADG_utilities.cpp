@@ -11,6 +11,11 @@ int get_stateCnt(ADG adg, int agent) {
   return accum_stateCnts[agent] - accum_stateCnts[agent-1];
 }
 
+int get_totalStateCnt(ADG adg) {
+  vector<int> accum_stateCnts = get<2>(adg);
+  return accum_stateCnts.back();
+}
+
 int compute_vertex(vector<int> accum_stateCnts, int agent, int state) {
   if (agent == 0) return state; // Accumulated state cnt == 0
   int accum_stateCnt = accum_stateCnts[agent - 1];
