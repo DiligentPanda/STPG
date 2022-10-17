@@ -8,7 +8,8 @@ class Simulator {
     ADG adg;
     int* config;
     
-    Simulator(char *fileName);
-    Step();
+    Simulator(ADG adg);
+    int Step();
+    bool Move(int* moved, int agent);
 };
 #endif
