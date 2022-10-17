@@ -9,14 +9,8 @@
 
 using namespace std;
 
-enum edgeType{
-    type1,
-    type2,
-    nullEdge
-};
-
 // <outNeighbors, inNeighbors>
-typedef tuple<set<edgeType>*, set<edgeType>*> subGraph;
+typedef pair<set<int>*, set<int>*> subGraph;
 
 // <type1 Graph, non-switchable Type2 Graph, switchable Type2 Graph, num nodes>
 typedef tuple<subGraph, subGraph, subGraph, int> Graph;
