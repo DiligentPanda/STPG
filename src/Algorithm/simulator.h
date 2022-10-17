@@ -9,7 +9,7 @@ class Simulator {
     int* config;
     
     Simulator(ADG adg);
-    int Step();
-    bool Move(int* moved, int agent);
+    int step();
+    bool move(int* moved, int agent, int* timeSpent);
 };
 #endif

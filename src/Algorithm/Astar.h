@@ -2,3 +2,5 @@
 #include "simulator.h"
 
 ADG Astar(ADG root);
+
+int heuristic(ADG adg);

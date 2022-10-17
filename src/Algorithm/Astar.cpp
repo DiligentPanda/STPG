@@ -30,6 +30,19 @@
 //   topologicalSort(adg, v, visited, result);
 // }
 
+int heuristic(ADG adg) {
+  Simulator simulator(adg);
+  int stepSpend = 0;
+  int totalSpend = 0;
+
+  int stepSpend = simulator.step();
+  while (stepSpend != 0) {
+    totalSpend += stepSpend;
+    stepSpend = simulator.step();
+  }
+  return totalSpend;
+}
+
 ADG Astar(ADG root) {
 
 }
