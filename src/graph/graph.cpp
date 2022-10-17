@@ -2,18 +2,35 @@
 
 using namespace std;
 
+
+bool error_check_node_range(Graph graph, int n1, int n2){
+    int graph_size = get<3>(graph);
+
+    if(n1 < 0 || n1 > graph_size){
+        //throw invalid_argument("rem_type1_edge invalid n1");
+        return false;
+    }
+
+    if(n2 < 0 || n2 > graph_size){
+        //throw invalid_argument("rem_type1_edge invalid n2");
+        return false;
+    }
+
+    return true;
+}
+
 Graph new_graph(int n){
-    set<edgeType>* type1GInNeighbors = new set<edgeType>[n];
-    set<edgeType>* type1OutNeighbors = new set<edgeType>[n];
-    subGraph type1G = make_tuple(type1OutNeighbors,type1GInNeighbors);
+    set<int>* type1GInNeighbors = new set<int>[n];
+    set<int>* type1OutNeighbors = new set<int>[n];
+    subGraph type1G = make_pair(type1OutNeighbors,type1GInNeighbors);
 
-    set<edgeType>* type2NonSwitchableGInNeighbors = new set<edgeType>[n];
-    set<edgeType>* type2NonSwitchableGOutNeighbors = new set<edgeType>[n];
-    subGraph type2NonSwitchableG = make_tuple(type2NonSwitchableGOutNeighbors, type2NonSwitchableGInNeighbors);
+    set<int>* type2NonSwitchableGInNeighbors = new set<int>[n];
+    set<int>* type2NonSwitchableGOutNeighbors = new set<int>[n];
+    subGraph type2NonSwitchableG = make_pair(type2NonSwitchableGOutNeighbors, type2NonSwitchableGInNeighbors);
 
-    set<edgeType>* type2SwitchableGInNeighbors = new set<edgeType>[n];
-    set<edgeType>* type2SwitchableGOutNeighbors = new set<edgeType>[n];
-    subGraph type2SwitchableG = make_tuple(type2SwitchableGOutNeighbors, type2SwitchableGInNeighbors);
+    set<int>* type2SwitchableGInNeighbors = new set<int>[n];
+    set<int>* type2SwitchableGOutNeighbors = new set<int>[n];
+    subGraph type2SwitchableG = make_pair(type2SwitchableGOutNeighbors, type2SwitchableGInNeighbors);
 
     Graph graph = make_tuple(type1G, type2NonSwitchableG, type2SwitchableG, n);
     return graph;
@@ -21,6 +38,7 @@ Graph new_graph(int n){
 
 void set_type1_edge(Graph graph, int n1, int n2){
     int graph_size = get<3>(graph);
+
     if(n1 < 0 || n1 > graph_size){
         throw invalid_argument("set_type1_edge invalid n1");
         return;
@@ -31,94 +49,280 @@ void set_type1_edge(Graph graph, int n1, int n2){
         return;
     }
 
-    subGraph type1G = get<0>(graph);
-    
-}
+    subGraph& type1G = get<0>(graph);
+    type1G.first[n1].insert(n2);
+    type1G.second[n2].insert(n1);
 
-void rem_edge(Graph graph, int v1, int v2){
-    edgeType** matrix = get<0>(graph);
-    int n = get<1>(graph);
-    int m = get<2>(graph);
-
-    if (v1 <= 0 || v1 > n){
-        return;
-    }
-
-    if (v2 <= 0 || v2 > m){
-        return;
-    }
-
-    matrix[v1][v2] = NULL_EDGE;
     return;
 }
 
-edgeType get_edge(Graph graph, int v1, int v2){
-    edgeType** matrix = get<0>(graph);
-    int n = get<1>(graph);
-    int m = get<2>(graph);
+void set_type2_nonSwitchable_edge(Graph graph, int n1, int n2){
+    int graph_size = get<3>(graph);
 
-    if (v1 <= 0 || v1 > n){
-        throw std::invalid_argument( "invalid index" );
+    if(n1 < 0 || n1 > graph_size){
+        throw invalid_argument("set_type1_edge invalid n1");
+        return;
     }
 
-    if (v2 <= 0 || v2 > m){
-        throw std::invalid_argument( "invalid index" );
+    if(n2 < 0 || n2 > graph_size){
+        throw invalid_argument("set_type1_edge invalid n2");
+        return;
     }
 
-    return matrix[v1][v2];
+    subGraph& type2NSG = get<1>(graph);
+    type2NSG.first[n1].insert(n2);
+    type2NSG.second[n2].insert(n1);
+
+    return;
 }
 
-vector<int> get_inNeighbors(Graph graph, int v) {
-    edgeType** matrix = get<0>(graph);
-    int n = get<1>(graph);
-    vector<int> neighbors;
+void set_type2_switchable_edge(Graph graph, int n1, int n2){
+    int graph_size = get<3>(graph);
 
-    for (int v0 = 0; v0 < n; v0 ++) {
-        if (matrix[v0][v] != NULL_EDGE) neighbors.push_back(v0);
+    if(n1 < 0 || n1 > graph_size){
+        throw invalid_argument("set_type1_edge invalid n1");
+        return;
     }
-    return neighbors;
+
+    if(n2 < 0 || n2 > graph_size){
+        throw invalid_argument("set_type1_edge invalid n2");
+        return;
+    }
+
+    subGraph& type2SG = get<2>(graph);
+    type2SG.first[n1].insert(n2);
+    type2SG.second[n2].insert(n1);
+
+    return;
 }
 
-vector<int> get_outNeighbors(Graph graph, int v) {
-    edgeType** matrix = get<0>(graph);
-    int m = get<2>(graph);
-    vector<int> neighbors;
+void rem_type1_edge(Graph graph, int n1, int n2){
+    int graph_size = get<3>(graph);
 
-    for (int v0 = 0; v0 < m; v0 ++) {
-        if (matrix[v][v0] != NULL_EDGE) neighbors.push_back(v0);
+    if(n1 < 0 || n1 > graph_size){
+        throw invalid_argument("rem_type1_edge invalid n1");
+        return;
     }
-    return neighbors;
+
+    if(n2 < 0 || n2 > graph_size){
+        throw invalid_argument("rem_type1_edge invalid n2");
+        return;
+    }
+
+    subGraph& type1G = get<0>(graph);
+    auto itr = type1G.first[n1].find(n2);
+    if(itr != type1G.first[n1].end()){
+        type1G.first[n1].remove(itr);
+    }
+
+    itr = type1G.second[n2].find(n1);
+    if(itr != type1G.second[n2].end()){
+        type1G.second[n2].remove(itr);
+    }
+
+    return;
 }
 
-vector<int> get_type2_inNeib(Graph graph, int v) {
-    edgeType** matrix = get<0>(graph);
-    int n = get<1>(graph);
-    vector<int> neighbors;
+void rem_type2_nonSwitchable_edge(Graph graph, int n1, int n2){
+    int graph_size = get<3>(graph);
 
-    for (int v0 = 0; v0 < n; v0 ++) {
-        if (matrix[v0][v] == TYPE2_EDGE) neighbors.push_back(v0);
+    if(n1 < 0 || n1 > graph_size){
+        throw invalid_argument("rem_type1_edge invalid n1");
+        return;
     }
-    return neighbors;
+
+    if(n2 < 0 || n2 > graph_size){
+        throw invalid_argument("rem_type1_edge invalid n2");
+        return;
+    }
+
+    subGraph& type2NSG = get<1>(graph);
+    auto itr = type2NSG.first[n1].find(n2);
+    if(itr != type2NSG.first[n1].end()){
+        type2NSG.first[n1].remove(itr);
+    }
+
+    itr = type2NSG.second[n2].find(n1);
+    if(itr != type2NSG.second[n2].end()){
+        type2NSG.second[n2].remove(itr);
+    }
+
+    return;
 }
 
-vector<int> get_type2_outNeib(Graph graph, int v) {
-    edgeType** matrix = get<0>(graph);
-    int m = get<2>(graph);
-    vector<int> neighbors;
+void rem_type2_switchable_edge(Graph graph, int n1, int n2){
+    int graph_size = get<3>(graph);
 
-    for (int v0 = 0; v0 < m; v0 ++) {
-        if (matrix[v][v0] == TYPE2_EDGE) neighbors.push_back(v0);
+    if(n1 < 0 || n1 > graph_size){
+        throw invalid_argument("rem_type1_edge invalid n1");
+        return;
     }
-    return neighbors;
+
+    if(n2 < 0 || n2 > graph_size){
+        throw invalid_argument("rem_type1_edge invalid n2");
+        return;
+    }
+
+    subGraph& type2SG = get<2>(graph);
+    auto itr = type2SG.first[n1].find(n2);
+    if(itr != type2SG.first[n1].end()){
+        type2SG.first[n1].remove(itr);
+    }
+
+    itr = type2SG.second[n2].find(n1);
+    if(itr != type2SG.second[n2].end()){
+        type2SG.second[n2].remove(itr);
+    }
+
+    return;
+    
+}
+
+bool get_type1_edge(Graph graph, int n1, int n2){
+    if(error_check_node_range(Graph graph, int n1, int n2) == false){
+        return false;
+    }
+
+    subGraph& type1G = get<0>(graph);
+    auto itr = type1G.first[n1].find(n2);
+    bool result = itr == type1G.first[n1].end() ? false : true;
+
+    return result;
+}
+
+bool get_type2_nonSwitchable_edge(Graph graph, int n1, int n2){
+    if(error_check_node_range(Graph graph, int n1, int n2) == false){
+        return false;
+    }
+
+    subGraph& type2NSG = get<1>(graph);
+    auto itr = type2NSG.first[n1].find(n2);
+    bool result = itr == type2NSG.first[n1].end() ? false : true;
+
+    return result;
+}
+
+bool get_type2_switchable_edge(Graph graph, int n1, int n2){
+    if(error_check_node_range(Graph graph, int n1, int n2) == false){
+        return false;
+    }
+
+    subGraph& type2SG = get<2>(graph);
+    auto itr = type2SG.first[n1].find(n2);
+    bool result = itr == type2SG.first[n1].end() ? false : true;
+
+    return result;
+}
+
+bool get_edge(Graph graph, int n1, int n2){
+
+    bool result = get_type1_edge(graph, n1, n2);
+
+    if (result == false){
+        result = get_type2_nonSwitchable_edge(graph, n1, n2);
+        if(result == false){
+            result = get_type2_switchable_edge(graph, n1, n2);
+        }
+    }
+
+    return result;
+}
+
+set<int> get_nonSwitchable_outNeib(Graph graph, int n){
+    subGraph& type1G = get<0>(graph);
+    subGraph& type2NSG = get<1>(graph);
+    set<int> result;
+    result.insert(type1G.first[n].begin(), type1G.first[n].end());
+    result.insert(type2NSG.first[n].begin(), type2NSG.first[n].end());
+
+    return result;
+
+}
+
+set<int> get_nonSwitchable_inNeib(Graph graph, int n){
+    subGraph& type1G = get<0>(graph);
+    subGraph& type2NSG = get<1>(graph);
+    set<int> result;
+    result.insert(type1G.second[n].begin(), type1G.second[n].end());
+    result.insert(type2NSG.second[n].begin(), type2NSG.second[n].end());
+
+    return result;
+}
+
+
+set<int>& get_switchable_outNeib(Graph graph, int n){
+    subGraph& type2SG = get<2>(graph);
+    return type2SG.first[n];
+}
+
+set<int>& get_switchable_inNeib(Graph graph, int n){
+    subGraph& type2SG = get<2>(graph);
+    return type2SG.second[n];
+}
+
+set<int> get_outNeighbors(Graph graph, int n){
+    set<int> res1 = get_nonSwitchable_outNeib(graph, n);
+    set<int>& res2 = get_switchable_outNeib(graph, n);
+
+    set<int> result;
+
+    result.insert(res1.begin(), res1.end());
+    result.insert(res2.begin(), res2.end());
+
+    return result;
+}
+
+set<int> get_inNeighbors(Graph graph, int n){
+    set<int> res1 = get_nonSwitchable_inNeib(graph, n);
+    set<int>& res2 = get_switchable_inNeib(graph, n);
+
+    set<int> result;
+
+    result.insert(res1.begin(), res1.end());
+    result.insert(res2.begin(), res2.end());
+
+    return result;
+}
+
+Graph copy_graph(Graph graph){
+
+    // removed until verification of tuple implementation
+
+    return graph;
+
+
 }
 
 void free_graph(Graph graph){
-    edgeType** matrix = get<0>(graph);
-    int n = get<1>(graph);
 
-    for (int i = 0; i < n; i++){
-        delete[] matrix[i];
-    }
+    // removed until verification of tuple implementation
 
-    delete[] matrix;
+    return;
+
 }
+
+bool dfs(Graph graph){
+
+    // removed until verification of tuple implementation
+
+    return true;
+}
+
+
+
+
+
+int main(){
+
+    cout<<"Testing Graph.cpp"<<endl;
+
+    /*
+
+    */
+
+    return 0;
+
+}
+
+
+

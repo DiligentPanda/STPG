@@ -3,6 +3,12 @@
         "tuple": "cpp",
         "utility": "cpp",
         "set": "cpp",
-        "stdexcept": "cpp"
+        "stdexcept": "cpp",
+        "new": "cpp",
+        "deque": "cpp",
+        "functional": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp"
     }
 }
