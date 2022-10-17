@@ -112,12 +112,12 @@ void rem_type1_edge(Graph graph, int n1, int n2){
     subGraph& type1G = get<0>(graph);
     auto itr = type1G.first[n1].find(n2);
     if(itr != type1G.first[n1].end()){
-        type1G.first[n1].remove(itr);
+        type1G.first[n1].erase(itr);
     }
 
     itr = type1G.second[n2].find(n1);
     if(itr != type1G.second[n2].end()){
-        type1G.second[n2].remove(itr);
+        type1G.second[n2].erase(itr);
     }
 
     return;
@@ -139,12 +139,12 @@ void rem_type2_nonSwitchable_edge(Graph graph, int n1, int n2){
     subGraph& type2NSG = get<1>(graph);
     auto itr = type2NSG.first[n1].find(n2);
     if(itr != type2NSG.first[n1].end()){
-        type2NSG.first[n1].remove(itr);
+        type2NSG.first[n1].erase(itr);
     }
 
     itr = type2NSG.second[n2].find(n1);
     if(itr != type2NSG.second[n2].end()){
-        type2NSG.second[n2].remove(itr);
+        type2NSG.second[n2].erase(itr);
     }
 
     return;
@@ -166,12 +166,12 @@ void rem_type2_switchable_edge(Graph graph, int n1, int n2){
     subGraph& type2SG = get<2>(graph);
     auto itr = type2SG.first[n1].find(n2);
     if(itr != type2SG.first[n1].end()){
-        type2SG.first[n1].remove(itr);
+        type2SG.first[n1].erase(itr);
     }
 
     itr = type2SG.second[n2].find(n1);
     if(itr != type2SG.second[n2].end()){
-        type2SG.second[n2].remove(itr);
+        type2SG.second[n2].erase(itr);
     }
 
     return;
@@ -179,7 +179,7 @@ void rem_type2_switchable_edge(Graph graph, int n1, int n2){
 }
 
 bool get_type1_edge(Graph graph, int n1, int n2){
-    if(error_check_node_range(Graph graph, int n1, int n2) == false){
+    if(error_check_node_range(graph, n1, n2) == false){
         return false;
     }
 
@@ -191,7 +191,7 @@ bool get_type1_edge(Graph graph, int n1, int n2){
 }
 
 bool get_type2_nonSwitchable_edge(Graph graph, int n1, int n2){
-    if(error_check_node_range(Graph graph, int n1, int n2) == false){
+    if(error_check_node_range(graph, n1, n2) == false){
         return false;
     }
 
@@ -203,7 +203,7 @@ bool get_type2_nonSwitchable_edge(Graph graph, int n1, int n2){
 }
 
 bool get_type2_switchable_edge(Graph graph, int n1, int n2){
-    if(error_check_node_range(Graph graph, int n1, int n2) == false){
+    if(error_check_node_range(graph, n1, n2) == false){
         return false;
     }
 
