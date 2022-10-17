@@ -25,14 +25,16 @@ class Compare {
     }
 };
 
-
-ADG Astar(ADG root) {
-  Simulator simulator(root);
-  priority_queue<Node, vector<Node>, Compare> pq;
-  int g = 0;
-
+Simulator exploreNode(priority_queue<Node, vector<Node>, Compare> pq,
+                      Simulator simulator, int g) {
   int agent1, state1, agent2, state2;
   tie(agent1, state1, agent2, state2) = simulator.detectSwitch();
+  while (agent1 < 0) {
+    int g_step = simulator.step(true);
+    if (g_step == 0) return simulator;
+
+    tie(agent1, state1, agent2, state2) = simulator.detectSwitch();
+  }
   if (agent1 >= 0) // Detected a switchable edge
   {
     ADG copy = copy_ADG(simulator.adg);
@@ -63,6 +65,15 @@ ADG Astar(ADG root) {
       pq.push(make_tuple(simulator, g, h)); 
     }
   }
+
+  // Recursive call
+}
+
+ADG Astar(ADG root) {
+  Simulator simulator(root);
+  priority_queue<Node, vector<Node>, Compare> pq;
+  int g = 0;
+  exploreNode(pq, simulator, g);
 }
 
 // Dead code below for longest path heuristic algorithms. Might restore later
