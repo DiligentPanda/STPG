@@ -129,52 +129,95 @@ ADG construct_ADG(char* fileName) {
   return make_tuple(graph, paths, accum_stateCnts);
 }
 
-// For testing purpose
-int main(int argc, char** argv) {
-  char* fileName = argv[1];
-  Paths paths;
-  vector<int> accum_stateCnts;
-  tie(paths, accum_stateCnts) = parse_soln(fileName);
-  int counter = 0;
-  for (Path path: paths) {
-    std::cout << "Agent " << counter << " : ";
-    for (pair<Location, int> pair: path) {
-      Location location = get<0>(pair);
-      std::cout << location.first << ' ' << location.second << "=>";
-    }
-    std::cout << "\n";
-    counter++;
-  }
+// // For testing purpose
+// int main(int argc, char** argv) {
+//   char* fileName = argv[1];
+//   Paths paths;
+//   vector<int> accum_stateCnts;
+//   tie(paths, accum_stateCnts) = parse_soln(fileName);
+//   int counter = 0;
+//   for (Path path: paths) {
+//     std::cout << "Agent " << counter << " : ";
+//     for (pair<Location, int> pair: path) {
+//       Location location = get<0>(pair);
+//       std::cout << location.first << ' ' << location.second << "=>";
+//     }
+//     std::cout << "\n";
+//     counter++;
+//   }
 
-  for (int stateCnt: accum_stateCnts) {
-    std::cout << stateCnt << ' ';
-  }
-  ADG adg = construct_ADG(fileName);
-  vector<pair<int, int>> v1 = get_switchable_outNeibPair(adg, 0, 0);
-  vector<pair<int, int>> v2 = get_inNeibPair(adg, 14, 6);
-  vector<pair<int, int>> v3 = get_switchable_outNeibPair(adg, 14, 6);
-  vector<pair<int, int>> v4 = get_nonSwitchable_outNeibPair(adg, 14, 6);
-  std::cout << "v1: " ;
-  for (pair<int, int> as: v1) {
-    std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
-  }
-  std::cout << "\n" ;
+//   for (int stateCnt: accum_stateCnts) {
+//     std::cout << stateCnt << ' ';
+//   }
+//   ADG adg = construct_ADG(fileName);
+//   vector<pair<int, int>> v1 = get_switchable_outNeibPair(adg, 0, 0);
+//   vector<pair<int, int>> v2 = get_inNeibPair(adg, 14, 6);
+//   vector<pair<int, int>> v3 = get_switchable_outNeibPair(adg, 14, 6);
+//   vector<pair<int, int>> v4 = get_nonSwitchable_outNeibPair(adg, 14, 6);
+//   vector<pair<int, int>> v5 = get_switchable_inNeibPair(adg, 14, 6);
+//   vector<pair<int, int>> v6 = get_nonSwitchable_inNeibPair(adg, 14, 6);
+//   std::cout << "v1: " ;
+//   for (pair<int, int> as: v1) {
+//     std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
+//   }
+//   std::cout << "\n" ;
 
-    std::cout << "v2: " ;
-  for (pair<int, int> as: v2) {
-    std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
-  }
-  std::cout << "\n" ;
+//     std::cout << "v2: " ;
+//   for (pair<int, int> as: v2) {
+//     std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
+//   }
+//   std::cout << "\n" ;
 
-    std::cout << "v3: " ;
-  for (pair<int, int> as: v3) {
-    std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
-  }
-  std::cout << "\n" ;
+//   std::cout << "v3: " ;
+//   for (pair<int, int> as: v3) {
+//     std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
+//   }
+//   std::cout << "\n" ;
+//       std::cout << "v4: " ;
+//   for (pair<int, int> as: v4) {
+//     std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
+//   }
+//   std::cout << "\n" ;
 
-    std::cout << "v4: " ;
-  for (pair<int, int> as: v4) {
-    std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
-  }
-  std::cout << "\n" ;
-}
+//         std::cout << "v5: " ;
+//   for (pair<int, int> as: v5) {
+//     std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
+//   }
+//   std::cout << "\n" ;
+
+//         std::cout << "v6: " ;
+//   for (pair<int, int> as: v6) {
+//     std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
+//   }
+//   std::cout << "\n" ;
+
+//   if (is_type2_edge(adg, 14, 6, 49, 5)) {
+//     std::cout << "goodassert\n";
+//   }
+//   fix_type2_edge_reversed(adg, 14, 6, 49, 5);
+//   v3 = get_switchable_outNeibPair(adg, 14, 6);
+//   v4 = get_nonSwitchable_outNeibPair(adg, 14, 6);
+//   v5 = get_switchable_inNeibPair(adg, 14, 6);
+//   v6 = get_nonSwitchable_inNeibPair(adg, 14, 6);
+//   std::cout << "v3: " ;
+//   for (pair<int, int> as: v3) {
+//     std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
+//   }
+//   std::cout << "\n" ;
+//   std::cout << "v4: " ;
+//   for (pair<int, int> as: v4) {
+//     std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
+//   }
+//   std::cout << "\n" ;
+//           std::cout << "v5: " ;
+//   for (pair<int, int> as: v5) {
+//     std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
+//   }
+//   std::cout << "\n" ;
+
+//         std::cout << "v6: " ;
+//   for (pair<int, int> as: v6) {
+//     std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
+//   }
+//   std::cout << "\n" ;
+// }
