@@ -1,0 +1,22 @@
+
+Graphs:
+
+- Allows insertion of same edge as type1 and type2-switchable and type2-nonswitchable
+- Does not gracefully handle non-existant insertion?
+- Graph interface 0 indexes, desired behavior to 1-index?
+
+- Graph constructor performs un-necesarry copying
+- Non-Switchable neighbors perform un-necesarry copying
+
+- No error checking for latter functions
+
+
+ADG:
+
+
+A*:
+
+
+
+
+
