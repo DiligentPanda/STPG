@@ -1,3 +1,4 @@
+#include <stack>
 #include "graph.h"
 
 using namespace std;
@@ -294,11 +295,16 @@ Graph copy_graph(Graph& graph){
 }
 
 void free_graph(Graph graph){
+    delete[] get<0>(graph).first;
+    delete[] get<0>(graph).second;
 
-    // removed until verification of tuple implementation
+    delete[] get<1>(graph).first;
+    delete[] get<1>(graph).second;
+
+    delete[] get<2>(graph).first;
+    delete[] get<2>(graph).second;
 
     return;
-
 }
 
 void print_graph(Graph& graph){
@@ -382,14 +388,71 @@ void print_graph(Graph& graph){
     return;
 }
 
-bool dfs(Graph graph){
 
-    // removed until verification of tuple implementation
+bool check_cycle_NS_helper(Graph& graph, int current, vector<bool>& visited, vector<bool>& parents){
+    cout<<current<<endl;
+    for(int i = 0; i < parents.size(); i++){
+        if(parents[i]){
+            cout<<i<<" ";
+        }
+    }
+    cout<<"\n\n"<<endl;
+    if(visited[current] == false){
+        visited[current] = true;
+        parents[current] = true;
 
-    return true;
+        set<int> neighborhood = get_nonSwitchable_outNeib(graph, current);
+        for(auto itr = neighborhood.begin(); itr != neighborhood.end(); itr++){
+            if(parents[*itr] == true){
+                return true;
+            }
+            bool result = check_cycle_NS_helper(graph, *itr, visited, parents);
+            if(result == true){
+                return true;
+            }
+            
+        }
+
+        parents[current] = false;
+    }
+
+    return false;
+}
+
+bool check_cycle_nonSwitchable(Graph& graph, int start){
+    int graph_size = get<3>(graph);
+    vector<bool> visited (graph_size, false);
+    vector<bool> parents (graph_size, false);
+
+    return check_cycle_NS_helper(graph, start, visited, parents);
 }
 
 
+
+
+
+/* int main() {
+
+
+    Graph graph = new_graph(5);
+
+    set_type1_edge(graph, 0, 1);
+    set_type1_edge(graph, 1, 2);
+    set_type2_nonSwitchable_edge(graph, 0, 3);
+    set_type2_nonSwitchable_edge(graph, 3, 1);
+    set_type1_edge(graph, 4, 1);
+    set_type2_nonSwitchable_edge(graph, 2, 4);
+
+    print_graph(graph);
+
+    cout<<"\n"<<check_cycle_nonSwitchable(graph, 0);
+
+    rem_type2_nonSwitchable_edge(graph, 0, 3);
+    cout<<"\n\n"<<check_cycle_nonSwitchable(graph, 0);
+
+    return 0;
+
+}*/ 
 
 
 
