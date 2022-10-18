@@ -69,8 +69,41 @@ int Simulator::step(bool switchCheck) {
       std::cout << cnt << ": " << get_stateCnt(adg, cnt) - 1 -state << ";  ";
       cnt ++;
     }
+    for (int i = 0; i <agentCnt ; i++) {
+      assert(!detectCycle(adg, i, 0));
+    }
+    
     std::cout <<  "\n" ;
+        std::cout << "out 28 " <<states[28]+1<<": " ;
+    for (pair<int, int> as: get_nonSwitchable_outNeibPair(adg, 28, states[28] + 1)) {
+      std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
+    }
+    std::cout <<  "\n" ;
+        std::cout << "out 45 " <<states[45]+1<<": " ;
+    for (pair<int, int> as: get_nonSwitchable_outNeibPair(adg, 45, states[45]+1)) {
+      std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
+    }
+    std::cout <<  "\n" ;
+
+    
+        std::cout << "in 28 " <<states[28]+1<<": " ;
+    for (pair<int, int> as: get_nonSwitchable_inNeibPair(adg, 28, states[28] + 1)) {
+      std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
+    }
+    std::cout <<  "\n" ;
+        std::cout << "in 45 " <<states[45]+1<<": " ;
+    for (pair<int, int> as: get_nonSwitchable_inNeibPair(adg, 45, states[45]+1)) {
+      std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
+    }
+    std::cout <<  "\n" ;
+
+    Location l1 = get_state_target(adg, 28, 12);
+    Location l2 = get_state_target(adg, 45, 18);
+    std::cout << "28, 12: ->>>"<<get<0>(l1) << ", " << get<1>(l1) << ";  \n";
+    std::cout << "45, 18: ->>>"<<get<0>(l2) << ", " << get<1>(l2) << ";  \n";
+
     std::cout << "no progress\n";
+    return -1;
   }
   return timeSpent[0];
 }

@@ -395,8 +395,8 @@ bool check_cycle_NS_helper(Graph& graph, int current, vector<bool>& visited, vec
         if(parents[i]){
             cout<<i<<" ";
         }
-    }*/
-    cout<<"\n\n"<<endl;
+    }
+    cout<<"\n\n"<<endl;*/
     if(visited[current] == false){
         visited[current] = true;
         parents[current] = true;
