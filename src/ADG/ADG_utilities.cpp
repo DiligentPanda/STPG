@@ -17,7 +17,11 @@ int get_totalStateCnt(ADG adg) {
 }
 
 int compute_vertex(vector<int> accum_stateCnts, int agent, int state) {
-  if (agent == 0) return state; // Accumulated state cnt == 0
+  if (agent == 0) { // Accumulated state cnt == 0
+    assert(state < accum_stateCnts[0]);
+    return state; 
+  }
+  assert(state < accum_stateCnts[agent] - accum_stateCnts[agent-1]);
   int accum_stateCnt = accum_stateCnts[agent - 1];
   return (state + accum_stateCnt);
 }
@@ -26,7 +30,7 @@ pair<int, int> compute_agent_state(vector<int> accum_stateCnts, int v) {
   int agent = 0;
   int prevStateCnt = 0;
   for (int stateCnt: accum_stateCnts) {
-    if (v <= stateCnt) return make_pair(agent, v - prevStateCnt);
+    if (v < stateCnt) return make_pair(agent, v - prevStateCnt);
     prevStateCnt = stateCnt;
     agent ++;
   }
@@ -168,9 +172,14 @@ ADG copy_ADG(ADG adg) {
 }
 
 bool detectCycle(ADG adg, int agent, int state) {
-  return false;
+  Graph graph = get<0>(adg);
+  vector<int> accum_stateCnts = get<2>(adg);
+  int v = compute_vertex(accum_stateCnts, agent, state);
+  return check_cycle_nonSwitchable(graph, v);
 }
 
 void free_underlying_graph(ADG adg) {
+  Graph graph = get<0>(adg);
+  free_graph(graph);
   return;
 }
