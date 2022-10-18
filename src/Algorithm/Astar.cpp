@@ -1,7 +1,16 @@
 #include "Astar.h"
 
 int heuristic(Simulator simulator) {
-  return 0;
+  int stepSpend = 0;
+  int totalSpend = 0;
+
+  stepSpend = simulator.step(false);
+  while (stepSpend != 0) {
+    if (stepSpend < 0) return -1; // stuck
+    totalSpend += stepSpend;
+    stepSpend = simulator.step(false);
+  }
+  return totalSpend;
 }
 
 class Compare {
@@ -13,34 +22,52 @@ class Compare {
       int g2 = get<1>(s2);
       int h2 = get<2>(s2);
 
-      return (g1 + h1) <= (g2 + h2);
+      return (g1 + h1) > (g2 + h2);
     }
 };
 
 Simulator exploreNode(priority_queue<Node, vector<Node>, Compare> pq,
                       Simulator simulator, int g, int newNode) {
-                        newNode += 1;
-                        if (newNode %1000 == 0) {
-                          std::cout << "newnodecnt: "<<newNode << "\n";
-                        }
-  // std::cout<< "newnode\n";
+  if (newNode >= 1628) {
+    std::cout << "newnodecnt: "<<newNode << "\n";
+    std::cout << "pq length: " << pq.size() << "\n";
+    ADG adg = simulator.adg;
+    vector<int> sts = simulator.states;
+    for (int agent = 0; agent < get_agentCnt(adg); agent++) {
+      std::cout << "agent "<<agent << ": ";
+      for (int i = 0; i <= sts[agent]; i++) {
+        Location l = get_state_target(adg, agent, i);
+        std::cout << "(" << get<0>(l) << ", " << get<1>(l) << ") => ";
+      }
+      std::cout << "   --- <<" << sts[agent] << " / " << get_stateCnt(adg, agent) << ">> \n\n";
+    }
+  }
   int agent1, state1, agent2, state2;
+  if (newNode >= 1628) { std::cout << "going to detect switch\n"; }
   tie(agent1, state1, agent2, state2) = simulator.detectSwitch();
   while (agent1 < 0) {
+    if (newNode >= 1628) { std::cout << "going to step\n"; }
     int g_step = simulator.step(true);
+    if (newNode >= 1628) { std::cout << "stepped\n"; }
     if (g_step == 0) {
       std::cout << "returning\n";
       return simulator; // All agents reach their goals
     }
-    else if (g_step < 0) {
-        Node node = pq.top();
-  pq.pop();
-  Simulator new_simulator = get<0>(node);
-  int new_g = get<1>(node);
-  return exploreNode(pq, new_simulator, new_g, newNode);
+    assert(g_step > 0);
+    if (newNode >= 1628) {
+      std::cout << "stepped, printing stepped simulator:\n";
+      ADG adg = simulator.adg;
+      vector<int> sts = simulator.states;
+      for (int agent = 0; agent < get_agentCnt(adg); agent++) {
+        std::cout << "agent "<<agent << ": ";
+        for (int i = 0; i <= sts[agent]; i++) {
+          Location l = get_state_target(adg, agent, i);
+          std::cout << "(" << get<0>(l) << ", " << get<1>(l) << ") => ";
+        }
+        std::cout << "   --- <<" << sts[agent] << " / " << get_stateCnt(adg, agent) << ">> \n\n";
+      }
     }
     g += g_step;
-
     tie(agent1, state1, agent2, state2) = simulator.detectSwitch();
   }
   
@@ -60,6 +87,10 @@ Simulator exploreNode(priority_queue<Node, vector<Node>, Compare> pq,
     {
       free_underlying_graph(simulator.adg);
     } else {
+      if (newNode >= 1628) {
+        std::cout << "added forward child, fix (" << agent1 << ", "<< state1 << ") -> ("<< agent2 << ", " << state2 <<")\n";
+        std::cout << "h = " << h << "\n";
+      }
       pq.push(make_tuple(simulator, g, h));
     }
   }
@@ -78,6 +109,10 @@ Simulator exploreNode(priority_queue<Node, vector<Node>, Compare> pq,
     {
       free_underlying_graph(copy);
     } else {
+      if (newNode >= 1628) {
+        std::cout << "added backward child, fix (" << agent2 << ", "<< state2 << ") -> ("<< agent1 << ", " << state1 <<")\n";
+        std::cout << "h = " << h << "\n";
+      }
       Simulator simulator_back(copy, simulator.states);
       pq.push(make_tuple(simulator_back, g, h)); 
     }
@@ -88,10 +123,36 @@ Simulator exploreNode(priority_queue<Node, vector<Node>, Compare> pq,
   pq.pop();
   Simulator new_simulator = get<0>(node);
   int new_g = get<1>(node);
+  if (newNode >= 1628) {
+    ADG new_adg = new_simulator.adg;
+    std::cout << "entering recursive call, next node fix: \n";
+    for (int agent = 0; agent < get_agentCnt(new_adg); agent++) {
+      for (int i = 0; i < get_stateCnt(new_adg, agent); i++) {
+        for (pair<int, int> outNeigb: get_nonSwitchable_outNeibPair(new_adg, agent, i)) {
+          if (get<0>(outNeigb) != agent) {
+            std::cout << "(" << agent << ", "<< i << ") -> ("<< get<0>(outNeigb) << ", " << get<1>(outNeigb) <<")\n";
+          }
+        }
+      }
+    }
+    std::cout << "g = " << get<1>(node) << ", h = " << get<2>(node) << "\n";
+  }
   return exploreNode(pq, new_simulator, new_g, newNode);
 }
 
 ADG Astar(ADG root) {
+  for (int agent = 0; agent < get_agentCnt(root); agent++) {
+    for (pair<int, int> outNeigb: get_switchable_outNeibPair(root, agent, 0)) {
+      // Fix starting edge
+      fix_type2_edge(root, agent, 0, get<0>(outNeigb), get<1>(outNeigb));
+    }
+
+    for (pair<int, int> inNeigb: get_switchable_inNeibPair(root, agent, get_stateCnt(root, agent)-1)) {
+      // Fix ending edge
+      fix_type2_edge(root, get<0>(inNeigb), get<1>(inNeigb), agent, get_stateCnt(root, agent)-1);
+    }
+  }
+  
   Simulator simulator(root);
   priority_queue<Node, vector<Node>, Compare> pq;
   int g = 0;
@@ -105,32 +166,6 @@ int main(int argc, char** argv) {
   ADG res = Astar(adg);
   std::cout<<"finished";
   print_graph_n2(get<0>(res));
-  // for (pair<int, int> as: get_switchable_inNeibPair(adg, 13, 1)) {
-  //   std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
-  // }
-  // Simulator simulator(adg);
-
-  // int agent1, state1, agent2, state2;
-  // int step = 0;
-  // int g = 0;
-  // tie(agent1, state1, agent2, state2) = simulator.detectSwitch();
-  // while (agent1 < 0) {
-  //   int g_step = simulator.step(true);
-  //   if (g_step == 0) {
-  //     std::cout << "reach goal\n";
-  //     return 0;
-  //   }
-  //   step ++;
-  //   g += g_step;
-
-  //   tie(agent1, state1, agent2, state2) = simulator.detectSwitch();
-  // }
-  // if (agent1 >= 0) // Detected a switchable edge
-  // {
-  //   std::cout << "detected switchable: " << agent1 << ", " << state1 << ";  " << agent2 << ", " << state2 << "\n";
-  //   std::cout << "step = " << step << ", g = " << g << "\n";
-  // }
-
   return 0;
 }
 

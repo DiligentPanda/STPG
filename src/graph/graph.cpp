@@ -286,24 +286,6 @@ set<int> get_inNeighbors(Graph& graph, int n){
     return result;
 }
 
-// void set_switchable_nonSwitchable(Graph& graph){
-//     int graph_size = get<0>(graph);
-//     subGraph& graph2NS = get<1>(graph);
-//     subGraph& graph2S = get<2>(graph);
-//     for(int i = 0; i < graph_size; i++){
-//         for(auto itr = graph2S.first[i].begin(); itr != graph2S.first[i].end(); itr++){
-//             graph2NS.first[i].insert(*itr);
-//         }
-//         graph2S.first[i].clear();
-//         for(auto itr = graph2S.second[i].begin(); itr != graph2S.second[i].end(); itr++){
-//             graph2NS.second[i].insert(*itr);
-//         }
-//         graph2S.second[i].clear();
-//     }
-
-//     return;
-// }
-
 set<int> get_switchable_allNeib(Graph& graph, int n);
 
 Graph copy_graph(Graph& graph){
