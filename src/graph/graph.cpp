@@ -294,11 +294,16 @@ Graph copy_graph(Graph& graph){
 }
 
 void free_graph(Graph graph){
+    delete[] get<0>(graph).first;
+    delete[] get<0>(graph).second;
 
-    // removed until verification of tuple implementation
+    delete[] get<1>(graph).first;
+    delete[] get<1>(graph).second;
+
+    delete[] get<2>(graph).first;
+    delete[] get<2>(graph).second;
 
     return;
-
 }
 
 void print_graph(Graph& graph){
