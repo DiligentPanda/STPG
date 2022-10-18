@@ -286,7 +286,23 @@ set<int> get_inNeighbors(Graph& graph, int n){
     return result;
 }
 
-set<int> get_switchable_allNeib(Graph& graph, int n);
+void set_switchable_nonSwitchable(Graph& graph){
+    int graph_size = get<3>(graph);
+    subGraph& graph2NS = get<1>(graph);
+    subGraph& graph2S = get<2>(graph);
+    for(int i = 0; i < graph_size; i++){
+        for(auto itr = graph2S.first[i].begin(); itr != graph2S.first[i].end(); itr++){
+            graph2NS.first[i].insert(*itr);
+        }
+        graph2S.first[i].clear();
+        for(auto itr = graph2S.second[i].begin(); itr != graph2S.second[i].end(); itr++){
+            graph2NS.second[i].insert(*itr);
+        }
+        graph2S.second[i].clear();
+    }
+
+    return;
+}
 
 Graph copy_graph(Graph& graph){
     int n = get<3>(graph);
@@ -421,6 +437,104 @@ void print_graph(Graph& graph){
     return;
 }
 
+void print_graph_concise(Graph& graph){
+    subGraph& type1G = get<0>(graph);
+    subGraph& type2NSG = get<1>(graph);
+    subGraph& type2SG = get<2>(graph);
+    int size = get<3>(graph);
+
+    cout<<"Printing Graph"<<endl;
+    cout<<"Type 1 Graph\n"<<endl;
+    
+    cout<<"Out Neighbors"<<endl;
+    for(int i = 0; i < size; i++){
+        auto g = type1G.first[i];
+        if(g.size() == 0){
+            continue;
+        }
+        cout<<"1ON: "<<i<<": ";
+        for(auto itr = g.begin(); itr != g.end(); itr++){
+            cout<<*itr<<" ";
+        }
+        cout<<endl;
+    }
+
+    cout<<"In Neighbors"<<endl;
+    for(int i = 0; i < size; i++){
+        auto g = type1G.second[i];
+        if(g.size() == 0){
+            continue;
+        }
+        cout<<"1ON: "<<i<<": ";
+        for(auto itr = g.begin(); itr != g.end(); itr++){
+            cout<<*itr<<" ";
+        }
+        cout<<endl;
+    }
+    cout<<endl;
+
+    cout<<"Type 2 Non-Switchable Graph\n"<<endl;
+
+    cout<<"Out Neighbors"<<endl;
+    for(int i = 0; i < size; i++){
+        auto g = type2NSG.first[i];
+        if(g.size() == 0){
+            continue;
+        }
+        cout<<"2NSON: "<<i<<": ";
+        for(auto itr = g.begin(); itr != g.end(); itr++){
+            cout<<*itr<<" ";
+        }
+        cout<<endl;
+    }
+
+    cout<<"In Neighbors"<<endl;
+    for(int i = 0; i < size; i++){
+        auto g = type2NSG.second[i];
+        if(g.size() == 0){
+            continue;
+        }
+        cout<<"2NSIN: "<<i<<": ";
+        for(auto itr = g.begin(); itr != g.end(); itr++){
+            cout<<*itr<<" ";
+        }
+        cout<<endl;
+    }
+    cout<<endl;
+
+    cout<<"Type 2 Switchable Graph\n"<<endl;
+
+    cout<<"Out Neighbors"<<endl;
+    for(int i = 0; i < size; i++){
+        auto g = type2SG.first[i];
+        if(g.size() == 0){
+            continue;
+        }
+        cout<<"SON: "<<i<<": ";
+        for(auto itr = g.begin(); itr != g.end(); itr++){
+            cout<<*itr<<" ";
+        }
+        cout<<endl;
+    }
+
+    cout<<"In Neighbors"<<endl;
+    for(int i = 0; i < size; i++){
+        auto g = type2SG.second[i];
+        if(g.size() == 0){
+            continue;
+        }
+        cout<<"SIN: "<<i<<": ";
+        for(auto itr = g.begin(); itr != g.end(); itr++){
+            cout<<*itr<<" ";
+        }
+        cout<<endl;
+    }
+    cout<<endl;
+    
+    cout<<endl;
+    return;
+}
+
 void print_graph_s2(Graph& graph){
     subGraph& type2SG = get<2>(graph);
     int size = get<3>(graph);
@@ -518,7 +632,22 @@ bool check_cycle_nonSwitchable(Graph& graph, int start){
 }
 
 
+int main(){
+    Graph graph = new_graph(5);
 
+    cout<<"Print Empty Graph"<<endl;
+    print_graph_concise(graph);
+
+    set_type1_edge(graph, 0, 1);
+    set_type1_edge(graph, 1, 2);
+    set_type2_nonSwitchable_edge(graph, 0, 3);
+    set_type2_nonSwitchable_edge(graph, 3, 1);
+    set_type1_edge(graph, 4, 1);
+    set_type2_nonSwitchable_edge(graph, 2, 4);
+
+    cout<<"Print Built Graph"<<endl;
+    print_graph_concise(graph);
+}
 
 /*int main() {
 
