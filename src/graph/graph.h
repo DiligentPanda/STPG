@@ -46,6 +46,8 @@ set<int> get_outNeighbors(Graph& graph, int n);
 
 set<int> get_inNeighbors(Graph& graph, int n);
 
+void set_switchable_nonSwitchable(Graph& graph);
+
 Graph copy_graph(Graph& graph);
 
 void free_graph(Graph& graph);
