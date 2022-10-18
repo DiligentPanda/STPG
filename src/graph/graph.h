@@ -6,7 +6,7 @@
 
 using namespace std;
 
-Graph new_graph(int n, int m);
+Graph new_graph(int n);
 
 void set_type1_edge(Graph graph, int n1, int n2);
 

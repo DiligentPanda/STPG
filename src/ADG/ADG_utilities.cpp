@@ -30,6 +30,7 @@ pair<int, int> compute_agent_state(vector<int> accum_stateCnts, int v) {
     prevStateCnt = stateCnt;
     agent ++;
   }
+  return make_pair(-1, -1);
 }
 
 bool is_type2_edge(ADG adg, int agent1, int state1, int agent2, int state2) {
@@ -164,4 +165,12 @@ ADG copy_ADG(ADG adg) {
   Paths newPaths = paths;
   vector<int> newAccum_stateCnts = accum_stateCnts;
   return make_tuple(newGraph, newPaths, newAccum_stateCnts);
+}
+
+bool detectCycle(ADG adg, int agent, int state) {
+  return false;
+}
+
+void free_underlying_graph(ADG adg) {
+  return;
 }

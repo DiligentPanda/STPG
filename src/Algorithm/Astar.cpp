@@ -67,14 +67,21 @@ Simulator exploreNode(priority_queue<Node, vector<Node>, Compare> pq,
   }
 
   // Recursive call
+  Node node = pq.top();
+  pq.pop();
+  Simulator simulator = get<0>(node);
+  int g = get<1>(node);
+  return exploreNode(pq, simulator, g);
 }
 
 ADG Astar(ADG root) {
   Simulator simulator(root);
   priority_queue<Node, vector<Node>, Compare> pq;
   int g = 0;
-  exploreNode(pq, simulator, g);
+  Simulator simulator = exploreNode(pq, simulator, g);
+  return simulator.adg;
 }
+
 
 // Dead code below for longest path heuristic algorithms. Might restore later
 // void topologicalSort(ADG adg, int v, bool* visited, vector<int> result)
