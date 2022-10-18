@@ -388,40 +388,50 @@ void print_graph(Graph& graph){
     return;
 }
 
-bool check_cycle_nonSwitchable(Graph& graph, int start){
 
-    set<int> visited;
-
-    stack<int> bag;
-
-    bag.push(start);
-    
-
-    while(!bag.empty()){
-        int current = bag.top();
-        cout<<current<<endl;
-        bag.pop();
-        if(visited.find(current) != visited.end()){
-            return false;
+bool check_cycle_NS_helper(Graph& graph, int current, vector<bool>& visited, vector<bool>& parents){
+    cout<<current<<endl;
+    for(int i = 0; i < parents.size(); i++){
+        if(parents[i]){
+            cout<<i<<" ";
         }
-        // Does this need to be freed
-        set<int> neighbors = get_nonSwitchable_outNeib(graph, current);
-        cout<<"Added: ";
-        for(auto itr = neighbors.begin(); itr != neighbors.end(); itr++){
-            cout<<*itr<<" ";
-            bag.push(*itr);
-        }
-        cout<<endl;
-
-        visited.insert(current);
     }
     cout<<"\n\n"<<endl;
-    return true;
+    if(visited[current] == false){
+        visited[current] = true;
+        parents[current] = true;
+
+        set<int> neighborhood = get_nonSwitchable_outNeib(graph, current);
+        for(auto itr = neighborhood.begin(); itr != neighborhood.end(); itr++){
+            if(parents[*itr] == true){
+                return true;
+            }
+            bool result = check_cycle_NS_helper(graph, *itr, visited, parents);
+            if(result == true){
+                return true;
+            }
+            
+        }
+
+        parents[current] = false;
+    }
+
+    return false;
+}
+
+bool check_cycle_nonSwitchable(Graph& graph, int start){
+    int graph_size = get<3>(graph);
+    vector<bool> visited (graph_size, false);
+    vector<bool> parents (graph_size, false);
+
+    return check_cycle_NS_helper(graph, start, visited, parents);
 }
 
 
 
-/*int main() {
+
+
+/* int main() {
 
 
     Graph graph = new_graph(5);
@@ -442,7 +452,7 @@ bool check_cycle_nonSwitchable(Graph& graph, int start){
 
     return 0;
 
-}*/
+}*/ 
 
 
 
