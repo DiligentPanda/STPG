@@ -6,6 +6,7 @@ int heuristic(Simulator simulator) {
 
   stepSpend = simulator.step(false);
   while (stepSpend != 0) {
+    if (stepSpend < 0) return -1; // stuck
     totalSpend += stepSpend;
     stepSpend = simulator.step(false);
   }
@@ -21,7 +22,7 @@ class Compare {
       int g2 = get<1>(s2);
       int h2 = get<2>(s2);
 
-      return (g1 + h1) < (g2 + h2);
+      return (g1 + h1) <= (g2 + h2);
     }
 };
 
@@ -45,11 +46,16 @@ Simulator exploreNode(priority_queue<Node, vector<Node>, Compare> pq,
   {
     free_underlying_graph(simulator.adg);
   } 
-  else // Add to the priority queue
+  else
   {
     Simulator simulator_h(simulator.adg, simulator.states);
     int h = heuristic(simulator_h);
-    pq.push(make_tuple(simulator, g, h));
+    if (h < 0) // Prune node
+    {
+      free_underlying_graph(simulator.adg);
+    } else {
+      pq.push(make_tuple(simulator, g, h));
+    }
   }
 
   // Backward child
@@ -58,12 +64,17 @@ Simulator exploreNode(priority_queue<Node, vector<Node>, Compare> pq,
   {
     free_underlying_graph(copy);
   }
-    else // Add to the priority queue
+  else // Add to the priority queue
   {
     Simulator simulator_h(copy, simulator.states);
     int h = heuristic(simulator_h);
-    Simulator simulator_back(copy, simulator.states);
-    pq.push(make_tuple(simulator_back, g, h)); 
+    if (h < 0) // Prune node
+    {
+      free_underlying_graph(copy);
+    } else {
+      Simulator simulator_back(copy, simulator.states);
+      pq.push(make_tuple(simulator_back, g, h)); 
+    }
   }
 
   // Recursive call
