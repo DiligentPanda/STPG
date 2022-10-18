@@ -398,158 +398,158 @@ bool dfs(Graph graph){
 
 
 
-/*int main(){
+// int main(){
 
-    cout<<"Testing Graph.cpp"<<endl;
+//     cout<<"Testing Graph.cpp"<<endl;
   
-    Graph graph = new_graph(5);
+//     Graph graph = new_graph(5);
 
-    cout<<"Empty Graph"<<endl;
-    print_graph(graph);
+//     cout<<"Empty Graph"<<endl;
+//     print_graph(graph);
 
-    // Basic
-    cout<<"Basic"<<endl;
-    set_type1_edge(graph, 1, 2);
+//     // Basic
+//     cout<<"Basic"<<endl;
+//     set_type1_edge(graph, 1, 2);
 
-    print_graph(graph);
+//     print_graph(graph);
 
-    // Set up some type 1 edges
-    cout<<"Set up some type 1 edges"<<endl;
-    set_type1_edge(graph, 2, 4);
-    set_type1_edge(graph, 3, 4);
+//     // Set up some type 1 edges
+//     cout<<"Set up some type 1 edges"<<endl;
+//     set_type1_edge(graph, 2, 4);
+//     set_type1_edge(graph, 3, 4);
 
-    print_graph(graph);
+//     print_graph(graph);
 
-    // Duplicate insert
-    cout<<"Duplicate insert"<<endl;
-    set_type1_edge(graph, 3, 4);
-    set_type1_edge(graph, 1, 2);
+//     // Duplicate insert
+//     cout<<"Duplicate insert"<<endl;
+//     set_type1_edge(graph, 3, 4);
+//     set_type1_edge(graph, 1, 2);
 
-    print_graph(graph);
+//     print_graph(graph);
 
-    // Set up some type 2 Non-Switchable Edges
-    cout<<"Set up some type 2 Non-Switchable Edges"<<endl;
-    set_type2_nonSwitchable_edge(graph, 1, 4);
-    set_type2_nonSwitchable_edge(graph, 0, 1);
-    set_type2_nonSwitchable_edge(graph, 2, 0);
+//     // Set up some type 2 Non-Switchable Edges
+//     cout<<"Set up some type 2 Non-Switchable Edges"<<endl;
+//     set_type2_nonSwitchable_edge(graph, 1, 4);
+//     set_type2_nonSwitchable_edge(graph, 0, 1);
+//     set_type2_nonSwitchable_edge(graph, 2, 0);
 
-    print_graph(graph);
+//     print_graph(graph);
 
-    // Set up some type 2 Switchable Edges
-    cout<<"Set up some type 2 Switchable Edges"<<endl;
-    set_type2_switchable_edge(graph, 4, 0);
-    set_type2_switchable_edge(graph, 4, 2);
+//     // Set up some type 2 Switchable Edges
+//     cout<<"Set up some type 2 Switchable Edges"<<endl;
+//     set_type2_switchable_edge(graph, 4, 0);
+//     set_type2_switchable_edge(graph, 4, 2);
 
-    print_graph(graph);
+//     print_graph(graph);
     
-    // Get Out Non-Switchable Edges
-    cout<<"Get Out Non-Switchable Edges"<<endl;
-    set<int> outNeibNS = get_nonSwitchable_outNeib(graph, 2);
-    cout<<"\n"<<endl;
-    for(auto itr = outNeibNS.begin(); itr != outNeibNS.end(); itr++){
-        cout<<*itr<<" ";
-    }
-    cout<<"\n"<<endl;
+//     // Get Out Non-Switchable Edges
+//     cout<<"Get Out Non-Switchable Edges"<<endl;
+//     set<int> outNeibNS = get_nonSwitchable_outNeib(graph, 2);
+//     cout<<"\n"<<endl;
+//     for(auto itr = outNeibNS.begin(); itr != outNeibNS.end(); itr++){
+//         cout<<*itr<<" ";
+//     }
+//     cout<<"\n"<<endl;
 
-    // Get In Non-Switchable Edges
-    cout<<"Get In Non-Switchable Edges"<<endl;
-    set<int> inNeibNS = get_nonSwitchable_inNeib(graph, 4);
-    cout<<"\n"<<endl;
-    for(auto itr = inNeibNS.begin(); itr != inNeibNS.end(); itr++){
-        cout<<*itr<<" ";
-    }
-    cout<<"\n"<<endl;
+//     // Get In Non-Switchable Edges
+//     cout<<"Get In Non-Switchable Edges"<<endl;
+//     set<int> inNeibNS = get_nonSwitchable_inNeib(graph, 4);
+//     cout<<"\n"<<endl;
+//     for(auto itr = inNeibNS.begin(); itr != inNeibNS.end(); itr++){
+//         cout<<*itr<<" ";
+//     }
+//     cout<<"\n"<<endl;
 
-    // Get copy of Out Switchable Edges
-    cout<<"Get Out Switchable Edges"<<endl;
-    set<int> outNeibSC = get_switchable_outNeib(graph, 4);
-    cout<<"\n"<<endl;
-    for(auto itr = outNeibSC.begin(); itr != outNeibSC.end(); itr++){
-        cout<<*itr<<" ";
-    }
-    cout<<"\n"<<endl;
+//     // Get copy of Out Switchable Edges
+//     cout<<"Get Out Switchable Edges"<<endl;
+//     set<int> outNeibSC = get_switchable_outNeib(graph, 4);
+//     cout<<"\n"<<endl;
+//     for(auto itr = outNeibSC.begin(); itr != outNeibSC.end(); itr++){
+//         cout<<*itr<<" ";
+//     }
+//     cout<<"\n"<<endl;
 
-    // Get copy of In Switchable Edges
-    cout<<"Get In Switchable Edges"<<endl;
-    set<int> inNeibSC = get_switchable_inNeib(graph, 2);
-    cout<<"\n"<<endl;
-    for(auto itr = inNeibSC.begin(); itr != inNeibSC.end(); itr++){
-        cout<<*itr<<" ";
-    }
-    cout<<"\n"<<endl;
+//     // Get copy of In Switchable Edges
+//     cout<<"Get In Switchable Edges"<<endl;
+//     set<int> inNeibSC = get_switchable_inNeib(graph, 2);
+//     cout<<"\n"<<endl;
+//     for(auto itr = inNeibSC.begin(); itr != inNeibSC.end(); itr++){
+//         cout<<*itr<<" ";
+//     }
+//     cout<<"\n"<<endl;
 
-    // Check copy status
-    auto itr1 = outNeibSC.find(0);
-    auto itr2 = inNeibSC.find(4);
-    outNeibSC.erase(itr1);
-    inNeibSC.erase(itr2);
+//     // Check copy status
+//     auto itr1 = outNeibSC.find(0);
+//     auto itr2 = inNeibSC.find(4);
+//     outNeibSC.erase(itr1);
+//     inNeibSC.erase(itr2);
 
-    print_graph(graph);
+//     print_graph(graph);
 
-    // Get no-copy of Out Switchable Edges
-    cout<<"Get Out Switchable Edges"<<endl;
-    set<int>& outNeibS = get_switchable_outNeib(graph, 4);
-    cout<<"\n"<<endl;
-    for(auto itr = outNeibS.begin(); itr != outNeibS.end(); itr++){
-        cout<<*itr<<" ";
-    }
-    cout<<"\n"<<endl;
+//     // Get no-copy of Out Switchable Edges
+//     cout<<"Get Out Switchable Edges"<<endl;
+//     set<int>& outNeibS = get_switchable_outNeib(graph, 4);
+//     cout<<"\n"<<endl;
+//     for(auto itr = outNeibS.begin(); itr != outNeibS.end(); itr++){
+//         cout<<*itr<<" ";
+//     }
+//     cout<<"\n"<<endl;
 
-    // Get no-copy of In Switchable Edges
-    cout<<"Get In Switchable Edges"<<endl;
-    set<int>& inNeibS = get_switchable_inNeib(graph, 2);
-    cout<<"\n"<<endl;
-    for(auto itr = inNeibS.begin(); itr != inNeibS.end(); itr++){
-        cout<<*itr<<" ";
-    }
-    cout<<"\n"<<endl;
-*/
-    // Uncomment to test that memory is actually aliased
-    /*itr1 = outNeibS.find(0);
-    itr2 = inNeibS.find(4);
-    outNeibS.erase(itr1);
-    inNeibS.erase(itr2);
+//     // Get no-copy of In Switchable Edges
+//     cout<<"Get In Switchable Edges"<<endl;
+//     set<int>& inNeibS = get_switchable_inNeib(graph, 2);
+//     cout<<"\n"<<endl;
+//     for(auto itr = inNeibS.begin(); itr != inNeibS.end(); itr++){
+//         cout<<*itr<<" ";
+//     }
+//     cout<<"\n"<<endl;
 
-    print_graph(graph);
-    */
+//     // Uncomment to test that memory is actually aliased
+//     /*itr1 = outNeibS.find(0);
+//     itr2 = inNeibS.find(4);
+//     outNeibS.erase(itr1);
+//     inNeibS.erase(itr2);
 
-    // Get Out Edges
-    /*cout<<"Get Out Edges"<<endl;
-    set<int> outNeib = get_outNeighbors(graph, 4);
-    for(auto itr = outNeib.begin(); itr != outNeib.end(); itr++){
-        cout<<*itr<<" ";
-    }
-    cout<<"\n"<<endl;
+//     print_graph(graph);
+//     */
 
-    // Get In Edges
-    cout<<"Get In Edges"<<endl;
-    set<int> inNeib = get_inNeighbors(graph, 4);
-    for(auto itr = inNeib.begin(); itr != inNeib.end(); itr++){
-        cout<<*itr<<" ";
-    }
-    cout<<"\n"<<endl;
+//     // Get Out Edges
+//     /*cout<<"Get Out Edges"<<endl;
+//     set<int> outNeib = get_outNeighbors(graph, 4);
+//     for(auto itr = outNeib.begin(); itr != outNeib.end(); itr++){
+//         cout<<*itr<<" ";
+//     }
+//     cout<<"\n"<<endl;
 
-    // Remove type 1 edges
-    cout<<"Remove type 1 edges"<<endl;
-    rem_type1_edge(graph, 3, 4);
+//     // Get In Edges
+//     cout<<"Get In Edges"<<endl;
+//     set<int> inNeib = get_inNeighbors(graph, 4);
+//     for(auto itr = inNeib.begin(); itr != inNeib.end(); itr++){
+//         cout<<*itr<<" ";
+//     }
+//     cout<<"\n"<<endl;
 
-    print_graph(graph);
+//     // Remove type 1 edges
+//     cout<<"Remove type 1 edges"<<endl;
+//     rem_type1_edge(graph, 3, 4);
 
-    // Remove type 2 Non-Switchable Edges
-    cout<<"Remove type 2 Non-Switchable Edges"<<endl;
-    rem_type2_nonSwitchable_edge(graph, 0, 1);
+//     print_graph(graph);
 
-    print_graph(graph);
+//     // Remove type 2 Non-Switchable Edges
+//     cout<<"Remove type 2 Non-Switchable Edges"<<endl;
+//     rem_type2_nonSwitchable_edge(graph, 0, 1);
 
-    // Remove type 2 Switchable Edges
-    cout<<"Remove type 2 Switchable Edges"<<endl;
-    rem_type2_switchable_edge(graph, 4, 2);
+//     print_graph(graph);
 
-    print_graph(graph);
-*/
-//    return 0;
+//     // Remove type 2 Switchable Edges
+//     cout<<"Remove type 2 Switchable Edges"<<endl;
+//     rem_type2_switchable_edge(graph, 4, 2);
 
-//}
+//     print_graph(graph);
+// */
+// //    return 0;
+
+// }
 
 
 
