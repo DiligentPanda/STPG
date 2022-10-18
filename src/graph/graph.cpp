@@ -1,4 +1,5 @@
 #include <stack>
+#include <algorithm>
 #include "graph.h"
 
 using namespace std;
@@ -286,15 +287,45 @@ set<int> get_inNeighbors(Graph& graph, int n){
 }
 
 Graph copy_graph(Graph& graph){
+    int n = get<3>(graph);
 
-    // removed until verification of tuple implementation
+    set<int>* type1GInNeighbors = new set<int>[n];
+    for(int i = 0; i < n; i++){
+        copy(get<0>(graph).second[i].begin(), get<0>(graph).second[i].end(), inserter(type1GInNeighbors[i], type1GInNeighbors[i].begin()));
+    }
 
-    return graph;
+    set<int>* type1OutNeighbors = new set<int>[n];
+    for(int i = 0; i < n; i++){
+        copy(get<0>(graph).first[i].begin(), get<0>(graph).first[i].end(), inserter(type1OutNeighbors[i], type1OutNeighbors[i].begin()));
+    }
+    subGraph type1G = make_pair(type1OutNeighbors,type1GInNeighbors);
 
+    set<int>* type2NonSwitchableGInNeighbors = new set<int>[n];
+    for(int i = 0; i < n; i++){
+        copy(get<1>(graph).second[i].begin(), get<1>(graph).second[i].end(), inserter(type2NonSwitchableGInNeighbors[i], type2NonSwitchableGInNeighbors[i].begin()));
+    }
+    set<int>* type2NonSwitchableGOutNeighbors = new set<int>[n];
+    for(int i = 0; i < n; i++){
+        copy(get<1>(graph).first[i].begin(), get<1>(graph).first[i].end(), inserter(type2NonSwitchableGOutNeighbors[i], type2NonSwitchableGOutNeighbors[i].begin()));
+    }
+    subGraph type2NonSwitchableG = make_pair(type2NonSwitchableGOutNeighbors, type2NonSwitchableGInNeighbors);
+
+    set<int>* type2SwitchableGInNeighbors = new set<int>[n];
+    for(int i = 0; i < n; i++){
+        copy(get<2>(graph).second[i].begin(), get<2>(graph).second[i].end(), inserter(type2SwitchableGInNeighbors[i], type2SwitchableGInNeighbors[i].begin()));
+    }
+    set<int>* type2SwitchableGOutNeighbors = new set<int>[n];
+    for(int i = 0; i < n; i++){
+        copy(get<2>(graph).first[i].begin(), get<2>(graph).first[i].end(), inserter(type2SwitchableGOutNeighbors[i], type2SwitchableGOutNeighbors[i].begin()));
+    }
+    subGraph type2SwitchableG = make_pair(type2SwitchableGOutNeighbors, type2SwitchableGInNeighbors);
+
+    Graph graphC = make_tuple(type1G, type2NonSwitchableG, type2SwitchableG, n);
+    return graphC;
 
 }
 
-void free_graph(Graph graph){
+void free_graph(Graph& graph){
     delete[] get<0>(graph).first;
     delete[] get<0>(graph).second;
 
@@ -390,13 +421,6 @@ void print_graph(Graph& graph){
 
 
 bool check_cycle_NS_helper(Graph& graph, int current, vector<bool>& visited, vector<bool>& parents){
-    /*cout<<current<<endl;
-    for(int i = 0; i < parents.size(); i++){
-        if(parents[i]){
-            cout<<i<<" ";
-        }
-    }*/
-    cout<<"\n\n"<<endl;
     if(visited[current] == false){
         visited[current] = true;
         parents[current] = true;
@@ -407,7 +431,7 @@ bool check_cycle_NS_helper(Graph& graph, int current, vector<bool>& visited, vec
                 return true;
             }
             bool result = check_cycle_NS_helper(graph, *itr, visited, parents);
-            if(result == true){
+            if(result == true && !visited[*itr]){
                 return true;
             }
             
@@ -429,6 +453,32 @@ bool check_cycle_nonSwitchable(Graph& graph, int start){
 
 
 
+
+/*int main() {
+
+
+    Graph graph = new_graph(5);
+
+    cout<<"graphC1 from graph"<<endl;
+    Graph graphC1 = copy_graph(graph);
+
+    set_type1_edge(graphC1, 1, 4);
+    set_type2_nonSwitchable_edge(graphC1, 1, 3);
+    set_type2_switchable_edge(graphC1, 1, 2);
+
+    print_graph(graph);
+    print_graph(graphC1);
+
+    cout<<"graphC2 from graphC1"<<endl;
+    Graph graphC2 = copy_graph(graphC1);
+
+    set_type1_edge(graphC1, 3, 0);
+
+    print_graph(graphC1);
+    print_graph(graphC2);
+    
+
+}*/
 
 
 /* int main() {
