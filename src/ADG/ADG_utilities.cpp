@@ -30,6 +30,7 @@ pair<int, int> compute_agent_state(vector<int> accum_stateCnts, int v) {
     prevStateCnt = stateCnt;
     agent ++;
   }
+  return make_pair(-1, -1);
 }
 
 bool is_type2_edge(ADG adg, int agent1, int state1, int agent2, int state2) {
@@ -69,7 +70,8 @@ vector<pair<int, int>> get_switchable_inNeibPair(ADG adg, int agent, int state) 
   Graph graph = get<0>(adg);
   vector<int> accum_stateCnts = get<2>(adg);
   int v = compute_vertex(accum_stateCnts, agent, state);
-  vector<int> inNeighbors_vertex = get_switchable_inNeib(graph, v);
+  set<int> inNeighbors_set = get_switchable_inNeib(graph, v);
+  vector<int> inNeighbors_vertex(inNeighbors_set.begin(), inNeighbors_set.end());
 
   vector<pair<int, int>> inNeighbors_pair;
   for (int vertex: inNeighbors_vertex) {
@@ -82,7 +84,8 @@ vector<pair<int, int>> get_switchable_outNeibPair(ADG adg, int agent, int state)
   Graph graph = get<0>(adg);
   vector<int> accum_stateCnts = get<2>(adg);
   int v = compute_vertex(accum_stateCnts, agent, state);
-  vector<int> outNeighbors_vertex = get_switchable_outNeib(graph, v);
+  set<int> outNeighbors_set = get_switchable_outNeib(graph, v);
+  vector<int> outNeighbors_vertex(outNeighbors_set.begin(), outNeighbors_set.end());
 
   vector<pair<int, int>> outNeighbors_pair;
   for (int vertex: outNeighbors_vertex) {
@@ -95,7 +98,8 @@ vector<pair<int, int>> get_nonSwitchable_inNeibPair(ADG adg, int agent, int stat
   Graph graph = get<0>(adg);
   vector<int> accum_stateCnts = get<2>(adg);
   int v = compute_vertex(accum_stateCnts, agent, state);
-  vector<int> inNeighbors_vertex = get_nonSwitchable_inNeib(graph, v);
+  set<int> inNeighbors_set = get_nonSwitchable_inNeib(graph, v);
+  vector<int> inNeighbors_vertex(inNeighbors_set.begin(), inNeighbors_set.end());
 
   vector<pair<int, int>> inNeighbors_pair;
   for (int vertex: inNeighbors_vertex) {
@@ -108,7 +112,8 @@ vector<pair<int, int>> get_nonSwitchable_outNeibPair(ADG adg, int agent, int sta
   Graph graph = get<0>(adg);
   vector<int> accum_stateCnts = get<2>(adg);
   int v = compute_vertex(accum_stateCnts, agent, state);
-  vector<int> outNeighbors_vertex = get_nonSwitchable_outNeib(graph, v);
+  set<int> outNeighbors_set = get_nonSwitchable_outNeib(graph, v);
+  vector<int> outNeighbors_vertex(outNeighbors_set.begin(), outNeighbors_set.end());
 
   vector<pair<int, int>> outNeighbors_pair;
   for (int vertex: outNeighbors_vertex) {
@@ -121,7 +126,8 @@ vector<pair<int, int>> get_inNeibPair(ADG adg, int agent, int state) {
   Graph graph = get<0>(adg);
   vector<int> accum_stateCnts = get<2>(adg);
   int v = compute_vertex(accum_stateCnts, agent, state);
-  vector<int> inNeighbors_vertex = get_inNeighbors(graph, v);
+  set<int> inNeighbors_set = get_inNeighbors(graph, v);
+  vector<int> inNeighbors_vertex(inNeighbors_set.begin(), inNeighbors_set.end());
 
   vector<pair<int, int>> inNeighbors_pair;
   for (int vertex: inNeighbors_vertex) {
@@ -134,7 +140,8 @@ vector<pair<int, int>> get_outNeibPair(ADG adg, int agent, int state) {
   Graph graph = get<0>(adg);
   vector<int> accum_stateCnts = get<2>(adg);
   int v = compute_vertex(accum_stateCnts, agent, state);
-  vector<int> outNeighbors_vertex = get_outNeighbors(graph, v);
+  set<int> outNeighbors_set = get_outNeighbors(graph, v);
+  vector<int> outNeighbors_vertex(outNeighbors_set.begin(), outNeighbors_set.end());
 
   vector<pair<int, int>> outNeighbors_pair;
   for (int vertex: outNeighbors_vertex) {
@@ -158,4 +165,12 @@ ADG copy_ADG(ADG adg) {
   Paths newPaths = paths;
   vector<int> newAccum_stateCnts = accum_stateCnts;
   return make_tuple(newGraph, newPaths, newAccum_stateCnts);
+}
+
+bool detectCycle(ADG adg, int agent, int state) {
+  return false;
+}
+
+void free_underlying_graph(ADG adg) {
+  return;
 }

@@ -1,5 +1,14 @@
 #include "generate_ADG.h"
 
+bool same_locations(Location location1, Location location2) {
+  int i1 = location1.first;
+  int j1 = location1.second;
+  int i2 = location2.first;
+  int j2 = location2.second;
+  
+  return (i1 == i2 && j1 == j2);
+}
+
 // Return path and stateCnt of an agent
 tuple<Path, int> parse_path(string line) {
   int i, j, stateCnt = 0;
@@ -54,15 +63,6 @@ tuple<Paths, vector<int>> parse_soln(char* fileName) {
   return make_tuple(paths, accum_stateCnts);
 }
 
-bool same_locations(Location location1, Location location2) {
-  int i1 = location1.first;
-  int j1 = location1.second;
-  int i2 = location2.first;
-  int j2 = location2.second;
-  
-  return (i1 == i2 && j1 == j2);
-}
-
 void add_type1_edges(Graph graph, Paths paths, vector<int> accum_stateCnts) {
   int agentCnt = paths.size();
   for (int agent = 0; agent < agentCnt; agent++) {
@@ -114,32 +114,32 @@ ADG construct_ADG(char* fileName) {
   tie(paths, accum_stateCnts) = parse_soln(fileName);
   int sumStates = accum_stateCnts.back();
 
-  Graph graph = new_graph(sumStates, sumStates);
+  Graph graph = new_graph(sumStates);
   add_type1_edges(graph, paths, accum_stateCnts);
   add_type2_edges(graph, paths, accum_stateCnts);
 
   return make_tuple(graph, paths, accum_stateCnts);
 }
 
-// // For testing purpose
-// int main(int argc, char** argv) {
-//   char* fileName = argv[1];
-//   Paths paths;
-//   vector<int> accum_stateCnts;
-//   tie(paths, accum_stateCnts) = parse_soln(fileName);
+// For testing purpose
+int main(int argc, char** argv) {
+  char* fileName = argv[1];
+  Paths paths;
+  vector<int> accum_stateCnts;
+  tie(paths, accum_stateCnts) = parse_soln(fileName);
   
-//   for (Path path: paths) {
-//     std::cout << "Agent: ";
-//     for (Location location: path) {
-//       std::cout << location.first << ' ' << location.second << "=>";
-//     }
-//     std::cout << "\n";
-//   }
+  for (Path path: paths) {
+    std::cout << "Agent: ";
+    for (Location location: path) {
+      std::cout << location.first << ' ' << location.second << "=>";
+    }
+    std::cout << "\n";
+  }
 
-//   for (int stateCnt: accum_stateCnts) {
-//     std::cout << stateCnt << ' ';
-//   }
-//   ADG adg = construct_ADG(fileName);
-//   std::cout << "agent cnt: " << get_agentCnt(adg) << "\n";
-//   std::cout << "state cnt: " << get_stateCnt(adg, 0) << "\n";
-// }
+  for (int stateCnt: accum_stateCnts) {
+    std::cout << stateCnt << ' ';
+  }
+  ADG adg = construct_ADG(fileName);
+  std::cout << "agent cnt: " << get_agentCnt(adg) << "\n";
+  std::cout << "state cnt: " << get_stateCnt(adg, 0) << "\n";
+}
