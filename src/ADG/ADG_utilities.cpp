@@ -46,7 +46,16 @@ bool is_type2_edge(ADG adg, int agent1, int state1, int agent2, int state2) {
           get_type2_nonSwitchable_edge(graph, v1, v2));
 }
 
+bool is_type2_switchable_edge(ADG adg, int agent1, int state1, int agent2, int state2) {
+  Graph graph = get<0>(adg);
+  vector<int> accum_stateCnts = get<2>(adg);
+  int v1 = compute_vertex(accum_stateCnts, agent1, state1);
+  int v2 = compute_vertex(accum_stateCnts, agent2, state2);
+  return (get_type2_switchable_edge(graph, v1, v2));
+}
+
 void fix_type2_edge(ADG adg, int agent1, int state1, int agent2, int state2) {
+  assert(is_type2_switchable_edge(adg, agent1, state1, agent2, state2));
   Graph graph = get<0>(adg);
   vector<int> accum_stateCnts = get<2>(adg);
   int v1 = compute_vertex(accum_stateCnts, agent1, state1);
@@ -59,6 +68,7 @@ void fix_type2_edge(ADG adg, int agent1, int state1, int agent2, int state2) {
 }
 
 void fix_type2_edge_reversed(ADG adg, int agent1, int state1, int agent2, int state2) {
+  assert(is_type2_switchable_edge(adg, agent1, state1, agent2, state2));
   Graph graph = get<0>(adg);
   vector<int> accum_stateCnts = get<2>(adg);
   int v1 = compute_vertex(accum_stateCnts, agent1, state1);

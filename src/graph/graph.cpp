@@ -287,7 +287,7 @@ set<int> get_inNeighbors(Graph& graph, int n){
 }
 
 // void set_switchable_nonSwitchable(Graph& graph){
-//     int graph_size = get<0>(graph);
+//     int graph_size = get<3>(graph);
 //     subGraph& graph2NS = get<1>(graph);
 //     subGraph& graph2S = get<2>(graph);
 //     for(int i = 0; i < graph_size; i++){
