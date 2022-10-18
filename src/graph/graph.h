@@ -52,5 +52,5 @@ void free_graph(Graph& graph);
 
 void print_graph(Graph& graph);
 
-bool dfs(Graph& graph);
+bool check_cycle_nonSwitchable(Graph& graph, int start);
 

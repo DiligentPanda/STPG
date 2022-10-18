@@ -1,3 +1,4 @@
+#include <stack>
 #include "graph.h"
 
 using namespace std;
@@ -387,14 +388,61 @@ void print_graph(Graph& graph){
     return;
 }
 
-bool dfs(Graph graph){
+bool check_cycle_nonSwitchable(Graph& graph, int start){
 
-    // removed until verification of tuple implementation
+    set<int> visited;
 
+    stack<int> bag;
+
+    bag.push(start);
+    
+
+    while(!bag.empty()){
+        int current = bag.top();
+        cout<<current<<endl;
+        bag.pop();
+        if(visited.find(current) != visited.end()){
+            return false;
+        }
+        // Does this need to be freed
+        set<int> neighbors = get_nonSwitchable_outNeib(graph, current);
+        cout<<"Added: ";
+        for(auto itr = neighbors.begin(); itr != neighbors.end(); itr++){
+            cout<<*itr<<" ";
+            bag.push(*itr);
+        }
+        cout<<endl;
+
+        visited.insert(current);
+    }
+    cout<<"\n\n"<<endl;
     return true;
 }
 
 
+
+/*int main() {
+
+
+    Graph graph = new_graph(5);
+
+    set_type1_edge(graph, 0, 1);
+    set_type1_edge(graph, 1, 2);
+    set_type2_nonSwitchable_edge(graph, 0, 3);
+    set_type2_nonSwitchable_edge(graph, 3, 1);
+    set_type1_edge(graph, 4, 1);
+    set_type2_nonSwitchable_edge(graph, 2, 4);
+
+    print_graph(graph);
+
+    cout<<"\n"<<check_cycle_nonSwitchable(graph, 0);
+
+    rem_type2_nonSwitchable_edge(graph, 0, 3);
+    cout<<"\n\n"<<check_cycle_nonSwitchable(graph, 0);
+
+    return 0;
+
+}*/
 
 
 
