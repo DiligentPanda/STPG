@@ -34,6 +34,10 @@ vector<pair<int, int>> get_nonSwitchable_inNeibPair(ADG adg, int agent, int stat
 
 vector<pair<int, int>> get_nonSwitchable_outNeibPair(ADG adg, int agent, int state);
 
+vector<pair<int, int>> get_inNeibPair(ADG adg, int agent, int state);
+
+vector<pair<int, int>> get_outNeibPair(ADG adg, int agent, int state);
+
 Location get_state_target(ADG adg, int agent, int state);
 
 ADG copy_ADG(ADG adg);

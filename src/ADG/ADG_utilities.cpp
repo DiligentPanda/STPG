@@ -70,7 +70,7 @@ vector<pair<int, int>> get_switchable_inNeibPair(ADG adg, int agent, int state) 
   Graph graph = get<0>(adg);
   vector<int> accum_stateCnts = get<2>(adg);
   int v = compute_vertex(accum_stateCnts, agent, state);
-  set<int> inNeighbors_set = get_switchable_inNeib(graph, v);
+  set<int>& inNeighbors_set = get_switchable_inNeib(graph, v);
   vector<int> inNeighbors_vertex(inNeighbors_set.begin(), inNeighbors_set.end());
 
   vector<pair<int, int>> inNeighbors_pair;
@@ -84,7 +84,7 @@ vector<pair<int, int>> get_switchable_outNeibPair(ADG adg, int agent, int state)
   Graph graph = get<0>(adg);
   vector<int> accum_stateCnts = get<2>(adg);
   int v = compute_vertex(accum_stateCnts, agent, state);
-  set<int> outNeighbors_set = get_switchable_outNeib(graph, v);
+  set<int>& outNeighbors_set = get_switchable_outNeib(graph, v);
   vector<int> outNeighbors_vertex(outNeighbors_set.begin(), outNeighbors_set.end());
 
   vector<pair<int, int>> outNeighbors_pair;
@@ -153,7 +153,7 @@ vector<pair<int, int>> get_outNeibPair(ADG adg, int agent, int state) {
 Location get_state_target(ADG adg, int agent, int state) {
   Paths paths = get<1>(adg);
   Path path = paths[agent];
-  return path[state];
+  return get<0>(path[state]);
 }
 
 ADG copy_ADG(ADG adg) {

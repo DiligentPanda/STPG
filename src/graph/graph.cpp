@@ -308,21 +308,3 @@ bool dfs(Graph graph){
     return true;
 }
 
-
-
-
-
-int main(){
-
-    cout<<"Testing Graph.cpp"<<endl;
-
-    /*
-
-    */
-
-    return 0;
-
-}
-
-
-

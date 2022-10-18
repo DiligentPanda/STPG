@@ -12,6 +12,7 @@ bool same_locations(Location location1, Location location2) {
 // Return path and stateCnt of an agent
 tuple<Path, int> parse_path(string line) {
   int i, j, stateCnt = 0;
+  int time = 0;
   size_t comma_pos, leftPar_pos, rightPar_pos;
   Path path;
   Location prev_location = make_pair(-1, -1);
@@ -28,9 +29,10 @@ tuple<Path, int> parse_path(string line) {
     Location location = make_pair(i, j);
     if (!same_locations(location, prev_location)) {
       stateCnt ++;
-      path.push_back(location);
+      path.push_back(make_pair(location, time));
       prev_location = location;
     }
+    time++;
   }
   return make_tuple(path, stateCnt);
 }
@@ -75,6 +77,7 @@ void add_type1_edges(Graph graph, Paths paths, vector<int> accum_stateCnts) {
       if (prev_vertex >= 0) {
         set_type1_edge(graph, prev_vertex, curr_vertex);
       }
+      prev_vertex = curr_vertex;
     }
   }
 }
@@ -91,15 +94,20 @@ void add_type2_edges(Graph graph, Paths paths, vector<int> accum_stateCnts) {
 
       // Looping through states
       for (int state1 = 0; state1 < stateCnt1; state1++) {
-        Location location1 = path1[state1];
+        pair<Location, int> pair1 = path1[state1];
+        Location location1 = get<0>(pair1);
         for (int state2 = 0; state2 < stateCnt2; state2++) {
-          Location location2 = path2[state2];
+          pair<Location, int> pair2 = path2[state2];
+          Location location2 = get<0>(pair2);
 
           if (same_locations(location1, location2)) {
             // Add a type2 edge
             int vertex1 = compute_vertex(accum_stateCnts, agent1, state1);
             int vertex2 = compute_vertex(accum_stateCnts, agent2, state2);
-            if (state1 < state2) set_type2_switchable_edge(graph, vertex1, vertex2);
+
+            int time1 = get<1>(pair1);
+            int time2 = get<1>(pair2);
+            if (time1 < time2) set_type2_switchable_edge(graph, vertex1, vertex2);
             else set_type2_switchable_edge(graph, vertex2, vertex1);
           }
         }
@@ -127,19 +135,46 @@ int main(int argc, char** argv) {
   Paths paths;
   vector<int> accum_stateCnts;
   tie(paths, accum_stateCnts) = parse_soln(fileName);
-  
+  int counter = 0;
   for (Path path: paths) {
-    std::cout << "Agent: ";
-    for (Location location: path) {
+    std::cout << "Agent " << counter << " : ";
+    for (pair<Location, int> pair: path) {
+      Location location = get<0>(pair);
       std::cout << location.first << ' ' << location.second << "=>";
     }
     std::cout << "\n";
+    counter++;
   }
 
   for (int stateCnt: accum_stateCnts) {
     std::cout << stateCnt << ' ';
   }
   ADG adg = construct_ADG(fileName);
-  std::cout << "agent cnt: " << get_agentCnt(adg) << "\n";
-  std::cout << "state cnt: " << get_stateCnt(adg, 0) << "\n";
+  vector<pair<int, int>> v1 = get_switchable_outNeibPair(adg, 0, 0);
+  vector<pair<int, int>> v2 = get_inNeibPair(adg, 14, 6);
+  vector<pair<int, int>> v3 = get_switchable_outNeibPair(adg, 14, 6);
+  vector<pair<int, int>> v4 = get_nonSwitchable_outNeibPair(adg, 14, 6);
+  std::cout << "v1: " ;
+  for (pair<int, int> as: v1) {
+    std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
+  }
+  std::cout << "\n" ;
+
+    std::cout << "v2: " ;
+  for (pair<int, int> as: v2) {
+    std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
+  }
+  std::cout << "\n" ;
+
+    std::cout << "v3: " ;
+  for (pair<int, int> as: v3) {
+    std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
+  }
+  std::cout << "\n" ;
+
+    std::cout << "v4: " ;
+  for (pair<int, int> as: v4) {
+    std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
+  }
+  std::cout << "\n" ;
 }
