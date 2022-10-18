@@ -22,7 +22,7 @@ class Compare {
       int g2 = get<1>(s2);
       int h2 = get<2>(s2);
 
-      return (g1 + h1) < (g2 + h2);
+      return (g1 + h1) <= (g2 + h2);
     }
 };
 
