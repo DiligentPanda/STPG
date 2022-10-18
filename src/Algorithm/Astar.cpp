@@ -1,16 +1,7 @@
 #include "Astar.h"
 
 int heuristic(Simulator simulator) {
-  int stepSpend = 0;
-  int totalSpend = 0;
-
-  stepSpend = simulator.step(false);
-  while (stepSpend != 0) {
-    if (stepSpend < 0) return -1; // stuck
-    totalSpend += stepSpend;
-    stepSpend = simulator.step(false);
-  }
-  return totalSpend;
+  return 0;
 }
 
 class Compare {
@@ -27,13 +18,27 @@ class Compare {
 };
 
 Simulator exploreNode(priority_queue<Node, vector<Node>, Compare> pq,
-                      Simulator simulator, int g) {
-                        // std::cout<< "newnode\n";
+                      Simulator simulator, int g, int newNode) {
+                        newNode += 1;
+                        if (newNode %1000 == 0) {
+                          std::cout << "newnodecnt: "<<newNode << "\n";
+                        }
+  // std::cout<< "newnode\n";
   int agent1, state1, agent2, state2;
   tie(agent1, state1, agent2, state2) = simulator.detectSwitch();
   while (agent1 < 0) {
     int g_step = simulator.step(true);
-    if (g_step == 0) return simulator; // All agents reach their goals
+    if (g_step == 0) {
+      std::cout << "returning\n";
+      return simulator; // All agents reach their goals
+    }
+    else if (g_step < 0) {
+        Node node = pq.top();
+  pq.pop();
+  Simulator new_simulator = get<0>(node);
+  int new_g = get<1>(node);
+  return exploreNode(pq, new_simulator, new_g, newNode);
+    }
     g += g_step;
 
     tie(agent1, state1, agent2, state2) = simulator.detectSwitch();
@@ -83,22 +88,22 @@ Simulator exploreNode(priority_queue<Node, vector<Node>, Compare> pq,
   pq.pop();
   Simulator new_simulator = get<0>(node);
   int new_g = get<1>(node);
-  return exploreNode(pq, new_simulator, new_g);
+  return exploreNode(pq, new_simulator, new_g, newNode);
 }
 
 ADG Astar(ADG root) {
   Simulator simulator(root);
   priority_queue<Node, vector<Node>, Compare> pq;
   int g = 0;
-  simulator = exploreNode(pq, simulator, g);
+  simulator = exploreNode(pq, simulator, g, 0);
   return simulator.adg;
 }
 
 int main(int argc, char** argv) {
   char* fileName = argv[1];
   ADG adg = construct_ADG(fileName);
-  print_graph_s2(get<0>(adg));
   ADG res = Astar(adg);
+  std::cout<<"finished";
   print_graph_n2(get<0>(res));
   // for (pair<int, int> as: get_switchable_inNeibPair(adg, 13, 1)) {
   //   std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
