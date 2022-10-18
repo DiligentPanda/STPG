@@ -28,6 +28,7 @@ class Compare {
 
 Simulator exploreNode(priority_queue<Node, vector<Node>, Compare> pq,
                       Simulator simulator, int g) {
+                        // std::cout<< "newnode\n";
   int agent1, state1, agent2, state2;
   tie(agent1, state1, agent2, state2) = simulator.detectSwitch();
   while (agent1 < 0) {
@@ -96,7 +97,9 @@ ADG Astar(ADG root) {
 int main(int argc, char** argv) {
   char* fileName = argv[1];
   ADG adg = construct_ADG(fileName);
+  print_graph_s2(get<0>(adg));
   ADG res = Astar(adg);
+  print_graph_n2(get<0>(res));
   // for (pair<int, int> as: get_switchable_inNeibPair(adg, 13, 1)) {
   //   std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
   // }

@@ -52,5 +52,9 @@ void free_graph(Graph& graph);
 
 void print_graph(Graph& graph);
 
+void print_graph_s2(Graph& graph);
+
+void print_graph_n2(Graph& graph);
+
 bool check_cycle_nonSwitchable(Graph& graph, int start);
 
