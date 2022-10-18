@@ -1,7 +1,16 @@
 #include "Astar.h"
 
 int heuristic(Simulator simulator) {
-  return 0;
+  int stepSpend = 0;
+  int totalSpend = 0;
+
+  stepSpend = simulator.step(false);
+  while (stepSpend != 0) {
+    if (stepSpend < 0) return -1; // stuck
+    totalSpend += stepSpend;
+    stepSpend = simulator.step(false);
+  }
+  return totalSpend;
 }
 
 class Compare {
@@ -24,14 +33,6 @@ Simulator exploreNode(priority_queue<Node, vector<Node>, Compare> pq,
   while (agent1 < 0) {
     int g_step = simulator.step(true);
     if (g_step == 0) return simulator; // All agents reach their goals
-    if (g_step < 0) {
-      // Recursive call
-      Node node = pq.top();
-      pq.pop();
-      Simulator new_simulator = get<0>(node);
-      int new_g = get<1>(node);
-      return exploreNode(pq, new_simulator, new_g);
-    }
     g += g_step;
 
     tie(agent1, state1, agent2, state2) = simulator.detectSwitch();
