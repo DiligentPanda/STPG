@@ -17,7 +17,11 @@ int get_totalStateCnt(ADG adg) {
 }
 
 int compute_vertex(vector<int> accum_stateCnts, int agent, int state) {
-  if (agent == 0) return state; // Accumulated state cnt == 0
+  if (agent == 0) { // Accumulated state cnt == 0
+    assert(state < accum_stateCnts[0]);
+    return state; 
+  }
+  assert(state < accum_stateCnts[agent] - accum_stateCnts[agent-1]);
   int accum_stateCnt = accum_stateCnts[agent - 1];
   return (state + accum_stateCnt);
 }
@@ -26,7 +30,7 @@ pair<int, int> compute_agent_state(vector<int> accum_stateCnts, int v) {
   int agent = 0;
   int prevStateCnt = 0;
   for (int stateCnt: accum_stateCnts) {
-    if (v <= stateCnt) return make_pair(agent, v - prevStateCnt);
+    if (v < stateCnt) return make_pair(agent, v - prevStateCnt);
     prevStateCnt = stateCnt;
     agent ++;
   }

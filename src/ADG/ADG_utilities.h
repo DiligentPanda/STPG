@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <stdlib.h>
+#include <cassert>
 
 #include "../graph/graph.h"
 #include "../types.h"

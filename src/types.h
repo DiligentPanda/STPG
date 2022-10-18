@@ -20,3 +20,4 @@ typedef vector<Path> Paths;
 typedef tuple<Graph, Paths, vector<int>> ADG;
 
 #endif
+
