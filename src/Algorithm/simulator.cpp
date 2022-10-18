@@ -91,7 +91,6 @@ int Simulator::step(bool switchCheck) {
     // Location l2 = get_state_target(adg, 45, 18);
     // std::cout << "28, 12: ->>>"<<get<0>(l1) << ", " << get<1>(l1) << ";  \n";
     // std::cout << "45, 18: ->>>"<<get<0>(l2) << ", " << get<1>(l2) << ";  \n";
-    std::cout << "no progress\n";
     return -1;
   }
   return timeSpent[0];
