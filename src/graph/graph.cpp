@@ -294,7 +294,7 @@ Graph copy_graph(Graph& graph){
 
 }
 
-void free_graph(Graph graph){
+void free_graph(Graph& graph){
     delete[] get<0>(graph).first;
     delete[] get<0>(graph).second;
 
@@ -391,7 +391,8 @@ void print_graph(Graph& graph){
 
 bool check_cycle_NS_helper(Graph& graph, int current, vector<bool>& visited, vector<bool>& parents){
     cout<<current<<endl;
-    for(int i = 0; i < parents.size(); i++){
+    int len = parents.size();
+    for(int i = 0; i < len; i++){
         if(parents[i]){
             cout<<i<<" ";
         }

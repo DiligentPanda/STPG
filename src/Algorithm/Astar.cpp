@@ -86,8 +86,6 @@ int main(int argc, char** argv) {
   char* fileName = argv[1];
   ADG adg = construct_ADG(fileName);
   ADG res = Astar(adg);
-
-  Simulator output(res);
   // for (pair<int, int> as: get_switchable_inNeibPair(adg, 13, 1)) {
   //   std::cout << get<0>(as) << ", " << get<1>(as) << ";  ";
   // }

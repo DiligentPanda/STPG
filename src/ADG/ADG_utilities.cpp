@@ -172,9 +172,14 @@ ADG copy_ADG(ADG adg) {
 }
 
 bool detectCycle(ADG adg, int agent, int state) {
-  return false;
+  Graph graph = get<0>(adg);
+  vector<int> accum_stateCnts = get<2>(adg);
+  int v = compute_vertex(accum_stateCnts, agent, state);
+  return check_cycle_nonSwitchable(graph, v);
 }
 
 void free_underlying_graph(ADG adg) {
+  Graph graph = get<0>(adg);
+  free_graph(graph);
   return;
 }
