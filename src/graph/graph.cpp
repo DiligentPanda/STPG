@@ -390,12 +390,12 @@ void print_graph(Graph& graph){
 
 
 bool check_cycle_NS_helper(Graph& graph, int current, vector<bool>& visited, vector<bool>& parents){
-    cout<<current<<endl;
+    /*cout<<current<<endl;
     for(int i = 0; i < parents.size(); i++){
         if(parents[i]){
             cout<<i<<" ";
         }
-    }
+    }*/
     cout<<"\n\n"<<endl;
     if(visited[current] == false){
         visited[current] = true;
