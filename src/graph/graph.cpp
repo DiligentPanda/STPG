@@ -600,12 +600,15 @@ void print_graph_n2(Graph& graph){
 }
 
 
-bool check_cycle_NS_helper(Graph& graph, int current, vector<bool>& visited, vector<bool>& parents){
+bool check_cycle_NS_helper(Graph& graph, int current, vector<bool>& visited, vector<bool>& parents, bool type2_flag){
     if(visited[current] == false){
         visited[current] = true;
         parents[current] = true;
 
         set<int> neighborhood = get_nonSwitchable_outNeib(graph, current);
+        if (flag){
+            neighborhood.insert(get<0>(graph).second[current].begin(), get<0>(graph).second[current].begin());
+        }
         for(auto itr = neighborhood.begin(); itr != neighborhood.end(); itr++){
             if(parents[*itr] == true){
                 return true;
