@@ -28,7 +28,8 @@ class Compare {
 
 Simulator exploreNode(priority_queue<Node, vector<Node>, Compare> pq,
                       Simulator simulator, int g, int newNode) {
-  if (newNode >= 1628) {
+  newNode += 1;
+  if (newNode >= -100) {
     std::cout << "newnodecnt: "<<newNode << "\n";
     std::cout << "pq length: " << pq.size() << "\n";
     ADG adg = simulator.adg;
@@ -43,18 +44,18 @@ Simulator exploreNode(priority_queue<Node, vector<Node>, Compare> pq,
     }
   }
   int agent1, state1, agent2, state2;
-  if (newNode >= 1628) { std::cout << "going to detect switch\n"; }
+  if (newNode >= -100) { std::cout << "going to detect switch\n"; }
   tie(agent1, state1, agent2, state2) = simulator.detectSwitch();
   while (agent1 < 0) {
-    if (newNode >= 1628) { std::cout << "going to step\n"; }
+    if (newNode >= -100) { std::cout << "going to step\n"; }
     int g_step = simulator.step(true);
-    if (newNode >= 1628) { std::cout << "stepped\n"; }
+    if (newNode >= -100) { std::cout << "stepped\n"; }
     if (g_step == 0) {
       std::cout << "returning\n";
       return simulator; // All agents reach their goals
     }
     assert(g_step > 0);
-    if (newNode >= 1628) {
+    if (newNode >= -100) {
       std::cout << "stepped, printing stepped simulator:\n";
       ADG adg = simulator.adg;
       vector<int> sts = simulator.states;
@@ -87,7 +88,7 @@ Simulator exploreNode(priority_queue<Node, vector<Node>, Compare> pq,
     {
       free_underlying_graph(simulator.adg);
     } else {
-      if (newNode >= 1628) {
+      if (newNode >= -100) {
         std::cout << "added forward child, fix (" << agent1 << ", "<< state1 << ") -> ("<< agent2 << ", " << state2 <<")\n";
         std::cout << "h = " << h << "\n";
       }
@@ -109,7 +110,7 @@ Simulator exploreNode(priority_queue<Node, vector<Node>, Compare> pq,
     {
       free_underlying_graph(copy);
     } else {
-      if (newNode >= 1628) {
+      if (newNode >= -100) {
         std::cout << "added backward child, fix (" << agent2 << ", "<< state2 << ") -> ("<< agent1 << ", " << state1 <<")\n";
         std::cout << "h = " << h << "\n";
       }
@@ -123,7 +124,7 @@ Simulator exploreNode(priority_queue<Node, vector<Node>, Compare> pq,
   pq.pop();
   Simulator new_simulator = get<0>(node);
   int new_g = get<1>(node);
-  if (newNode >= 1628) {
+  if (newNode >= -100) {
     ADG new_adg = new_simulator.adg;
     std::cout << "entering recursive call, next node fix: \n";
     for (int agent = 0; agent < get_agentCnt(new_adg); agent++) {

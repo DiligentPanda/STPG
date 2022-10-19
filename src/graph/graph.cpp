@@ -632,22 +632,22 @@ bool check_cycle_nonSwitchable(Graph& graph, int start){
 }
 
 
-int main(){
-    Graph graph = new_graph(5);
+// int main(){
+//     Graph graph = new_graph(5);
 
-    cout<<"Print Empty Graph"<<endl;
-    print_graph_concise(graph);
+//     cout<<"Print Empty Graph"<<endl;
+//     print_graph_concise(graph);
 
-    set_type1_edge(graph, 0, 1);
-    set_type1_edge(graph, 1, 2);
-    set_type2_nonSwitchable_edge(graph, 0, 3);
-    set_type2_nonSwitchable_edge(graph, 3, 1);
-    set_type1_edge(graph, 4, 1);
-    set_type2_nonSwitchable_edge(graph, 2, 4);
+//     set_type1_edge(graph, 0, 1);
+//     set_type1_edge(graph, 1, 2);
+//     set_type2_nonSwitchable_edge(graph, 0, 3);
+//     set_type2_nonSwitchable_edge(graph, 3, 1);
+//     set_type1_edge(graph, 4, 1);
+//     set_type2_nonSwitchable_edge(graph, 2, 4);
 
-    cout<<"Print Built Graph"<<endl;
-    print_graph_concise(graph);
-}
+//     cout<<"Print Built Graph"<<endl;
+//     print_graph_concise(graph);
+// }
 
 /*int main() {
 
