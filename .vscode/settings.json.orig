@@ -4,14 +4,11 @@
         "utility": "cpp",
         "set": "cpp",
         "stdexcept": "cpp",
-<<<<<<< HEAD
         "new": "cpp",
         "deque": "cpp",
         "functional": "cpp",
         "string": "cpp",
         "unordered_map": "cpp",
-=======
->>>>>>> 007deba19823aac3ee8eff9401c7e2ddfafd3379
         "vector": "cpp"
     }
 }

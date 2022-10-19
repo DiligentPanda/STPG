@@ -600,29 +600,72 @@ void print_graph_n2(Graph& graph){
 }
 
 
-bool check_cycle_NS_helper(Graph& graph, int current, vector<bool>& visited, vector<bool>& parents, bool type2_flag){
+bool check_cycle_NS_helper(Graph& graph, int current, vector<bool>& visited, vector<bool>& parents, bool type2_flag, int flag_parent){
+    cout<<"Start curr: "<<current<<" with "<<flag_parent<<endl;
     if(visited[current] == false){
         visited[current] = true;
         parents[current] = true;
 
-        set<int> neighborhood = get_nonSwitchable_outNeib(graph, current);
-        if (flag){
-            neighborhood.insert(get<0>(graph).second[current].begin(), get<0>(graph).second[current].begin());
+
+        set<int> neighborhood1 = get<0>(graph).first[current];
+        set<int> neighborhood2NS = get<1>(graph).first[current];
+        
+        if (type2_flag){
+            set<int> reversible_edge = get<0>(graph).second[current];
+            auto itr = reversible_edge.begin();
+            cout<<current<<"->"<<*itr<<" "<<type2_flag<<endl;
+            if(*itr != flag_parent && parents[*itr] == true){
+                cout<<"Ret True "<<current<<endl;
+                return true;
+            }
+            bool result = *itr != flag_parent ? check_cycle_NS_helper(graph, *itr, visited, parents, false, current) : false;
+            if(result == true){
+                cout<<"Ret True "<<current<<endl;
+                return true;
+            }
         }
-        for(auto itr = neighborhood.begin(); itr != neighborhood.end(); itr++){
-            if(parents[*itr] == true){
+
+        for(auto itr = neighborhood1.begin(); itr != neighborhood1.end(); itr++){
+            cout<<*itr<<" ";
+        }
+        cout<<endl;
+        for(auto itr = neighborhood2NS.begin(); itr != neighborhood2NS.end(); itr++){
+            cout<<*itr<<" ";
+        }
+        cout<<endl;
+
+        // Type 1
+        for(auto itr = neighborhood1.begin(); itr != neighborhood1.end(); itr++){
+            cout<<current<<"->"<<*itr<<" "<<type2_flag<<endl;
+            if(*itr != flag_parent && parents[*itr] == true){
+                cout<<"Ret True asd "<<current<<endl;
                 return true;
             }
-            bool result = check_cycle_NS_helper(graph, *itr, visited, parents);
-            if(result == true && !visited[*itr]){
+            bool result = *itr != flag_parent ? check_cycle_NS_helper(graph, *itr, visited, parents, false, -1) : false;
+            if(result == true){
+                cout<<"Ret True "<<current<<endl;
                 return true;
             }
-            
+        }
+
+        // Type 2 NS
+        for(auto itr = neighborhood2NS.begin(); itr != neighborhood2NS.end(); itr++){
+            cout<<current<<"->"<<*itr<<" "<<type2_flag<<endl;
+            if(*itr != flag_parent && parents[*itr] == true){
+                cout<<"Ret True "<<current<<endl;
+                return true;
+            }
+            bool result = *itr != flag_parent ? check_cycle_NS_helper(graph, *itr, visited, parents, true, -1) : false;
+            if(result == true){
+                cout<<"Ret True "<<current<<endl;
+                return true;
+            } 
         }
 
         parents[current] = false;
     }
 
+    cout<<"End curr: "<<current<<endl;
     return false;
 }
 
@@ -631,25 +674,48 @@ bool check_cycle_nonSwitchable(Graph& graph, int start){
     vector<bool> visited (graph_size, false);
     vector<bool> parents (graph_size, false);
 
-    return check_cycle_NS_helper(graph, start, visited, parents);
+    return check_cycle_NS_helper(graph, start, visited, parents, false, -1);
 }
 
 
 int main(){
-    Graph graph = new_graph(5);
-
-    cout<<"Print Empty Graph"<<endl;
-    print_graph_concise(graph);
+    Graph graph = new_graph(10);
 
     set_type1_edge(graph, 0, 1);
     set_type1_edge(graph, 1, 2);
-    set_type2_nonSwitchable_edge(graph, 0, 3);
-    set_type2_nonSwitchable_edge(graph, 3, 1);
-    set_type1_edge(graph, 4, 1);
-    set_type2_nonSwitchable_edge(graph, 2, 4);
+    set_type1_edge(graph, 2, 3);
+    set_type1_edge(graph, 4, 5);
+    set_type1_edge(graph, 5, 6);
+    set_type1_edge(graph, 6, 7);
+    set_type1_edge(graph, 7, 8);
+    set_type1_edge(graph, 8, 9);
 
-    cout<<"Print Built Graph"<<endl;
-    print_graph_concise(graph);
+    cout<<check_cycle_nonSwitchable(graph, 0)<<endl;
+    cout<<check_cycle_nonSwitchable(graph, 1)<<endl;
+    cout<<"\n\n"<<endl;
+
+    // Cycle
+    // set_type2_nonSwitchable_edge(graph, 1, 6);
+    // set_type2_nonSwitchable_edge(graph, 8, 2);
+    // cout<<check_cycle_nonSwitchable(graph, 8)<<endl;
+
+    // Not Cycle
+    // set_type2_nonSwitchable_edge(graph, 6, 1);
+    // set_type2_nonSwitchable_edge(graph, 8, 2);
+    // cout<<check_cycle_nonSwitchable(graph, 8)<<endl;
+
+    // Not Cycle
+    // set_type2_nonSwitchable_edge(graph, 6, 1);
+    // set_type2_nonSwitchable_edge(graph, 2, 8);
+    // cout<<check_cycle_nonSwitchable(graph, 2)<<endl;
+
+    // Not Cycle
+    set_type2_nonSwitchable_edge(graph, 1, 6);
+    set_type2_nonSwitchable_edge(graph, 2, 8);
+    cout<<check_cycle_nonSwitchable(graph, 2)<<endl;
+
+    
+    
 }
 
 /*int main() {
