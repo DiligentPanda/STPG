@@ -9,11 +9,7 @@ Simulator::Simulator(ADG input_adg) {
 Simulator::Simulator(ADG input_adg, vector<int> visited_states) {
   adg = input_adg;
   int agentCnt = get_agentCnt(adg);
-  vector<int> new_states;
-  for (int agent = 0; agent < agentCnt; agent ++) {
-    new_states.push_back(visited_states[agent]);
-  }
-  states = new_states;
+  states = visited_states;
 }
 
 bool Simulator::move(vector<int>& moved, int agent, int *timeSpent, bool switchCheck) {

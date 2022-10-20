@@ -84,6 +84,7 @@ ADG exploreNode(priority_queue<Node, vector<Node>, Compare> pq) {
   int hPrune = 0;
   microseconds alltime(0);
   microseconds heuT(0);
+  microseconds heuTN(0);
   microseconds prunedH(0);
   microseconds dfsT(0);
   while (pq.size() > 0) {
@@ -91,6 +92,7 @@ ADG exploreNode(priority_queue<Node, vector<Node>, Compare> pq) {
     if (newNode % 2000 == 0) {
       std::cout << alltime.count() << " alltime \n";
       std::cout << heuT.count() << " heuristic time \n";
+      std::cout << heuTN.count() << "new heuristic time \n";
       std::cout << prunedH.count() << " pruned heuristic time \n";
       std::cout << dfsT.count() << " dfs time \n\n";
     }
@@ -162,6 +164,7 @@ ADG exploreNode(priority_queue<Node, vector<Node>, Compare> pq) {
     // Detected a switchable edge
     ADG copy = copy_ADG(simulator.adg);
     if (newNode > 100000) std::cout << "copied\n";
+    
     // Forward child
     fix_type2_edge(simulator.adg, agent1, state1, agent2, state2);
     if (newNode > 100000) std::cout << "forward fixed\n";
@@ -185,6 +188,14 @@ ADG exploreNode(priority_queue<Node, vector<Node>, Compare> pq) {
       auto stop = high_resolution_clock::now();
       auto duration = duration_cast<microseconds>(stop - start);
       heuT += duration;
+
+      Simulator new_simulator_h(simulator.adg, simulator.states);
+      start = high_resolution_clock::now();
+      int new_h = new_heuristic(new_simulator_h);
+      stop = high_resolution_clock::now();
+      duration = duration_cast<microseconds>(stop - start);
+      heuTN += duration;
+      assert(new_h == h);
       if (h < 0) // Prune node
       {
         if (newNode >= 100000) std::cout <<"-----hprune-----\n";
@@ -221,6 +232,14 @@ ADG exploreNode(priority_queue<Node, vector<Node>, Compare> pq) {
       auto stop = high_resolution_clock::now();
       auto duration = duration_cast<microseconds>(stop - start);
       heuT += duration;
+
+      Simulator new_simulator_h(copy, simulator.states);
+      start = high_resolution_clock::now();
+      int new_h = new_heuristic(new_simulator_h);
+      stop = high_resolution_clock::now();
+      duration = duration_cast<microseconds>(stop - start);
+      heuTN += duration;
+      assert(new_h == h);
       if (h < 0) // Prune node
       {
         if (newNode >= 100000) std::cout <<"-----hprune-----\n";
@@ -243,20 +262,7 @@ ADG exploreNode(priority_queue<Node, vector<Node>, Compare> pq) {
   throw invalid_argument("no solution found");
 }
 
-ADG Astar(ADG root) {
-  for (int agent = 0; agent < get_agentCnt(root); agent++) {
-    for (pair<int, int> outNeigb: get_switchable_outNeibPair(root, agent, 0)) {
-      // Fix starting edge
-      fix_type2_edge(root, agent, 0, get<0>(outNeigb), get<1>(outNeigb));
-    }
-
-    for (pair<int, int> inNeigb: get_switchable_inNeibPair(root, agent, get_stateCnt(root, agent)-1)) {
-      // Fix ending edge
-      fix_type2_edge(root, get<0>(inNeigb), get<1>(inNeigb), agent, get_stateCnt(root, agent)-1);
-    }
-  }
-  
-  Simulator simulator(root);
+ADG Astar(Simulator simulator) {
   priority_queue<Node, vector<Node>, Compare> pq;
   Simulator simulator_h(simulator.adg, simulator.states);
   int h = heuristic(simulator_h);
@@ -267,11 +273,25 @@ ADG Astar(ADG root) {
 int main(int argc, char** argv) {
   char* fileName = argv[1];
   ADG adg = construct_ADG(fileName);
-  ADG res = Astar(adg);
+
+  for (int agent = 0; agent < get_agentCnt(adg); agent++) {
+    for (pair<int, int> outNeigb: get_switchable_outNeibPair(adg, agent, 0)) {
+      // Fix starting edge
+      fix_type2_edge(adg, agent, 0, get<0>(outNeigb), get<1>(outNeigb));
+    }
+
+    for (pair<int, int> inNeigb: get_switchable_inNeibPair(adg, agent, get_stateCnt(adg, agent)-1)) {
+      // Fix ending edge
+      fix_type2_edge(adg, get<0>(inNeigb), get<1>(inNeigb), agent, get_stateCnt(adg, agent)-1);
+    }
+  }
+  Simulator simulator(adg);
+  
+  ADG res = Astar(simulator);
   std::cout<<"finished, result graph: \n";
 
-  Simulator simulator(res);
-  int timeSum = heuristic(simulator);
+  Simulator simulator_res(res);
+  int timeSum = heuristic(simulator_res);
   std::cout << "solution time spend = " << timeSum << "\n";
 
   ADG original_adg = construct_ADG(fileName);
