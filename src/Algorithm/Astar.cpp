@@ -14,7 +14,46 @@ int heuristic(Simulator simulator) {
 }
 
 int new_heuristic(Simulator simulator) {
-  return 0;
+  ADG adg = copy_ADG(simulator.adg);
+  int agentCnt = get_agentCnt(adg);
+  vector<int> currents;
+  for (int agent = 0; agent < agentCnt; agent ++) {
+    int currentState = simulator.states[agent];
+    int current = compute_vertex_ADG(adg, agent, currentState);
+    currents.push_back(current);
+
+    for (int state = currentState; state < get_stateCnt(adg, agent); state++) {
+      for (pair<int, int> dep: get_nonSwitchable_inNeibPair(adg, agent, state)) {
+        int dep_agent = get<0>(dep);
+        if (dep_agent != agent) {
+          int dep_state = get<1>(dep);
+          shift(adg, dep_agent, dep_state, agent, state);
+        }
+      }
+    }
+  }
+  vector<int> ts = topologicalSort(get<0>(adg), currents);
+
+  int *values = new int[(get<2>(adg)).back()]();
+  for (int i: ts) {
+    int prevVal = values[i];
+    set<int> outNeib = get_nonSwitchable_outNeib(i);
+    for (set<int>::iterator it = outNeib.begin(); it != outNeib.end(); it++) {
+      int j = *it;
+      int weight = 0;
+      if (get_type1_edge(get<0>(adg), i, j)) weight = 1;
+      if (values[j] < prevVal + weight) values[j] = prevVal + weight;
+    }
+  }
+  // TODO: DELET TS IF NECESSARY
+  int sum = 0;
+  for (int agent = 0; agent < agentCnt; agent ++) {
+    int goalVert = compute_vertex_ADG(adg, agent, get_stateCnt(adg, agent) - 1);
+    sum += values[goalVert];
+  }
+  delete values;
+  free_underlying_graph(adg);
+  return sum;
 }
 
 class Compare {

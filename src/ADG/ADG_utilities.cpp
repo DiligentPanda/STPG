@@ -26,6 +26,11 @@ int compute_vertex(vector<int> accum_stateCnts, int agent, int state) {
   return (state + accum_stateCnt);
 }
 
+int compute_vertex_ADG(ADG adg, int agent, int state) {
+  vector<int> accum_stateCnts = get<2>(adg);
+  return compute_vertex(accum_stateCnts, agent, state);
+}
+
 pair<int, int> compute_agent_state(vector<int> accum_stateCnts, int v) {
   int agent = 0;
   int prevStateCnt = 0;
@@ -66,6 +71,17 @@ void fix_type2_edge_reversed(ADG adg, int agent1, int state1, int agent2, int st
   assert(get_type2_switchable_edge(graph, v1, v2));
   rem_type2_switchable_edge(graph, v1, v2);
   set_type2_nonSwitchable_edge(graph, v2, v1);
+}
+
+void shift(ADG adg, int agent1, int state1, int agent2, int state2) {
+  Graph graph = get<0>(adg);
+  vector<int> accum_stateCnts = get<2>(adg);
+  int v1 = compute_vertex(accum_stateCnts, agent1, state1);
+  int v2 = compute_vertex(accum_stateCnts, agent2, state2);
+
+  assert(get_type2_nonSwitchable_edge(graph, v1, v2));
+  rem_type2_nonSwitchable_edge(graph, v1, v2);
+  set_type2_nonSwitchable_edge(graph, compute_vertex(accum_stateCnts, agent1, state1 + 1), v2);
 }
 
 vector<pair<int, int>> get_switchable_inNeibPair(ADG adg, int agent, int state) {
