@@ -600,105 +600,50 @@ void print_graph_n2(Graph& graph){
 }
 
 bool check_cycle_NS_helper(Graph& graph, int current, vector<bool>& visited, vector<bool>& parents, bool type2_flag, int flag_parent){
-<<<<<<< HEAD
-    cout<<"Start curr: "<<current<<" with "<<flag_parent<<endl;
     //if(visited[current] == false){
     visited[current] = true;
     parents[current] = true;
 
 
-=======
-    //if(visited[current] == false){
-    visited[current] = true;
-    parents[current] = true;
-
-
->>>>>>> 8fdfe7ecf918d1fbdf26b20f2dcc52e86a52fc99
     set<int> neighborhood1 = get<0>(graph).first[current];
     set<int> neighborhood2NS = get<1>(graph).first[current];
     
     if (type2_flag){
         set<int> reversible_edge = get<0>(graph).second[current];
         auto itr = reversible_edge.begin();
-<<<<<<< HEAD
-        cout<<current<<"->"<<*itr<<" "<<type2_flag<<endl;
         if(*itr != flag_parent && parents[*itr] == true){
-            cout<<"Ret True "<<current<<endl;
-=======
-        if(*itr != flag_parent && parents[*itr] == true){
->>>>>>> 8fdfe7ecf918d1fbdf26b20f2dcc52e86a52fc99
             return true;
         }
         bool result = *itr != flag_parent ? check_cycle_NS_helper(graph, *itr, visited, parents, false, current) : false;
         if(result == true){
-<<<<<<< HEAD
-            cout<<"Ret True "<<current<<endl;
-=======
->>>>>>> 8fdfe7ecf918d1fbdf26b20f2dcc52e86a52fc99
             return true;
         }
     }
 
-<<<<<<< HEAD
-    for(auto itr = neighborhood1.begin(); itr != neighborhood1.end(); itr++){
-        cout<<*itr<<" ";
-    }
-    cout<<endl;
-    for(auto itr = neighborhood2NS.begin(); itr != neighborhood2NS.end(); itr++){
-        cout<<*itr<<" ";
-    }
-    cout<<endl;
-
-    // Type 1
-    for(auto itr = neighborhood1.begin(); itr != neighborhood1.end(); itr++){
-        cout<<current<<"->"<<*itr<<" "<<type2_flag<<endl;
-        if(*itr != flag_parent && parents[*itr] == true){
-            cout<<"Ret True asd "<<current<<endl;
-=======
     // Type 1
     for(auto itr = neighborhood1.begin(); itr != neighborhood1.end(); itr++){
         if(*itr != flag_parent && parents[*itr] == true){
->>>>>>> 8fdfe7ecf918d1fbdf26b20f2dcc52e86a52fc99
             return true;
         }
         bool result = *itr != flag_parent ? check_cycle_NS_helper(graph, *itr, visited, parents, false, -1) : false;
         if(result == true){
-<<<<<<< HEAD
-            cout<<"Ret True "<<current<<endl;
-=======
->>>>>>> 8fdfe7ecf918d1fbdf26b20f2dcc52e86a52fc99
             return true;
         }
     }
 
     // Type 2 NS
     for(auto itr = neighborhood2NS.begin(); itr != neighborhood2NS.end(); itr++){
-<<<<<<< HEAD
-        cout<<current<<"->"<<*itr<<" "<<type2_flag<<endl;
         if(*itr != flag_parent && parents[*itr] == true){
-            cout<<"Ret True "<<current<<endl;
-=======
-        if(*itr != flag_parent && parents[*itr] == true){
->>>>>>> 8fdfe7ecf918d1fbdf26b20f2dcc52e86a52fc99
             return true;
         }
         bool result = *itr != flag_parent ? check_cycle_NS_helper(graph, *itr, visited, parents, true, -1) : false;
         if(result == true){
-<<<<<<< HEAD
-            cout<<"Ret True "<<current<<endl;
-=======
->>>>>>> 8fdfe7ecf918d1fbdf26b20f2dcc52e86a52fc99
             return true;
         } 
     }
 
     parents[current] = false;
     //}
-<<<<<<< HEAD
-
-    cout<<"End curr: "<<current<<endl;
-=======
->>>>>>> 8fdfe7ecf918d1fbdf26b20f2dcc52e86a52fc99
     return false;
 }
 
@@ -741,84 +686,9 @@ bool check_cycle_nonSwitchable_old(Graph& graph, int start){
     return check_cycle_NS_helper_old(graph, start, visited, parents);
 }
 
-// Slack Example 1.
-/*int main() {
 
-    Graph graph = new_graph(26);
-
-    set_type1_edge(graph, 0, 1);
-    set_type1_edge(graph, 1, 2);
-    set_type1_edge(graph, 2, 3);
-    set_type1_edge(graph, 3, 4);
-    set_type1_edge(graph, 4, 5);
-    set_type1_edge(graph, 5, 6);
-    set_type1_edge(graph, 6, 7);
-
-    set_type1_edge(graph, 8, 9);
-    set_type1_edge(graph, 9, 10);
-    set_type1_edge(graph, 10, 11);
-    set_type1_edge(graph, 11, 12);
-    set_type1_edge(graph, 12, 13);
-    set_type1_edge(graph, 13, 14);
-
-    set_type1_edge(graph, 15, 16);
-
-    set_type1_edge(graph, 17, 18);
-    set_type1_edge(graph, 18, 19);
-    set_type1_edge(graph, 19, 20);
-    set_type1_edge(graph, 20, 21);
-    set_type1_edge(graph, 21, 22);
-    set_type1_edge(graph, 22, 23);
-    set_type1_edge(graph, 23, 24);
-    set_type1_edge(graph, 24, 25);
-
-    set_type2_nonSwitchable_edge(graph, 8, 0);
-    set_type2_nonSwitchable_edge(graph, 13, 24);
-
-    set_type2_nonSwitchable_edge(graph, 17, 6);
-    set_type2_nonSwitchable_edge(graph, 18, 7);
-    set_type2_nonSwitchable_edge(graph, 19, 15);
-    set_type2_nonSwitchable_edge(graph, 20, 16);
-    set_type2_nonSwitchable_edge(graph, 25, 14);
-
-    cout<<check_cycle_nonSwitchable(graph, 13)<<endl;
-
-    return 0;
-
-}*/
-
-/*int main(){
-    Graph graph = new_graph(15);
-
-<<<<<<< HEAD
-    set_type1_edge(graph, 0, 1);
-    set_type1_edge(graph, 1, 2);
-    set_type1_edge(graph, 2, 3);
-    set_type1_edge(graph, 4, 5);
-    set_type1_edge(graph, 5, 6);
-    set_type1_edge(graph, 6, 7);
-    set_type1_edge(graph, 7, 8);
-    set_type1_edge(graph, 9, 10);
-    set_type1_edge(graph, 10, 11);
-    set_type1_edge(graph, 11, 12);
-    set_type1_edge(graph, 12, 13);
-    set_type1_edge(graph, 13, 14);
-
-    set_type2_nonSwitchable_edge(graph, 3, 6);
-    set_type2_nonSwitchable_edge(graph, 5, 11);
-    set_type2_nonSwitchable_edge(graph, 14, 2);
-
-    cout<<check_cycle_nonSwitchable(graph, 14)<<endl;
-
-    return 0;
-}*/
-
-/*int main(){
-    Graph graph = new_graph(10);
-=======
 // int main(){
 //     Graph graph = new_graph(10);
->>>>>>> 8fdfe7ecf918d1fbdf26b20f2dcc52e86a52fc99
 
 //     set_type1_edge(graph, 0, 1);
 //     set_type1_edge(graph, 1, 2);
@@ -855,11 +725,7 @@ bool check_cycle_nonSwitchable_old(Graph& graph, int start){
 
     
     
-<<<<<<< HEAD
-}*/
-=======
 // }
->>>>>>> 8fdfe7ecf918d1fbdf26b20f2dcc52e86a52fc99
 
 /*int main() {
 
