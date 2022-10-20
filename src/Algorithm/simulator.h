@@ -14,8 +14,10 @@ class Simulator {
     bool move(vector<int>& moved, int agent, int* timeSpent, bool switchCheck);
     // Return the first switchable edge detected for the next step
     tuple<int, int, int, int> detectSwitch();
+    
 
-    // int step_print();
-    // bool move_print(vector<int>& moved, int agent, int* timeSpent);
+    int astep(int p, int d, int *delayer);
+    bool amove(vector<int>& moved, int agent, int *timeSpent, int *delayer, int p, int d);
+    int asimulate(int p, int d, ofstream &outFile);
 };
 #endif
