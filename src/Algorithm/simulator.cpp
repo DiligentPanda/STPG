@@ -8,7 +8,6 @@ Simulator::Simulator(ADG input_adg) {
 
 Simulator::Simulator(ADG input_adg, vector<int> visited_states) {
   adg = input_adg;
-  int agentCnt = get_agentCnt(adg);
   states = visited_states;
 }
 
