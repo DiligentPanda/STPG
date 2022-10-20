@@ -38,7 +38,7 @@ int new_heuristic(Simulator simulator) {
   for (int i: ts) {
     int prevVal = values[i];
     set<int> outNeib = get_nonSwitchable_outNeib(i);
-    for (set<int>::iterator it = outNeib.begin(); it != outNeib.end(); it++) {
+    for (auto it = outNeib.begin(); it != outNeib.end(); it++) {
       int j = *it;
       int weight = 0;
       if (get_type1_edge(get<0>(adg), i, j)) weight = 1;
