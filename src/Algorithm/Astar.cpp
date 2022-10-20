@@ -264,9 +264,9 @@ ADG exploreNode(priority_queue<Node, vector<Node>, Compare> pq) {
 
 ADG Astar(Simulator simulator) {
   priority_queue<Node, vector<Node>, Compare> pq;
-  Simulator simulator_h(simulator.adg, simulator.states);
-  int h = heuristic(simulator_h);
-  pq.push(make_tuple(simulator, 0, h));
+  // Simulator simulator_h(simulator.adg, simulator.states);
+  // int h = heuristic(simulator_h);
+  pq.push(make_tuple(simulator, 0, 0));
   return exploreNode(pq);
 }
 

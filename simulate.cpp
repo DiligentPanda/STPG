@@ -82,6 +82,19 @@ int step(Simulator simulator, int p, int d, int *delayer) {
   return timeSpent[0];
 }
 
+void print_for_replanning(ADG adg, vector<int> states) {
+  std::cout << "version 1\n";
+  for (int agent = 0; agent < get_agentCnt(adg); agent ++) {
+    Location current = get_state_target(adg, agent, states[agent]);
+    int i1 = get<1>(current);
+    int j1 = get<0>(current);
+    Location goal = get_state_target(adg, agent, get_stateCnt(adg, agent) - 1);
+    int i2 = get<1>(goal);
+    int j2 = get<0>(goal);
+    std::cout << "0\trandom-32-32-20.map\t32\t32\t" << i1 << "\t" << j1 << "\t" << i2 << "\t" << j2 << "\t0.00\n";
+  }
+}
+
 int simulate(Simulator simulator, int p, int d)  {
   int stepSpend = 0;
   int totalSpend = 0;
@@ -91,8 +104,21 @@ int simulate(Simulator simulator, int p, int d)  {
   while (stepSpend != 0) {
     if (delayer[0] >= 0 && delayer[1] == 0) // a delay just ends
     {
-      // TODO: NOW TESTING FOR ONLY DELAY ONCE!!!!y
+      vector<int> record_states = simulator.states;
+      // TODO: NOW TESTING FOR ONLY DELAY ONCE!!!!
+      microseconds timer(0);
+      auto start = high_resolution_clock::now();
       ADG replanned_adg = Astar(simulator);
+      auto stop = high_resolution_clock::now();
+      auto duration = duration_cast<microseconds>(stop - start);
+      timer += duration;
+      std::cout << "------------------------REPLANNING TAKE TIME:::: " << timer.count() << "\n\n";
+      
+      Simulator simulator_res(replanned_adg, record_states);
+      int timeSum = heuristic(simulator_res);
+      std::cout << "solution time spend = " << timeSum << "\n\n";
+
+      print_for_replanning(adg, record_states);
       delayer[0] = -1; // set to indicate not immediately after a delay
       exit(0);
     }
