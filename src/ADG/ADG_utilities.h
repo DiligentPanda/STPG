@@ -17,14 +17,16 @@ int get_totalStateCnt(ADG adg);
 
 int compute_vertex(vector<int> accum_stateCnts, int agent, int state);
 
+int compute_vertex_ADG(ADG adg, int agent, int state);
+
 // Directed
 bool is_type2_edge(ADG adg, int agent1, int state1, int agent2, int state2);
 
-// Nothing happens if a switchable type2 edge does not exist in the first place
 void fix_type2_edge(ADG adg, int agent1, int state1, int agent2, int state2);
 
-// Nothing happens if a switchable type2 edge does not exist in the first place
 void fix_type2_edge_reversed(ADG adg, int agent1, int state1, int agent2, int state2);
+
+void shift(ADG adg, int agent1, int state1, int agent2, int state2);
 
 // Return an vector of agent-state pairs
 vector<pair<int, int>> get_switchable_inNeibPair(ADG adg, int agent, int state);

@@ -129,14 +129,14 @@ ADG construct_ADG(char* fileName) {
   return make_tuple(graph, paths, accum_stateCnts);
 }
 
-int main(int argc, char** argv) {
-  char* fileName = argv[1];
-  ADG adg = construct_ADG(fileName);
+// int main(int argc, char** argv) {
+//   char* fileName = argv[1];
+//   ADG adg = construct_ADG(fileName);
 
-  print_graph(get<0>(adg));
+//   print_graph(get<0>(adg));
 
-  return 0;
-}
+//   return 0;
+// }
 
 
 // // For testing purpose
