@@ -152,6 +152,20 @@ void rem_type2_nonSwitchable_edge(Graph& graph, int n1, int n2){
     return;
 }
 
+void rem_type2_nonSwitchable_neighborhood(Graph& graph, int n){
+    int graph_size = get<3>(graph);
+
+    if(n < 0 || n > graph_size){
+        throw invalid_argument("rem_type1_edge invalid n1");
+        return;
+    }
+
+    subGraph& type2NSG = get<1>(graph);
+    type2NSG.first[n].clear();  
+
+    return;
+}
+
 void rem_type2_switchable_edge(Graph& graph, int n1, int n2){
     int graph_size = get<3>(graph);
 

@@ -61,7 +61,7 @@ bool Simulator::amove(vector<int>& moved, int agent, int *timeSpent, int *delaye
         return false;
       }
     }
-    assert(get_type2_nonSwitchable_edge(get<0>(adg), compute_vertex_ADG(adg, dep_agent, dep_state), compute_vertex_ADG(adg, agent, next_state)));
+    assert(get_type2_nonSwitchable_edge(get<0>(adg), compute_vertex(get<2>(adg), dep_agent, dep_state), compute_vertex(get<2>(adg), agent, next_state)));
   }
 
   // Going to move. fix all outgoing switchable edges
