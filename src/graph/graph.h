@@ -20,6 +20,8 @@ void rem_type1_edge(Graph& graph, int n1, int n2);
 // Also shouldn't need this right?
 void rem_type2_nonSwitchable_edge(Graph& graph, int n1, int n2);
 
+void rem_type2_nonSwitchable_neighborhood(Graph& graph, int n);
+
 void rem_type2_switchable_edge(Graph& graph, int n1, int n2);
 
 bool get_type1_edge(Graph& graph, int n1, int n2);
