@@ -14,49 +14,48 @@ int heuristic(Simulator simulator) {
 }
 
 int new_heuristic(Simulator simulator, microseconds *s) {
-
-  ADG adg = copy_ADG(simulator.adg);
-  int agentCnt = get_agentCnt(adg);
-  vector<int> currents;
   auto start = high_resolution_clock::now();
+  Graph shifted = get<3>(simulator.adg);
+  int agentCnt = get_agentCnt(simulator.adg);
+  vector<int> currents;
   for (int agent = 0; agent < agentCnt; agent ++) {
     int currentState = simulator.states[agent];
-    int current = compute_vertex_ADG(adg, agent, currentState);
+    int current = compute_vertex(get<2>(simulator.adg), agent, currentState);
     currents.push_back(current);
+    rem_type2_nonSwitchable_neighborhood(shifted, compute_vertex(get<2>(simulator.adg), agent, currentState));
   }
   auto stop = high_resolution_clock::now();
   auto duration = duration_cast<microseconds>(stop - start);
   s[0] += duration;
 
   start = high_resolution_clock::now();
-  vector<int> ts = topologicalSort(get<3>(adg), currents);
+  vector<int> ts = topologicalSort(shifted, currents);
   stop = high_resolution_clock::now();
   duration = duration_cast<microseconds>(stop - start);
   s[1] += duration;
 
-  start = high_resolution_clock::now();
-  int *values = new int[(get<2>(adg)).back()]();
+  vector<int> values((get<2>(simulator.adg)).back(), 0);
   for (int i: ts) {
     int prevVal = values[i];
-    set<int> outNeib = get_nonSwitchable_outNeib(get<3>(adg), i);
+    set<int> outNeib = get_nonSwitchable_outNeib(shifted, i);
     for (auto it = outNeib.begin(); it != outNeib.end(); it++) {
       int j = *it;
       int weight = 0;
-      if (get_type1_edge(get<3>(adg), i, j)) weight = 1;
+      if (get_type1_edge(shifted, i, j)) weight = 1;
       if (values[j] < prevVal + weight) values[j] = prevVal + weight;
     }
   }
 
   int sum = 0;
   for (int agent = 0; agent < agentCnt; agent ++) {
-    int goalVert = compute_vertex_ADG(adg, agent, get_stateCnt(adg, agent) - 1);
+    start = high_resolution_clock::now();
+    int goalVert = compute_vertex(get<2>(simulator.adg), agent, get_stateCnt(simulator.adg, agent) - 1);
+    stop = high_resolution_clock::now();
+    duration = duration_cast<microseconds>(stop - start);
+    s[2] += duration;
     sum += values[goalVert];
   }
-  delete values;
-  free_underlying_graph(adg);
-  stop = high_resolution_clock::now();
-  duration = duration_cast<microseconds>(stop - start);
-  s[2] += duration;
+
   return sum;
 }
 
@@ -87,9 +86,7 @@ ADG exploreNode(priority_queue<Node, vector<Node>, Compare> pq) {
   int dfsPrune = 0;
   int hPrune = 0;
   microseconds alltime(0);
-  microseconds heuT(0);
   microseconds heuTN(0);
-  microseconds prunedH(0);
   microseconds dfsT(0);
 
   microseconds m1(0);
@@ -104,9 +101,7 @@ ADG exploreNode(priority_queue<Node, vector<Node>, Compare> pq) {
     newNode ++;
     if (newNode % 2000 == 0) {
       std::cout << alltime.count() << " alltime \n";
-      std::cout << heuT.count() << " heuristic time \n";
       std::cout << heuTN.count() << "new heuristic time \n";
-      std::cout << prunedH.count() << " pruned heuristic time \n";
       std::cout << dfsT.count() << " dfs time \n\n";
 
       std::cout << (s[0]).count() << "----pre heuristic time \n";
