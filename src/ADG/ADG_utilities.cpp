@@ -1,4 +1,5 @@
 #include "ADG_utilities.h"
+#include "../types.h"
 
 int get_agentCnt(ADG adg) {
   Paths paths = get<1>(adg);
@@ -53,24 +54,28 @@ bool is_type2_edge(ADG adg, int agent1, int state1, int agent2, int state2) {
 
 void fix_type2_edge(ADG adg, int agent1, int state1, int agent2, int state2) {
   Graph graph = get<0>(adg);
+  Graph shifted = get<3>(adg);
   vector<int> accum_stateCnts = get<2>(adg);
   int v1 = compute_vertex(accum_stateCnts, agent1, state1);
   int v2 = compute_vertex(accum_stateCnts, agent2, state2);
 
-  assert(get_type2_switchable_edge(graph, v1, v2));
   rem_type2_switchable_edge(graph, v1, v2);
   set_type2_nonSwitchable_edge(graph, v1, v2);
+  
+  set_type2_nonSwitchable_edge(shifted, v1+1, v2);
 }
 
 void fix_type2_edge_reversed(ADG adg, int agent1, int state1, int agent2, int state2) {
   Graph graph = get<0>(adg);
+  Graph shifted = get<3>(adg);
   vector<int> accum_stateCnts = get<2>(adg);
   int v1 = compute_vertex(accum_stateCnts, agent1, state1);
   int v2 = compute_vertex(accum_stateCnts, agent2, state2);
 
-  assert(get_type2_switchable_edge(graph, v1, v2));
   rem_type2_switchable_edge(graph, v1, v2);
   set_type2_nonSwitchable_edge(graph, v2, v1);
+    
+  set_type2_nonSwitchable_edge(shifted, v2+1, v1);
 }
 
 void shift(ADG adg, int agent1, int state1, int agent2, int state2) {
@@ -79,7 +84,6 @@ void shift(ADG adg, int agent1, int state1, int agent2, int state2) {
   int v1 = compute_vertex(accum_stateCnts, agent1, state1);
   int v2 = compute_vertex(accum_stateCnts, agent2, state2);
 
-  assert(get_type2_nonSwitchable_edge(graph, v1, v2));
   rem_type2_nonSwitchable_edge(graph, v1, v2);
   set_type2_nonSwitchable_edge(graph, compute_vertex(accum_stateCnts, agent1, state1 + 1), v2);
 }
@@ -172,11 +176,13 @@ ADG copy_ADG(ADG adg) {
   Graph graph = get<0>(adg);
   Paths paths = get<1>(adg);
   vector<int> accum_stateCnts = get<2>(adg);
+  Graph shifted = get<3>(adg);
 
   Graph newGraph = copy_graph(graph);
+  Graph newShifted = copy_graph(shifted);
   Paths newPaths = paths;
   vector<int> newAccum_stateCnts = accum_stateCnts;
-  return make_tuple(newGraph, newPaths, newAccum_stateCnts);
+  return make_tuple(newGraph, newPaths, newAccum_stateCnts, newShifted);
 }
 
 bool detectCycle(ADG adg, int agent, int state) {
@@ -188,6 +194,8 @@ bool detectCycle(ADG adg, int agent, int state) {
 
 void free_underlying_graph(ADG adg) {
   Graph graph = get<0>(adg);
+  Graph shifted = get<3>(adg);
   free_graph(graph);
+  free_graph(shifted);
   return;
 }

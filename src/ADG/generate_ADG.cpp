@@ -124,9 +124,10 @@ ADG construct_ADG(char* fileName) {
 
   Graph graph = new_graph(sumStates);
   add_type1_edges(graph, paths, accum_stateCnts);
+  Graph shifted = copy_graph(graph);
   add_type2_edges(graph, paths, accum_stateCnts);
 
-  return make_tuple(graph, paths, accum_stateCnts);
+  return make_tuple(graph, paths, accum_stateCnts, shifted);
 }
 
 // int main(int argc, char** argv) {

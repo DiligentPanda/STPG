@@ -1,4 +1,5 @@
 #include "Astar.h"
+#include "../graph/graph.h"
 
 int heuristic(Simulator simulator) {
   int stepSpend = 0;
@@ -13,48 +14,52 @@ int heuristic(Simulator simulator) {
   return totalSpend;
 }
 
-// int new_heuristic(Simulator simulator) {
-//   ADG adg = copy_ADG(simulator.adg);
-//   int agentCnt = get_agentCnt(adg);
-//   vector<int> currents;
-//   for (int agent = 0; agent < agentCnt; agent ++) {
-//     int currentState = simulator.states[agent];
-//     int current = compute_vertex_ADG(adg, agent, currentState);
-//     currents.push_back(current);
+int new_heuristic(Simulator simulator, microseconds *s) {
 
-//     for (int state = currentState; state < get_stateCnt(adg, agent); state++) {
-//       for (pair<int, int> dep: get_nonSwitchable_inNeibPair(adg, agent, state)) {
-//         int dep_agent = get<0>(dep);
-//         if (dep_agent != agent) {
-//           int dep_state = get<1>(dep);
-//           shift(adg, dep_agent, dep_state, agent, state);
-//         }
-//       }
-//     }
-//   }
-//   vector<int> ts = topologicalSort(get<0>(adg), currents);
+  ADG adg = copy_ADG(simulator.adg);
+  int agentCnt = get_agentCnt(adg);
+  vector<int> currents;
+  auto start = high_resolution_clock::now();
+  for (int agent = 0; agent < agentCnt; agent ++) {
+    int currentState = simulator.states[agent];
+    int current = compute_vertex_ADG(adg, agent, currentState);
+    currents.push_back(current);
+  }
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<microseconds>(stop - start);
+  s[0] += duration;
 
-//   int *values = new int[(get<2>(adg)).back()]();
-//   for (int i: ts) {
-//     int prevVal = values[i];
-//     set<int> outNeib = get_nonSwitchable_outNeib(i);
-//     for (auto it = outNeib.begin(); it != outNeib.end(); it++) {
-//       int j = *it;
-//       int weight = 0;
-//       if (get_type1_edge(get<0>(adg), i, j)) weight = 1;
-//       if (values[j] < prevVal + weight) values[j] = prevVal + weight;
-//     }
-//   }
-//   // TODO: DELET TS IF NECESSARY
-//   int sum = 0;
-//   for (int agent = 0; agent < agentCnt; agent ++) {
-//     int goalVert = compute_vertex_ADG(adg, agent, get_stateCnt(adg, agent) - 1);
-//     sum += values[goalVert];
-//   }
-//   delete values;
-//   free_underlying_graph(adg);
-//   return sum;
-// }
+  start = high_resolution_clock::now();
+  vector<int> ts = topologicalSort(get<3>(adg), currents);
+  stop = high_resolution_clock::now();
+  duration = duration_cast<microseconds>(stop - start);
+  s[1] += duration;
+
+  start = high_resolution_clock::now();
+  int *values = new int[(get<2>(adg)).back()]();
+  for (int i: ts) {
+    int prevVal = values[i];
+    set<int> outNeib = get_nonSwitchable_outNeib(get<3>(adg), i);
+    for (auto it = outNeib.begin(); it != outNeib.end(); it++) {
+      int j = *it;
+      int weight = 0;
+      if (get_type1_edge(get<3>(adg), i, j)) weight = 1;
+      if (values[j] < prevVal + weight) values[j] = prevVal + weight;
+    }
+  }
+
+  int sum = 0;
+  for (int agent = 0; agent < agentCnt; agent ++) {
+    int goalVert = compute_vertex_ADG(adg, agent, get_stateCnt(adg, agent) - 1);
+    sum += values[goalVert];
+  }
+  delete values;
+  free_underlying_graph(adg);
+  stop = high_resolution_clock::now();
+  duration = duration_cast<microseconds>(stop - start);
+  s[2] += duration;
+  return sum;
+}
 
 class Compare {
   public:
@@ -87,6 +92,15 @@ ADG exploreNode(priority_queue<Node, vector<Node>, Compare> pq) {
   microseconds heuTN(0);
   microseconds prunedH(0);
   microseconds dfsT(0);
+
+  microseconds m1(0);
+  microseconds m2(0);
+  microseconds m3(0);
+  microseconds s[3];
+  s[0] = m1;
+  s[1] = m2;
+  s[2] = m3;
+
   while (pq.size() > 0) {
     newNode ++;
     if (newNode % 2000 == 0) {
@@ -95,6 +109,10 @@ ADG exploreNode(priority_queue<Node, vector<Node>, Compare> pq) {
       std::cout << heuTN.count() << "new heuristic time \n";
       std::cout << prunedH.count() << " pruned heuristic time \n";
       std::cout << dfsT.count() << " dfs time \n\n";
+
+      std::cout << (s[0]).count() << "----pre heuristic time \n";
+      std::cout << (s[1]).count() << "----sort heuristic time \n";
+      std::cout << (s[2]).count() << "----post heuristic time \n\n";
     }
     auto startAll = high_resolution_clock::now();
     Node node = pq.top();
@@ -182,25 +200,15 @@ ADG exploreNode(priority_queue<Node, vector<Node>, Compare> pq) {
     } 
     else
     {
-      Simulator simulator_h(simulator.adg, simulator.states);
+      Simulator new_simulator_h(simulator.adg, simulator.states);
       auto start = high_resolution_clock::now();
-      int h = heuristic(simulator_h);
+      int h = new_heuristic(new_simulator_h, s);
       auto stop = high_resolution_clock::now();
       auto duration = duration_cast<microseconds>(stop - start);
-      heuT += duration;
-
-      // Simulator new_simulator_h(simulator.adg, simulator.states);
-      // start = high_resolution_clock::now();
-      // int new_h = new_heuristic(new_simulator_h);
-      // stop = high_resolution_clock::now();
-      // duration = duration_cast<microseconds>(stop - start);
-      // heuTN += duration;
-      // assert(new_h == h);
+      heuTN += duration;
       if (h < 0) // Prune node
       {
         if (newNode <=1) std::cout <<"-----hprune-----\n";
-        prunedH += duration;
-        hPrune ++;
         free_underlying_graph(simulator.adg);
       } else {
         if (newNode <=1) {
@@ -226,25 +234,15 @@ ADG exploreNode(priority_queue<Node, vector<Node>, Compare> pq) {
     }
     else // Add to the priority queue
     {
-      Simulator simulator_h(copy, simulator.states);
+      Simulator new_simulator_h(copy, simulator.states);
       auto start = high_resolution_clock::now();
-      int h = heuristic(simulator_h);
+      int h = new_heuristic(new_simulator_h, s);
       auto stop = high_resolution_clock::now();
       auto duration = duration_cast<microseconds>(stop - start);
-      heuT += duration;
-
-      // Simulator new_simulator_h(copy, simulator.states);
-      // start = high_resolution_clock::now();
-      // int new_h = new_heuristic(new_simulator_h);
-      // stop = high_resolution_clock::now();
-      // duration = duration_cast<microseconds>(stop - start);
-      // heuTN += duration;
-      // assert(new_h == h);
+      heuTN += duration;
       if (h < 0) // Prune node
       {
         if (newNode <=1) std::cout <<"-----hprune-----\n";
-        hPrune++;
-        prunedH += duration;
         free_underlying_graph(copy);
       } else {
         if (newNode <=1) {
@@ -270,37 +268,37 @@ ADG Astar(Simulator simulator) {
   return exploreNode(pq);
 }
 
-// int main(int argc, char** argv) {
-//   char* fileName = argv[1];
-//   ADG adg = construct_ADG(fileName);
+int main(int argc, char** argv) {
+  char* fileName = argv[1];
+  ADG adg = construct_ADG(fileName);
 
-//   for (int agent = 0; agent < get_agentCnt(adg); agent++) {
-//     for (pair<int, int> outNeigb: get_switchable_outNeibPair(adg, agent, 0)) {
-//       // Fix starting edge
-//       fix_type2_edge(adg, agent, 0, get<0>(outNeigb), get<1>(outNeigb));
-//     }
+  for (int agent = 0; agent < get_agentCnt(adg); agent++) {
+    for (pair<int, int> outNeigb: get_switchable_outNeibPair(adg, agent, 0)) {
+      // Fix starting edge
+      fix_type2_edge(adg, agent, 0, get<0>(outNeigb), get<1>(outNeigb));
+    }
 
-//     for (pair<int, int> inNeigb: get_switchable_inNeibPair(adg, agent, get_stateCnt(adg, agent)-1)) {
-//       // Fix ending edge
-//       fix_type2_edge(adg, get<0>(inNeigb), get<1>(inNeigb), agent, get_stateCnt(adg, agent)-1);
-//     }
-//   }
-//   Simulator simulator(adg);
+    for (pair<int, int> inNeigb: get_switchable_inNeibPair(adg, agent, get_stateCnt(adg, agent)-1)) {
+      // Fix ending edge
+      fix_type2_edge(adg, get<0>(inNeigb), get<1>(inNeigb), agent, get_stateCnt(adg, agent)-1);
+    }
+  }
+  Simulator simulator(adg);
   
-//   ADG res = Astar(simulator);
-//   std::cout<<"finished, result graph: \n";
+  ADG res = Astar(simulator);
+  std::cout<<"finished, result graph: \n";
 
-//   Simulator simulator_res(res);
-//   int timeSum = heuristic(simulator_res);
-//   std::cout << "solution time spend = " << timeSum << "\n";
+  Simulator simulator_res(res);
+  int timeSum = heuristic(simulator_res);
+  std::cout << "solution time spend = " << timeSum << "\n";
 
-//   ADG original_adg = construct_ADG(fileName);
-//   set_switchable_nonSwitchable(get<0>(original_adg));
-//   Simulator original_simulator(original_adg);
-//   int original_timeSum = heuristic(original_simulator);
-//   std::cout << "optimal time spend = " << original_timeSum << "\n";
-//   return 0;
-// }
+  ADG original_adg = construct_ADG(fileName);
+  set_switchable_nonSwitchable(get<0>(original_adg));
+  Simulator original_simulator(original_adg);
+  int original_timeSum = heuristic(original_simulator);
+  std::cout << "optimal time spend = " << original_timeSum << "\n";
+  return 0;
+}
 
 // Dead code below for longest path heuristic algorithms. Might restore later
 // void topologicalSort(ADG adg, int v, bool* visited, vector<int> result)
