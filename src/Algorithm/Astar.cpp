@@ -55,7 +55,15 @@ int new_heuristic(Simulator simulator, microseconds *s) {
     s[2] += duration;
     sum += values[goalVert];
   }
+<<<<<<< HEAD
 
+=======
+  delete[] values;
+  free_underlying_graph(adg);
+  stop = high_resolution_clock::now();
+  duration = duration_cast<microseconds>(stop - start);
+  s[2] += duration;
+>>>>>>> cdd76545371415cb7ade03563ea1a4f0c5dc8f9b
   return sum;
 }
 
