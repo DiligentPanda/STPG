@@ -52,7 +52,7 @@ int new_heuristic(Simulator simulator, microseconds *s) {
     int goalVert = compute_vertex_ADG(adg, agent, get_stateCnt(adg, agent) - 1);
     sum += values[goalVert];
   }
-  delete values;
+  delete[] values;
   free_underlying_graph(adg);
   stop = high_resolution_clock::now();
   duration = duration_cast<microseconds>(stop - start);
