@@ -1,5 +1,4 @@
 #include "Astar.h"
-#include "../graph/graph.h"
 
 int heuristic(Simulator simulator) {
   int stepSpend = 0;
