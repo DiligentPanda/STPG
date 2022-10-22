@@ -321,7 +321,7 @@ void set_switchable_nonSwitchable(Graph& graph){
 Graph copy_graph(Graph& graph){
     int n = get<3>(graph);
 
-    set<int>* type1GInNeighbors = new set<int>[n];
+    /*set<int>* type1GInNeighbors = new set<int>[n];
     for(int i = 0; i < n; i++){
         copy(get<0>(graph).second[i].begin(), get<0>(graph).second[i].end(), inserter(type1GInNeighbors[i], type1GInNeighbors[i].begin()));
     }
@@ -329,8 +329,9 @@ Graph copy_graph(Graph& graph){
     set<int>* type1OutNeighbors = new set<int>[n];
     for(int i = 0; i < n; i++){
         copy(get<0>(graph).first[i].begin(), get<0>(graph).first[i].end(), inserter(type1OutNeighbors[i], type1OutNeighbors[i].begin()));
-    }
-    subGraph type1G = make_pair(type1OutNeighbors,type1GInNeighbors);
+    }*/
+    //subGraph type1G = make_pair(type1OutNeighbors,type1GInNeighbors);
+    subGraph type1G = make_pair(get<0>(graph).first, get<0>(graph).second);
 
     set<int>* type2NonSwitchableGInNeighbors = new set<int>[n];
     for(int i = 0; i < n; i++){
@@ -358,8 +359,8 @@ Graph copy_graph(Graph& graph){
 }
 
 void free_graph(Graph& graph){
-    delete[] get<0>(graph).first;
-    delete[] get<0>(graph).second;
+    //delete[] get<0>(graph).first;
+    //delete[] get<0>(graph).second;
 
     delete[] get<1>(graph).first;
     delete[] get<1>(graph).second;
@@ -700,7 +701,7 @@ bool check_cycle_nonSwitchable_old(Graph& graph, int start){
     return check_cycle_NS_helper_old(graph, start, visited, parents);
 }
 
-void build_time_arr(Graph& graph, vector<bool>& visited, vector<int>& state, int current) {
+void build_time_arr(Graph& graph, vector<bool>& visited, vector<int>* state, int current) {
     if(visited[current] == true){
         // revisit
         return;
@@ -715,14 +716,14 @@ void build_time_arr(Graph& graph, vector<bool>& visited, vector<int>& state, int
     }
 
     //finish
-    state.push_back(current);
+    (*state).push_back(current);
 }
 
-vector<int>& topologicalSort(Graph& graph, vector<int> starts) {
+vector<int>* topologicalSort(Graph& graph, vector<int> starts) {
     int graph_size = get<3>(graph);
 
-    vector<int>* result = new vector<int>;
-    vector<int>& sorted_values = *result;
+    vector<int>* sorted_values = new vector<int>;
+    //vector<int>& sorted_values = *result;
     vector<bool> visited(graph_size, false);
 
     int n = starts.size();
@@ -730,7 +731,7 @@ vector<int>& topologicalSort(Graph& graph, vector<int> starts) {
         build_time_arr(graph, visited, sorted_values, starts[i]);
     }
 
-    reverse(sorted_values.begin(), sorted_values.end());
+    reverse((*sorted_values).begin(), (*sorted_values).end());
 
     return sorted_values;
 }
