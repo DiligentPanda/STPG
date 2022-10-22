@@ -718,10 +718,11 @@ void build_time_arr(Graph& graph, vector<bool>& visited, vector<int>& state, int
     state.push_back(current);
 }
 
-vector<int> topologicalSort(Graph& graph, vector<int> starts) {
+vector<int>& topologicalSort(Graph& graph, vector<int> starts) {
     int graph_size = get<3>(graph);
 
-    vector<int> sorted_values;
+    vector<int>* result = new vector<int>;
+    vector<int>& sorted_values = *result;
     vector<bool> visited(graph_size, false);
 
     int n = starts.size();
@@ -735,7 +736,7 @@ vector<int> topologicalSort(Graph& graph, vector<int> starts) {
 }
 
 // Slack Example 1.
-/*int main() {
+int main() {
 
     Graph graph = new_graph(26);
 
@@ -783,8 +784,8 @@ vector<int> topologicalSort(Graph& graph, vector<int> starts) {
     
     print_graph_concise(graph);
     cout<<"\n"<<endl;
-    for(int i = 0; i < sorted.size(); i++){
-        cout<<sorted[i]<<" ";
+    for(int i = 0; i < (sorted).size(); i++){
+        cout<<(sorted)[i]<<" ";
     }
     cout<<endl;
 
@@ -792,7 +793,7 @@ vector<int> topologicalSort(Graph& graph, vector<int> starts) {
 
     return 0;
 
-}*/
+}
 
 /*int main(){
     Graph graph = new_graph(15);
