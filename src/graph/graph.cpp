@@ -736,7 +736,7 @@ vector<int>& topologicalSort(Graph& graph, vector<int> starts) {
 }
 
 // Slack Example 1.
-int main() {
+/*int main() {
 
     Graph graph = new_graph(26);
 
@@ -793,7 +793,7 @@ int main() {
 
     return 0;
 
-}
+}*/
 
 /*int main(){
     Graph graph = new_graph(15);
