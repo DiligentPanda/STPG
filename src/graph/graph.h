@@ -20,9 +20,9 @@ void rem_type1_edge(Graph& graph, int n1, int n2);
 // Also shouldn't need this right?
 void rem_type2_nonSwitchable_edge(Graph& graph, int n1, int n2);
 
-void rem_type2_nonSwitchable_neighborhood(Graph& graph, int n);
-
 void rem_type2_switchable_edge(Graph& graph, int n1, int n2);
+
+void rem_type2_nonSwitchable_neighborhood(Graph& graph, int n);
 
 bool get_type1_edge(Graph& graph, int n1, int n2);
 
@@ -43,6 +43,8 @@ set<int>& get_switchable_outNeib(Graph& graph, int n);
 // Note that a reference type should not be used to recieve output if a copy is
 // desired. If a copy is not needed reference is returned to reduce copying
 set<int>& get_switchable_inNeib(Graph& graph, int n);
+
+set<int>& get_type2_nonSwitchable_inNeib(Graph& graph, int n);
 
 set<int> get_outNeighbors(Graph& graph, int n);
 

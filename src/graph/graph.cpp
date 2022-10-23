@@ -265,7 +265,6 @@ set<int> get_nonSwitchable_inNeib(Graph& graph, int n){
     return result;
 }
 
-
 set<int>& get_switchable_outNeib(Graph& graph, int n){
     subGraph& type2SG = get<2>(graph);
     return type2SG.first[n];
@@ -274,6 +273,10 @@ set<int>& get_switchable_outNeib(Graph& graph, int n){
 set<int>& get_switchable_inNeib(Graph& graph, int n){
     subGraph& type2SG = get<2>(graph);
     return type2SG.second[n];
+}
+
+set<int>& get_type2_nonSwitchable_inNeib(Graph& graph, int n) {
+    return get<1>(graph).second[n];
 }
 
 set<int> get_outNeighbors(Graph& graph, int n){
