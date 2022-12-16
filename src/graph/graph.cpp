@@ -710,18 +710,19 @@ bool check_cycle_dfs(Graph& graph, int start) {
     vector<bool> visited (graph_size, false);
 
     bag.push(start);
-    while(bag.size != 0) {
+    while(bag.size() != 0) {
         int vertex = bag.top();
+        bag.pop();
         if (visited[vertex] == true){
             return true;
         }
-
+        visited[vertex] = true;
         set<int> neighbors = get_nonSwitchable_outNeib(graph, vertex);
         for (auto itr = neighbors.begin(); itr != neighbors.end(); itr++){
             bag.push(*itr);
         }
     }  
-    return true;
+    return false;
 }
 
 void build_time_arr(Graph& graph, vector<bool>& visited, vector<int>* state, int current) {
@@ -760,66 +761,67 @@ vector<int>* topologicalSort(Graph& graph, vector<int> starts) {
 }
 
 // Slack Example 1.
-/*int main() {
+// int main() {
 
-    Graph graph = new_graph(26);
+//     Graph graph = new_graph(26);
 
-    set_type1_edge(graph, 0, 1);
-    set_type1_edge(graph, 1, 2);
-    set_type1_edge(graph, 2, 3);
-    set_type1_edge(graph, 3, 4);
-    set_type1_edge(graph, 4, 5);
-    set_type1_edge(graph, 5, 6);
-    set_type1_edge(graph, 6, 7);
+//     set_type1_edge(graph, 0, 1);
+//     set_type1_edge(graph, 1, 2);
+//     set_type1_edge(graph, 2, 3);
+//     set_type1_edge(graph, 3, 4);
+//     set_type1_edge(graph, 4, 5);
+//     set_type1_edge(graph, 5, 6);
+//     set_type1_edge(graph, 6, 7);
 
-    set_type1_edge(graph, 8, 9);
-    set_type1_edge(graph, 9, 10);
-    set_type1_edge(graph, 10, 11);
-    set_type1_edge(graph, 11, 12);
-    set_type1_edge(graph, 12, 13);
-    set_type1_edge(graph, 13, 14);
+//     set_type1_edge(graph, 8, 9);
+//     set_type1_edge(graph, 9, 10);
+//     set_type1_edge(graph, 10, 11);
+//     set_type1_edge(graph, 11, 12);
+//     set_type1_edge(graph, 12, 13);
+//     set_type1_edge(graph, 13, 14);
 
-    set_type1_edge(graph, 15, 16);
+//     set_type1_edge(graph, 15, 16);
 
-    set_type1_edge(graph, 17, 18);
-    set_type1_edge(graph, 18, 19);
-    set_type1_edge(graph, 19, 20);
-    set_type1_edge(graph, 20, 21);
-    set_type1_edge(graph, 21, 22);
-    set_type1_edge(graph, 22, 23);
-    set_type1_edge(graph, 23, 24);
-    set_type1_edge(graph, 24, 25);
+//     set_type1_edge(graph, 17, 18);
+//     set_type1_edge(graph, 18, 19);
+//     set_type1_edge(graph, 19, 20);
+//     set_type1_edge(graph, 20, 21);
+//     set_type1_edge(graph, 21, 22);
+//     set_type1_edge(graph, 22, 23);
+//     set_type1_edge(graph, 23, 24);
+//     set_type1_edge(graph, 24, 25);
 
-    set_type2_nonSwitchable_edge(graph, 8, 0);
-    set_type2_nonSwitchable_edge(graph, 13, 24);
+//     set_type2_nonSwitchable_edge(graph, 8, 0);
+//     set_type2_nonSwitchable_edge(graph, 13, 24);
 
-    set_type2_nonSwitchable_edge(graph, 17, 6);
-    set_type2_nonSwitchable_edge(graph, 18, 7);
-    set_type2_nonSwitchable_edge(graph, 19, 15);
-    set_type2_nonSwitchable_edge(graph, 20, 16);
-    set_type2_nonSwitchable_edge(graph, 25, 14);
+//     set_type2_nonSwitchable_edge(graph, 17, 6);
+//     set_type2_nonSwitchable_edge(graph, 18, 7);
+//     set_type2_nonSwitchable_edge(graph, 19, 15);
+//     set_type2_nonSwitchable_edge(graph, 20, 16);
+//     set_type2_nonSwitchable_edge(graph, 25, 14);
 
-    vector<int> starts;
-    starts.push_back(0);
-    starts.push_back(8);
-    starts.push_back(15);
-    starts.push_back(17);
-    vector<int> sorted = topologicalSort(graph, starts);
+//     // vector<int> starts;
+//     // starts.push_back(0);
+//     // starts.push_back(8);
+//     // starts.push_back(15);
+//     // starts.push_back(17);
+//     // vector<int> sorted = *topologicalSort(graph, starts);
     
-    print_graph_concise(graph);
-    cout<<"\n"<<endl;
-    for(int i = 0; i < (sorted).size(); i++){
-        cout<<(sorted)[i]<<" ";
-    }
-    cout<<endl;
+//     // print_graph_concise(graph);
+//     // cout<<"\n"<<endl;
+//     // for(int i = 0; i < (sorted).size(); i++){
+//     //     cout<<(sorted)[i]<<" ";
+//     // }
+//     // cout<<endl;
 
-    //cout<<check_cycle_nonSwitchable(graph, 13)<<endl;
+//     cout<<check_cycle_nonSwitchable(graph, 13)<<endl;
+//     cout<<check_cycle_dfs(graph, 13)<<endl;
 
-    return 0;
+//     return 0;
 
-}*/
+// }
 
-/*int main(){
+int main(){
     Graph graph = new_graph(15);
 
     set_type1_edge(graph, 0, 1);
@@ -840,9 +842,10 @@ vector<int>* topologicalSort(Graph& graph, vector<int> starts) {
     set_type2_nonSwitchable_edge(graph, 14, 2);
 
     cout<<check_cycle_nonSwitchable(graph, 14)<<endl;
+    cout<<check_cycle_dfs(graph, 14)<<endl;
 
     return 0;
-}*/
+}
 
 /*int main(){
     Graph graph = new_graph(10);
