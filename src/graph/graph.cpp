@@ -821,31 +821,31 @@ vector<int>* topologicalSort(Graph& graph, vector<int> starts) {
 
 // }
 
-int main(){
-    Graph graph = new_graph(15);
+// int main(){
+//     Graph graph = new_graph(15);
 
-    set_type1_edge(graph, 0, 1);
-    set_type1_edge(graph, 1, 2);
-    set_type1_edge(graph, 2, 3);
-    set_type1_edge(graph, 4, 5);
-    set_type1_edge(graph, 5, 6);
-    set_type1_edge(graph, 6, 7);
-    set_type1_edge(graph, 7, 8);
-    set_type1_edge(graph, 9, 10);
-    set_type1_edge(graph, 10, 11);
-    set_type1_edge(graph, 11, 12);
-    set_type1_edge(graph, 12, 13);
-    set_type1_edge(graph, 13, 14);
+//     set_type1_edge(graph, 0, 1);
+//     set_type1_edge(graph, 1, 2);
+//     set_type1_edge(graph, 2, 3);
+//     set_type1_edge(graph, 4, 5);
+//     set_type1_edge(graph, 5, 6);
+//     set_type1_edge(graph, 6, 7);
+//     set_type1_edge(graph, 7, 8);
+//     set_type1_edge(graph, 9, 10);
+//     set_type1_edge(graph, 10, 11);
+//     set_type1_edge(graph, 11, 12);
+//     set_type1_edge(graph, 12, 13);
+//     set_type1_edge(graph, 13, 14);
 
-    set_type2_nonSwitchable_edge(graph, 3, 6);
-    set_type2_nonSwitchable_edge(graph, 5, 11);
-    set_type2_nonSwitchable_edge(graph, 14, 2);
+//     set_type2_nonSwitchable_edge(graph, 3, 6);
+//     set_type2_nonSwitchable_edge(graph, 5, 11);
+//     set_type2_nonSwitchable_edge(graph, 14, 2);
 
-    cout<<check_cycle_nonSwitchable(graph, 14)<<endl;
-    cout<<check_cycle_dfs(graph, 14)<<endl;
+//     cout<<check_cycle_nonSwitchable(graph, 14)<<endl;
+//     cout<<check_cycle_dfs(graph, 14)<<endl;
 
-    return 0;
-}
+//     return 0;
+// }
 
 /*int main(){
     Graph graph = new_graph(10);
