@@ -62,6 +62,8 @@ void print_graph_s2(Graph& graph);
 
 bool check_cycle_nonSwitchable(Graph& graph, int start);
 
+bool check_cycle_dfs(Graph& graph, int start);
+
 bool check_cycle_nonSwitchable_old(Graph& graph, int start);
 
 vector<int>* topologicalSort(Graph& graph, vector<int> starts);

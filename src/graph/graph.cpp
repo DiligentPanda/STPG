@@ -704,6 +704,26 @@ bool check_cycle_nonSwitchable_old(Graph& graph, int start){
     return check_cycle_NS_helper_old(graph, start, visited, parents);
 }
 
+bool check_cycle_dfs(Graph& graph, int start) {
+    stack<int> bag;
+    int graph_size = get<3>(graph);
+    vector<bool> visited (graph_size, false);
+
+    bag.push(start);
+    while(bag.size != 0) {
+        int vertex = bag.top();
+        if (visited[vertex] == true){
+            return true;
+        }
+
+        set<int> neighbors = get_nonSwitchable_outNeib(graph, vertex);
+        for (auto itr = neighbors.begin(); itr != neighbors.end(); itr++){
+            bag.push(*itr);
+        }
+    }  
+    return true;
+}
+
 void build_time_arr(Graph& graph, vector<bool>& visited, vector<int>* state, int current) {
     if(visited[current] == true){
         // revisit
