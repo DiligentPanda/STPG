@@ -1,5 +1,5 @@
-#ifndef   TYPES
-#define   TYPES
+#ifndef TYPES
+#define TYPES
 
 #include <stdlib.h>
 #include <tuple>
@@ -17,7 +17,7 @@ typedef tuple<subGraph, subGraph, subGraph, int> Graph;
 typedef pair<int, int> Location;
 typedef vector<pair<Location, int>> Path;
 typedef vector<Path> Paths;
-typedef tuple<Graph, Paths, vector<int>> ADG;
+typedef tuple<Graph, Paths, vector<int>, Graph> ADG;
 
 #endif
 

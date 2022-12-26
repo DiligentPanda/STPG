@@ -152,6 +152,20 @@ void rem_type2_nonSwitchable_edge(Graph& graph, int n1, int n2){
     return;
 }
 
+void rem_type2_nonSwitchable_neighborhood(Graph& graph, int n){
+    int graph_size = get<3>(graph);
+
+    if(n < 0 || n > graph_size){
+        throw invalid_argument("rem_type1_edge invalid n1");
+        return;
+    }
+
+    subGraph& type2NSG = get<1>(graph);
+    type2NSG.first[n].clear();  
+
+    return;
+}
+
 void rem_type2_switchable_edge(Graph& graph, int n1, int n2){
     int graph_size = get<3>(graph);
 
@@ -251,7 +265,6 @@ set<int> get_nonSwitchable_inNeib(Graph& graph, int n){
     return result;
 }
 
-
 set<int>& get_switchable_outNeib(Graph& graph, int n){
     subGraph& type2SG = get<2>(graph);
     return type2SG.first[n];
@@ -260,6 +273,10 @@ set<int>& get_switchable_outNeib(Graph& graph, int n){
 set<int>& get_switchable_inNeib(Graph& graph, int n){
     subGraph& type2SG = get<2>(graph);
     return type2SG.second[n];
+}
+
+set<int>& get_type2_nonSwitchable_inNeib(Graph& graph, int n) {
+    return get<1>(graph).second[n];
 }
 
 set<int> get_outNeighbors(Graph& graph, int n){
@@ -300,14 +317,30 @@ void set_switchable_nonSwitchable(Graph& graph){
         }
         graph2S.second[i].clear();
     }
+void set_switchable_nonSwitchable(Graph& graph){
+    int graph_size = get<3>(graph);
+    subGraph& graph2NS = get<1>(graph);
+    subGraph& graph2S = get<2>(graph);
+    for(int i = 0; i < graph_size; i++){
+        for(auto itr = graph2S.first[i].begin(); itr != graph2S.first[i].end(); itr++){
+            graph2NS.first[i].insert(*itr);
+        }
+        graph2S.first[i].clear();
+        for(auto itr = graph2S.second[i].begin(); itr != graph2S.second[i].end(); itr++){
+            graph2NS.second[i].insert(*itr);
+        }
+        graph2S.second[i].clear();
+    }
 
+    return;
+}
     return;
 }
 
 Graph copy_graph(Graph& graph){
     int n = get<3>(graph);
 
-    set<int>* type1GInNeighbors = new set<int>[n];
+    /*set<int>* type1GInNeighbors = new set<int>[n];
     for(int i = 0; i < n; i++){
         copy(get<0>(graph).second[i].begin(), get<0>(graph).second[i].end(), inserter(type1GInNeighbors[i], type1GInNeighbors[i].begin()));
     }
@@ -315,8 +348,9 @@ Graph copy_graph(Graph& graph){
     set<int>* type1OutNeighbors = new set<int>[n];
     for(int i = 0; i < n; i++){
         copy(get<0>(graph).first[i].begin(), get<0>(graph).first[i].end(), inserter(type1OutNeighbors[i], type1OutNeighbors[i].begin()));
-    }
-    subGraph type1G = make_pair(type1OutNeighbors,type1GInNeighbors);
+    }*/
+    //subGraph type1G = make_pair(type1OutNeighbors,type1GInNeighbors);
+    subGraph type1G = make_pair(get<0>(graph).first, get<0>(graph).second);
 
     set<int>* type2NonSwitchableGInNeighbors = new set<int>[n];
     for(int i = 0; i < n; i++){
@@ -344,8 +378,8 @@ Graph copy_graph(Graph& graph){
 }
 
 void free_graph(Graph& graph){
-    delete[] get<0>(graph).first;
-    delete[] get<0>(graph).second;
+    //delete[] get<0>(graph).first;
+    //delete[] get<0>(graph).second;
 
     delete[] get<1>(graph).first;
     delete[] get<1>(graph).second;
@@ -535,6 +569,104 @@ void print_graph_concise(Graph& graph){
     return;
 }
 
+void print_graph_concise(Graph& graph){
+    subGraph& type1G = get<0>(graph);
+    subGraph& type2NSG = get<1>(graph);
+    subGraph& type2SG = get<2>(graph);
+    int size = get<3>(graph);
+
+    cout<<"Printing Graph"<<endl;
+    cout<<"Type 1 Graph\n"<<endl;
+    
+    cout<<"Out Neighbors"<<endl;
+    for(int i = 0; i < size; i++){
+        auto g = type1G.first[i];
+        if(g.size() == 0){
+            continue;
+        }
+        cout<<"1ON: "<<i<<": ";
+        for(auto itr = g.begin(); itr != g.end(); itr++){
+            cout<<*itr<<" ";
+        }
+        cout<<endl;
+    }
+
+    cout<<"In Neighbors"<<endl;
+    for(int i = 0; i < size; i++){
+        auto g = type1G.second[i];
+        if(g.size() == 0){
+            continue;
+        }
+        cout<<"1ON: "<<i<<": ";
+        for(auto itr = g.begin(); itr != g.end(); itr++){
+            cout<<*itr<<" ";
+        }
+        cout<<endl;
+    }
+    cout<<endl;
+
+    cout<<"Type 2 Non-Switchable Graph\n"<<endl;
+
+    cout<<"Out Neighbors"<<endl;
+    for(int i = 0; i < size; i++){
+        auto g = type2NSG.first[i];
+        if(g.size() == 0){
+            continue;
+        }
+        cout<<"2NSON: "<<i<<": ";
+        for(auto itr = g.begin(); itr != g.end(); itr++){
+            cout<<*itr<<" ";
+        }
+        cout<<endl;
+    }
+
+    cout<<"In Neighbors"<<endl;
+    for(int i = 0; i < size; i++){
+        auto g = type2NSG.second[i];
+        if(g.size() == 0){
+            continue;
+        }
+        cout<<"2NSIN: "<<i<<": ";
+        for(auto itr = g.begin(); itr != g.end(); itr++){
+            cout<<*itr<<" ";
+        }
+        cout<<endl;
+    }
+    cout<<endl;
+
+    cout<<"Type 2 Switchable Graph\n"<<endl;
+
+    cout<<"Out Neighbors"<<endl;
+    for(int i = 0; i < size; i++){
+        auto g = type2SG.first[i];
+        if(g.size() == 0){
+            continue;
+        }
+        cout<<"SON: "<<i<<": ";
+        for(auto itr = g.begin(); itr != g.end(); itr++){
+            cout<<*itr<<" ";
+        }
+        cout<<endl;
+    }
+
+    cout<<"In Neighbors"<<endl;
+    for(int i = 0; i < size; i++){
+        auto g = type2SG.second[i];
+        if(g.size() == 0){
+            continue;
+        }
+        cout<<"SIN: "<<i<<": ";
+        for(auto itr = g.begin(); itr != g.end(); itr++){
+            cout<<*itr<<" ";
+        }
+        cout<<endl;
+    }
+    cout<<endl;
+    
+    cout<<endl;
+    return;
+}
+
 void print_graph_s2(Graph& graph){
     subGraph& type2SG = get<2>(graph);
     int size = get<3>(graph);
@@ -599,53 +731,51 @@ void print_graph_n2(Graph& graph){
     return;
 }
 
-
 bool check_cycle_NS_helper(Graph& graph, int current, vector<bool>& visited, vector<bool>& parents, bool type2_flag, int flag_parent){
-    if(visited[current] == false){
-        visited[current] = true;
-        parents[current] = true;
+    //if(visited[current] == false){
+    visited[current] = true;
+    parents[current] = true;
 
 
-        set<int> neighborhood1 = get<0>(graph).first[current];
-        set<int> neighborhood2NS = get<1>(graph).first[current];
-        
-        if (type2_flag){
-            set<int> reversible_edge = get<0>(graph).second[current];
-            auto itr = reversible_edge.begin();
-            if(*itr != flag_parent && parents[*itr] == true){
-                return true;
-            }
-            bool result = *itr != flag_parent ? check_cycle_NS_helper(graph, *itr, visited, parents, false, current) : false;
-            if(result == true){
-                return true;
-            }
+    set<int> neighborhood1 = get<0>(graph).first[current];
+    set<int> neighborhood2NS = get<1>(graph).first[current];
+    
+    if (type2_flag){
+        set<int> reversible_edge = get<0>(graph).second[current];
+        auto itr = reversible_edge.begin();
+        if(*itr != flag_parent && parents[*itr] == true){
+            return true;
         }
-
-        // Type 1
-        for(auto itr = neighborhood1.begin(); itr != neighborhood1.end(); itr++){
-            if(*itr != flag_parent && parents[*itr] == true){
-                return true;
-            }
-            bool result = *itr != flag_parent ? check_cycle_NS_helper(graph, *itr, visited, parents, false, -1) : false;
-            if(result == true){
-                return true;
-            }
+        bool result = *itr != flag_parent ? check_cycle_NS_helper(graph, *itr, visited, parents, false, current) : false;
+        if(result == true){
+            return true;
         }
-
-        // Type 2 NS
-        for(auto itr = neighborhood2NS.begin(); itr != neighborhood2NS.end(); itr++){
-            if(*itr != flag_parent && parents[*itr] == true){
-                return true;
-            }
-            bool result = *itr != flag_parent ? check_cycle_NS_helper(graph, *itr, visited, parents, true, -1) : false;
-            if(result == true){
-                return true;
-            } 
-        }
-
-        parents[current] = false;
     }
 
+    // Type 1
+    for(auto itr = neighborhood1.begin(); itr != neighborhood1.end(); itr++){
+        if(*itr != flag_parent && parents[*itr] == true){
+            return true;
+        }
+        bool result = *itr != flag_parent ? check_cycle_NS_helper(graph, *itr, visited, parents, false, -1) : false;
+        if(result == true){
+            return true;
+        }
+    }
+
+    // Type 2 NS
+    for(auto itr = neighborhood2NS.begin(); itr != neighborhood2NS.end(); itr++){
+        if(*itr != flag_parent && parents[*itr] == true){
+            return true;
+        }
+        bool result = *itr != flag_parent ? check_cycle_NS_helper(graph, *itr, visited, parents, true, -1) : false;
+        if(result == true){
+            return true;
+        } 
+    }
+
+    parents[current] = false;
+    //}
     return false;
 }
 
@@ -688,9 +818,151 @@ bool check_cycle_nonSwitchable_old(Graph& graph, int start){
     return check_cycle_NS_helper_old(graph, start, visited, parents);
 }
 
+bool check_cycle_dfs(Graph& graph, int start) {
+    stack<int> bag;
+    int graph_size = get<3>(graph);
+    vector<bool> visited (graph_size, false);
+
+    bag.push(start);
+    while(bag.size() != 0) {
+        int vertex = bag.top();
+        bag.pop();
+        if (visited[vertex] == true){
+            return true;
+        }
+        visited[vertex] = true;
+        set<int> neighbors = get_nonSwitchable_outNeib(graph, vertex);
+        for (auto itr = neighbors.begin(); itr != neighbors.end(); itr++){
+            bag.push(*itr);
+        }
+    }  
+    return false;
+}
+
+void build_time_arr(Graph& graph, vector<bool>& visited, vector<int>* state, int current) {
+    if(visited[current] == true){
+        // revisit
+        return;
+    }
+
+    // visit
+    visited[current] = true;
+
+    set<int> neighbors = get_nonSwitchable_outNeib(graph, current);
+    for(auto itr = neighbors.begin(); itr != neighbors.end(); itr++){
+        build_time_arr(graph, visited, state, *itr);
+    }
+
+    //finish
+    (*state).push_back(current);
+}
+
+vector<int>* topologicalSort(Graph& graph, vector<int> starts) {
+    int graph_size = get<3>(graph);
+
+    vector<int>* sorted_values = new vector<int>;
+    //vector<int>& sorted_values = *result;
+    vector<bool> visited(graph_size, false);
+
+    int n = starts.size();
+    for(int i = 0; i < n; i++){
+        build_time_arr(graph, visited, sorted_values, starts[i]);
+    }
+
+    reverse((*sorted_values).begin(), (*sorted_values).end());
+
+    return sorted_values;
+}
+
+// Slack Example 1.
+// int main() {
+
+//     Graph graph = new_graph(26);
+
+//     set_type1_edge(graph, 0, 1);
+//     set_type1_edge(graph, 1, 2);
+//     set_type1_edge(graph, 2, 3);
+//     set_type1_edge(graph, 3, 4);
+//     set_type1_edge(graph, 4, 5);
+//     set_type1_edge(graph, 5, 6);
+//     set_type1_edge(graph, 6, 7);
+
+//     set_type1_edge(graph, 8, 9);
+//     set_type1_edge(graph, 9, 10);
+//     set_type1_edge(graph, 10, 11);
+//     set_type1_edge(graph, 11, 12);
+//     set_type1_edge(graph, 12, 13);
+//     set_type1_edge(graph, 13, 14);
+
+//     set_type1_edge(graph, 15, 16);
+
+//     set_type1_edge(graph, 17, 18);
+//     set_type1_edge(graph, 18, 19);
+//     set_type1_edge(graph, 19, 20);
+//     set_type1_edge(graph, 20, 21);
+//     set_type1_edge(graph, 21, 22);
+//     set_type1_edge(graph, 22, 23);
+//     set_type1_edge(graph, 23, 24);
+//     set_type1_edge(graph, 24, 25);
+
+//     set_type2_nonSwitchable_edge(graph, 8, 0);
+//     set_type2_nonSwitchable_edge(graph, 13, 24);
+
+//     set_type2_nonSwitchable_edge(graph, 17, 6);
+//     set_type2_nonSwitchable_edge(graph, 18, 7);
+//     set_type2_nonSwitchable_edge(graph, 19, 15);
+//     set_type2_nonSwitchable_edge(graph, 20, 16);
+//     set_type2_nonSwitchable_edge(graph, 25, 14);
+
+//     // vector<int> starts;
+//     // starts.push_back(0);
+//     // starts.push_back(8);
+//     // starts.push_back(15);
+//     // starts.push_back(17);
+//     // vector<int> sorted = *topologicalSort(graph, starts);
+    
+//     // print_graph_concise(graph);
+//     // cout<<"\n"<<endl;
+//     // for(int i = 0; i < (sorted).size(); i++){
+//     //     cout<<(sorted)[i]<<" ";
+//     // }
+//     // cout<<endl;
+
+//     cout<<check_cycle_nonSwitchable(graph, 13)<<endl;
+//     cout<<check_cycle_dfs(graph, 13)<<endl;
+
+//     return 0;
+
+// }
 
 // int main(){
-//     Graph graph = new_graph(10);
+//     Graph graph = new_graph(15);
+
+//     set_type1_edge(graph, 0, 1);
+//     set_type1_edge(graph, 1, 2);
+//     set_type1_edge(graph, 2, 3);
+//     set_type1_edge(graph, 4, 5);
+//     set_type1_edge(graph, 5, 6);
+//     set_type1_edge(graph, 6, 7);
+//     set_type1_edge(graph, 7, 8);
+//     set_type1_edge(graph, 9, 10);
+//     set_type1_edge(graph, 10, 11);
+//     set_type1_edge(graph, 11, 12);
+//     set_type1_edge(graph, 12, 13);
+//     set_type1_edge(graph, 13, 14);
+
+//     set_type2_nonSwitchable_edge(graph, 3, 6);
+//     set_type2_nonSwitchable_edge(graph, 5, 11);
+//     set_type2_nonSwitchable_edge(graph, 14, 2);
+
+//     cout<<check_cycle_nonSwitchable(graph, 14)<<endl;
+//     cout<<check_cycle_dfs(graph, 14)<<endl;
+
+//     return 0;
+// }
+
+/*int main(){
+    Graph graph = new_graph(10);
 
 //     set_type1_edge(graph, 0, 1);
 //     set_type1_edge(graph, 1, 2);
@@ -727,7 +999,7 @@ bool check_cycle_nonSwitchable_old(Graph& graph, int start){
 
     
     
-// }
+}*/
 
 /*int main() {
 
@@ -933,6 +1205,5 @@ bool check_cycle_nonSwitchable_old(Graph& graph, int start){
 // //    return 0;
 
 // }
-
 
 

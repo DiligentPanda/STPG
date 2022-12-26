@@ -22,6 +22,8 @@ void rem_type2_nonSwitchable_edge(Graph& graph, int n1, int n2);
 
 void rem_type2_switchable_edge(Graph& graph, int n1, int n2);
 
+void rem_type2_nonSwitchable_neighborhood(Graph& graph, int n);
+
 bool get_type1_edge(Graph& graph, int n1, int n2);
 
 bool get_type2_nonSwitchable_edge(Graph& graph, int n1, int n2);
@@ -43,19 +45,26 @@ set<int>& get_switchable_outNeib(Graph& graph, int n);
 // desired. If a copy is not needed reference is returned to reduce copying
 set<int>& get_switchable_inNeib(Graph& graph, int n);
 
+set<int>& get_type2_nonSwitchable_inNeib(Graph& graph, int n);
+
 set<int> get_outNeighbors(Graph& graph, int n);
 
 set<int> get_inNeighbors(Graph& graph, int n);
+
+void set_switchable_nonSwitchable(Graph& graph);
 
 Graph copy_graph(Graph& graph);
 
 void free_graph(Graph& graph);
 
 void print_graph(Graph& graph);
-
-void print_graph_s2(Graph& graph);
-
 void print_graph_n2(Graph& graph);
+void print_graph_s2(Graph& graph);
 
 bool check_cycle_nonSwitchable(Graph& graph, int start);
 
+bool check_cycle_dfs(Graph& graph, int start);
+
+bool check_cycle_nonSwitchable_old(Graph& graph, int start);
+
+vector<int>* topologicalSort(Graph& graph, vector<int> starts);
