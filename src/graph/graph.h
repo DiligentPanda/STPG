@@ -33,6 +33,7 @@ bool get_edge(Graph& graph, int n1, int n2);
 set<int> get_nonSwitchable_outNeib(Graph& graph, int n);
 
 set<int> get_nonSwitchable_inNeib(Graph& graph, int n);
+void set_switchable_nonSwitchable(Graph& graph);
 
 // Note that a reference type should not be used to recieve output if a copy is
 // desired. If a copy is not needed reference is returned to reduce copying

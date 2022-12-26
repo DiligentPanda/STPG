@@ -56,21 +56,12 @@ bool Simulator::move(vector<int>& moved, int agent, int *timeSpent, bool switchC
 }
 
 int Simulator::step(bool switchCheck) {
-  std::cout << "step\n";
   int timeSpent[2] = {0};
   int agentCnt = get_agentCnt(adg);
   vector<int> moved(agentCnt, 0);
   for (int agent = 0; agent < agentCnt; agent++) {
     move(moved, agent, timeSpent, switchCheck);
   }
-    int cnt = 0;
-    for (int state: states) {
-      std::cout << cnt << ": " << state << ", total = " << get_stateCnt(adg, cnt) << ";//   ";
-      cnt ++;
-    }
-    for (int i = 0; i <agentCnt ; i++) {
-      assert(!detectCycle(adg, i, 0));
-    }
   if (timeSpent[1] == 0 && timeSpent[0] != 0) {
     // int cnt = 0;
     // for (int state: states) {
@@ -92,7 +83,6 @@ int Simulator::step(bool switchCheck) {
 }
 
 tuple<int, int, int, int> Simulator::detectSwitch() {
-  std::cout << "detect switch\n";
   int agentCnt = get_agentCnt(adg);
   for (int agent = 0; agent < agentCnt; agent++) {
     int state = states[agent];
