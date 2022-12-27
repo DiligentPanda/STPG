@@ -67,4 +67,6 @@ bool check_cycle_dfs(Graph& graph, int start);
 
 bool check_cycle_nonSwitchable_old(Graph& graph, int start);
 
-vector<int>* topologicalSort(Graph& graph, vector<int> starts);
+// First vector: arr[time] = vertex
+// Second vector: arr[vertex] = time
+tuple<vector<int>*, vector<int>*> topologicalSort(Graph& graph, vector<int> starts);
