@@ -17,7 +17,7 @@ typedef tuple<subGraph, subGraph, subGraph, int> Graph;
 typedef pair<int, int> Location;
 typedef vector<pair<Location, int>> Path;
 typedef vector<Path> Paths;
-typedef tuple<Graph, Paths, vector<int>, Graph> ADG;
+typedef tuple<Graph, Paths, vector<int>> ADG;
 
 #endif
 
