@@ -69,7 +69,7 @@ ADG exploreNode(priority_queue<Node, vector<Node>, Compare> pq) {
     int maxI, maxJ;
     for (int i = 0; i < get<3>(graph); i++) {
       int iTime = (*ts_vt)[i];
-      set<int>& outNeib = get_switchable_outNeib(graph, agent);
+      set<int>& outNeib = get_switchable_outNeib(graph, i);
       for (auto it = outNeib.begin(); it != outNeib.end(); it++) {
         int j = *it;
         int jTime = (*ts_vt)[j];
@@ -113,8 +113,8 @@ ADG exploreNode(priority_queue<Node, vector<Node>, Compare> pq) {
       Graph copyGraph = get<0>(copy);
 
       // Fix the edge
-      int backI = maxJ+1
-      int backJ = maxI-1
+      int backI = maxJ+1;
+      int backJ = maxI-1;
       assert((*ts_vt)[backJ] > (*ts_vt)[backI]); // (should obey the original sort)
 
       rem_type2_switchable_edge(copyGraph, backI, backJ);
@@ -131,7 +131,7 @@ ADG exploreNode(priority_queue<Node, vector<Node>, Compare> pq) {
   throw invalid_argument("no solution found");
 }
 
-ADG Astar(Simulator simulator) {
+ADG Astar(ADG adg) {
   priority_queue<Node, vector<Node>, Compare> pq;
   pq.push(make_tuple(adg, 0));
   return exploreNode(pq);

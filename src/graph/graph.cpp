@@ -317,23 +317,7 @@ void set_switchable_nonSwitchable(Graph& graph){
         }
         graph2S.second[i].clear();
     }
-void set_switchable_nonSwitchable(Graph& graph){
-    int graph_size = get<3>(graph);
-    subGraph& graph2NS = get<1>(graph);
-    subGraph& graph2S = get<2>(graph);
-    for(int i = 0; i < graph_size; i++){
-        for(auto itr = graph2S.first[i].begin(); itr != graph2S.first[i].end(); itr++){
-            graph2NS.first[i].insert(*itr);
-        }
-        graph2S.first[i].clear();
-        for(auto itr = graph2S.second[i].begin(); itr != graph2S.second[i].end(); itr++){
-            graph2NS.second[i].insert(*itr);
-        }
-        graph2S.second[i].clear();
-    }
 
-    return;
-}
     return;
 }
 
@@ -460,104 +444,6 @@ void print_graph(Graph& graph){
     for(int i = 0; i < size; i++){
         auto g = type2SG.second[i];
         cout<<i<<": ";
-        for(auto itr = g.begin(); itr != g.end(); itr++){
-            cout<<*itr<<" ";
-        }
-        cout<<endl;
-    }
-    cout<<endl;
-    
-    cout<<endl;
-    return;
-}
-
-void print_graph_concise(Graph& graph){
-    subGraph& type1G = get<0>(graph);
-    subGraph& type2NSG = get<1>(graph);
-    subGraph& type2SG = get<2>(graph);
-    int size = get<3>(graph);
-
-    cout<<"Printing Graph"<<endl;
-    cout<<"Type 1 Graph\n"<<endl;
-    
-    cout<<"Out Neighbors"<<endl;
-    for(int i = 0; i < size; i++){
-        auto g = type1G.first[i];
-        if(g.size() == 0){
-            continue;
-        }
-        cout<<"1ON: "<<i<<": ";
-        for(auto itr = g.begin(); itr != g.end(); itr++){
-            cout<<*itr<<" ";
-        }
-        cout<<endl;
-    }
-
-    cout<<"In Neighbors"<<endl;
-    for(int i = 0; i < size; i++){
-        auto g = type1G.second[i];
-        if(g.size() == 0){
-            continue;
-        }
-        cout<<"1ON: "<<i<<": ";
-        for(auto itr = g.begin(); itr != g.end(); itr++){
-            cout<<*itr<<" ";
-        }
-        cout<<endl;
-    }
-    cout<<endl;
-
-    cout<<"Type 2 Non-Switchable Graph\n"<<endl;
-
-    cout<<"Out Neighbors"<<endl;
-    for(int i = 0; i < size; i++){
-        auto g = type2NSG.first[i];
-        if(g.size() == 0){
-            continue;
-        }
-        cout<<"2NSON: "<<i<<": ";
-        for(auto itr = g.begin(); itr != g.end(); itr++){
-            cout<<*itr<<" ";
-        }
-        cout<<endl;
-    }
-
-    cout<<"In Neighbors"<<endl;
-    for(int i = 0; i < size; i++){
-        auto g = type2NSG.second[i];
-        if(g.size() == 0){
-            continue;
-        }
-        cout<<"2NSIN: "<<i<<": ";
-        for(auto itr = g.begin(); itr != g.end(); itr++){
-            cout<<*itr<<" ";
-        }
-        cout<<endl;
-    }
-    cout<<endl;
-
-    cout<<"Type 2 Switchable Graph\n"<<endl;
-
-    cout<<"Out Neighbors"<<endl;
-    for(int i = 0; i < size; i++){
-        auto g = type2SG.first[i];
-        if(g.size() == 0){
-            continue;
-        }
-        cout<<"SON: "<<i<<": ";
-        for(auto itr = g.begin(); itr != g.end(); itr++){
-            cout<<*itr<<" ";
-        }
-        cout<<endl;
-    }
-
-    cout<<"In Neighbors"<<endl;
-    for(int i = 0; i < size; i++){
-        auto g = type2SG.second[i];
-        if(g.size() == 0){
-            continue;
-        }
-        cout<<"SIN: "<<i<<": ";
         for(auto itr = g.begin(); itr != g.end(); itr++){
             cout<<*itr<<" ";
         }
@@ -857,7 +743,8 @@ void build_time_arr(Graph& graph, vector<bool>& visited, vector<int>* state, int
     (*state).push_back(current);
 }
 
-vector<int>* topologicalSort(Graph& graph, vector<int> starts) {
+/*------------ CHANGED FOR OVERALL TYPE CHECKING ------------*/
+tuple<vector<int>*, vector<int>*> topologicalSort(Graph& graph, vector<int> starts) {
     int graph_size = get<3>(graph);
 
     vector<int>* sorted_values = new vector<int>;
@@ -871,7 +758,8 @@ vector<int>* topologicalSort(Graph& graph, vector<int> starts) {
 
     reverse((*sorted_values).begin(), (*sorted_values).end());
 
-    return sorted_values;
+    /* CHANGED FOR OVERALL TYPE CHECKING */
+    return make_tuple(sorted_values, sorted_values);
 }
 
 // Slack Example 1.

@@ -13,6 +13,7 @@ Simulator::Simulator(ADG input_adg, vector<int> visited_states) {
 
 int Simulator::checkMovable(vector<int>& movable) {
   int timeSpent = 0;
+  int agentCnt = get_agentCnt(adg);
   for (int agent = 0; agent < agentCnt; agent++) {
     int state = states[agent];
     if (state >= get_stateCnt(adg, agent) - 1) {

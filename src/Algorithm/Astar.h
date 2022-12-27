@@ -7,6 +7,6 @@ using namespace std::chrono;
 
 typedef tuple<ADG, int> Node;
 
-ADG Astar(Simulator simulator);
+ADG Astar(ADG adg);
 
-int heuristic(Simulator simulator);
+int heuristic(ADG adg, vector<int> *ts);
