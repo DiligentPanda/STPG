@@ -66,4 +66,6 @@ bool check_cycle_dfs(Graph& graph, int start);
 
 bool check_cycle_nonSwitchable_old(Graph& graph, int start);
 
-vector<int>* topologicalSort(Graph& graph, vector<int> starts);
+// vector<int>* topologicalSort(Graph& graph, vector<int> starts);
+
+sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_starts, int u, int v)

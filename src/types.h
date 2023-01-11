@@ -9,6 +9,9 @@
 
 using namespace std;
 
+// <arr[time]=vertex, arr[vertex]=time>
+typedef pair<vector<int>*, vector<int>*> sortResult;
+
 // <outNeighbors, inNeighbors>
 typedef pair<set<int>*, set<int>*> subGraph;
 

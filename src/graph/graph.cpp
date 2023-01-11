@@ -743,21 +743,54 @@ void build_time_arr(Graph& graph, vector<bool>& visited, vector<int>* state, int
     (*state).push_back(current);
 }
 
-vector<int>* topologicalSort(Graph& graph, vector<int> starts) {
+sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_starts, int u, int v) {
     int graph_size = get<3>(graph);
 
-    vector<int>* sorted_values = new vector<int>;
-    //vector<int>& sorted_values = *result;
-    vector<bool> visited(graph_size, false);
+    vector<int>* time_arr = state.first;
+    vector<int>* vertex_arr = state.second;
 
-    int n = starts.size();
-    for(int i = 0; i < n; i++){
-        build_time_arr(graph, visited, sorted_values, starts[i]);
+    if(time_arr == nullptr && vertex_arr == nullptr && agent_starts != nullptr) {
+
+        vector<int> starts = *agent_starts;
+
+        vector<int>* sorted_vertecies = new vector<int>;
+        //vector<int>& sorted_values = *result;
+        vector<bool> visited(graph_size, false);
+
+        int n = starts.size();
+        for(int i = 0; i < n; i++){
+            build_time_arr(graph, visited, sorted_vertecies, starts[i]);
+        }
+
+        reverse((*sorted_vertecies).begin(), (*sorted_vertecies).end());
+        
+        // Error scenario
+        if ((*sorted_vertecies).size() != graph_size){    
+            sortResult ret_val = make_pair(nullptr, nullptr);
+            return ret_val;
+        }
+
+        vector<int>* sorted_times = new vector<int>;
+
+        for (int i = 0; i < graph_size; i++){
+            (*sorted_times)[(*sorted_vertecies)[i]] = i;
+        }
+        
+        sortResult ret_val = make_pair(sorted_vertecies, sorted_times);
+        return ret_val;
+    }
+    else if(agent_starts == nullptr) {
+        // Error scenario
+        sortResult ret_val = make_pair(nullptr, nullptr);
+        return ret_val;
+    }
+    else{
+        // Error scenario
+        sortResult ret_val = make_pair(nullptr, nullptr);
+        return ret_val;
     }
 
-    reverse((*sorted_values).begin(), (*sorted_values).end());
-
-    return sorted_values;
+    
 }
 
 // Slack Example 1.
