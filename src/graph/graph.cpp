@@ -743,12 +743,7 @@ void build_time_arr(Graph& graph, vector<bool>& visited, vector<int>* state, int
     (*state).push_back(current);
 }
 
-<<<<<<< HEAD
 sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_starts, int u, int v) {
-=======
-/*------------ CHANGED FOR OVERALL TYPE CHECKING ------------*/
-tuple<vector<int>*, vector<int>*> topologicalSort(Graph& graph, vector<int> starts) {
->>>>>>> 643bd98b09c9a06c879942ea79a897b2b30ef71a
     int graph_size = get<3>(graph);
 
     vector<int>* time_arr = state.first;
@@ -777,7 +772,6 @@ tuple<vector<int>*, vector<int>*> topologicalSort(Graph& graph, vector<int> star
 
         vector<int>* sorted_times = new vector<int>;
 
-<<<<<<< HEAD
         for (int i = 0; i < graph_size; i++){
             (*sorted_times)[(*sorted_vertecies)[i]] = i;
         }
@@ -786,7 +780,7 @@ tuple<vector<int>*, vector<int>*> topologicalSort(Graph& graph, vector<int> star
         return ret_val;
     }
     else if(agent_starts == nullptr) {
-        // Error scenario
+        // Temporarily return failure condition
         sortResult ret_val = make_pair(nullptr, nullptr);
         return ret_val;
     }
@@ -797,10 +791,6 @@ tuple<vector<int>*, vector<int>*> topologicalSort(Graph& graph, vector<int> star
     }
 
     
-=======
-    /* CHANGED FOR OVERALL TYPE CHECKING */
-    return make_tuple(sorted_values, sorted_values);
->>>>>>> 643bd98b09c9a06c879942ea79a897b2b30ef71a
 }
 
 // Slack Example 1.
