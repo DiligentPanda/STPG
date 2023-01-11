@@ -35,6 +35,7 @@ bool get_edge(Graph& graph, int n1, int n2);
 set<int> get_nonSwitchable_outNeib(Graph& graph, int n);
 
 set<int> get_nonSwitchable_inNeib(Graph& graph, int n);
+void set_switchable_nonSwitchable(Graph& graph);
 
 // Note that a reference type should not be used to recieve output if a copy is
 // desired. If a copy is not needed reference is returned to reduce copying
@@ -66,6 +67,12 @@ bool check_cycle_dfs(Graph& graph, int start);
 
 bool check_cycle_nonSwitchable_old(Graph& graph, int start);
 
+<<<<<<< HEAD
 // vector<int>* topologicalSort(Graph& graph, vector<int> starts);
 
 sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_starts, int u, int v)
+=======
+// First vector: arr[time] = vertex
+// Second vector: arr[vertex] = time
+tuple<vector<int>*, vector<int>*> topologicalSort(Graph& graph, vector<int> starts);
+>>>>>>> 643bd98b09c9a06c879942ea79a897b2b30ef71a
