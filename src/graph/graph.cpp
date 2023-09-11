@@ -482,7 +482,7 @@ void print_graph_concise(Graph& graph){
         if(g.size() == 0){
             continue;
         }
-        cout<<"1ON: "<<i<<": ";
+        cout<<"1IN: "<<i<<": ";
         for(auto itr = g.begin(); itr != g.end(); itr++){
             cout<<*itr<<" ";
         }
@@ -724,7 +724,7 @@ bool check_cycle_dfs(Graph& graph, int start) {
     return false;
 }
 
-void build_time_arr(Graph& graph, vector<bool>& visited, vector<int>* state, int current) {
+void build_time_arr(Graph& graph, vector<bool>& visited, vector<int>* sorted_vertecies, vector<int>* sorted_times, int current, int& time) {
     if(visited[current] == true){
         // revisit
         return;
@@ -735,86 +735,45 @@ void build_time_arr(Graph& graph, vector<bool>& visited, vector<int>* state, int
 
     set<int> neighbors = get_nonSwitchable_outNeib(graph, current);
     for(auto itr = neighbors.begin(); itr != neighbors.end(); itr++){
-        build_time_arr(graph, visited, state, *itr);
+        build_time_arr(graph, visited, sorted_vertecies, sorted_times, *itr, time);
     }
 
     //finish
-    (*state).push_back(current);
+    // (*state).push_back(current);
+    (*sorted_vertecies)[time] = current;
+    (*sorted_times)[current] = time;
+    time--;
 }
 
-vector<int>* check = nullptr;
-
-sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_starts) {
+sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_starts, int u, int v) {
     int graph_size = get<3>(graph);
 
     vector<int>* time_arr = state.first;
     vector<int>* vertex_arr = state.second;
 
     if(time_arr == nullptr && vertex_arr == nullptr && agent_starts != nullptr) {
-        // std::cout << "right case\n";
-
+        cout<<"begin sort"<<endl;
         vector<int> starts = *agent_starts;
-        check = new vector<int>(*agent_starts);
 
         vector<int>* sorted_vertecies = new vector<int>;
-        //vector<int>& sorted_values = *result;
+        (*sorted_vertecies) = vector<int>(graph_size, -1);
+        vector<int>* sorted_times = new vector<int>;
+        (*sorted_times) = vector<int>(graph_size, -1);
         vector<bool> visited(graph_size, false);
+        int time = graph_size - 1;
 
         int n = starts.size();
         for(int i = 0; i < n; i++){
-            build_time_arr(graph, visited, sorted_vertecies, starts[i]);
+            build_time_arr(graph, visited, sorted_vertecies, sorted_times, starts[i], time);
         }
 
-        // std::cout << "starting reverse\n";
-        reverse((*sorted_vertecies).begin(), (*sorted_vertecies).end());
-
-        // std::cout << "vert size = " << (*sorted_vertecies).size() << ", graph size = " << graph_size << "\n";
-        
-        // Error scenario
-        if ((*sorted_vertecies).size() != (unsigned long) (unsigned int)graph_size){  
-            // std::cout << "inside error case\n";
-            sortResult ret_val = make_pair(nullptr, nullptr);
-            return ret_val;
-        }
-
-        // std::cout << "outside error case\n";
-        vector<int>* sorted_times = new vector<int>((*sorted_vertecies).size());
-
-        for (int i = 0; i < graph_size; i++){
-            (*sorted_times)[(*sorted_vertecies)[i]] = i;
-        }
-        
         sortResult ret_val = make_pair(sorted_vertecies, sorted_times);
         // std::cout << "returned\n";
         return ret_val;
     }
     else if(agent_starts == nullptr) {
-        vector<int> starts = *check;
-
-        vector<int>* sorted_vertecies = new vector<int>;
-        //vector<int>& sorted_values = *result;
-        vector<bool> visited(graph_size, false);
-
-        int n = starts.size();
-        for(int i = 0; i < n; i++){
-            build_time_arr(graph, visited, sorted_vertecies, starts[i]);
-        }
-
-        reverse((*sorted_vertecies).begin(), (*sorted_vertecies).end());
-        
         // Error scenario
-        if ((*sorted_vertecies).size() != (unsigned long) (unsigned int)graph_size){    
-            sortResult ret_val = make_pair(nullptr, nullptr);
-            return ret_val;
-        }
-
-        vector<int>* sorted_times = new vector<int>;
-
-        for (int i = 0; i < graph_size; i++){
-            (*sorted_times)[(*sorted_vertecies)[i]] = i;
-        }
-        
-        sortResult ret_val = make_pair(sorted_vertecies, sorted_times);
+        sortResult ret_val = make_pair(nullptr, nullptr);
         return ret_val;
     }
     else{
@@ -827,65 +786,73 @@ sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_st
 }
 
 // Slack Example 1.
-// int main() {
+int main() {
 
-//     Graph graph = new_graph(26);
+    Graph graph = new_graph(26);
 
-//     set_type1_edge(graph, 0, 1);
-//     set_type1_edge(graph, 1, 2);
-//     set_type1_edge(graph, 2, 3);
-//     set_type1_edge(graph, 3, 4);
-//     set_type1_edge(graph, 4, 5);
-//     set_type1_edge(graph, 5, 6);
-//     set_type1_edge(graph, 6, 7);
+    set_type1_edge(graph, 0, 1);
+    set_type1_edge(graph, 1, 2);
+    set_type1_edge(graph, 2, 3);
+    set_type1_edge(graph, 3, 4);
+    set_type1_edge(graph, 4, 5);
+    set_type1_edge(graph, 5, 6);
+    set_type1_edge(graph, 6, 7);
 
-//     set_type1_edge(graph, 8, 9);
-//     set_type1_edge(graph, 9, 10);
-//     set_type1_edge(graph, 10, 11);
-//     set_type1_edge(graph, 11, 12);
-//     set_type1_edge(graph, 12, 13);
-//     set_type1_edge(graph, 13, 14);
+    set_type1_edge(graph, 8, 9);
+    set_type1_edge(graph, 9, 10);
+    set_type1_edge(graph, 10, 11);
+    set_type1_edge(graph, 11, 12);
+    set_type1_edge(graph, 12, 13);
+    set_type1_edge(graph, 13, 14);
 
-//     set_type1_edge(graph, 15, 16);
+    set_type1_edge(graph, 15, 16);
 
-//     set_type1_edge(graph, 17, 18);
-//     set_type1_edge(graph, 18, 19);
-//     set_type1_edge(graph, 19, 20);
-//     set_type1_edge(graph, 20, 21);
-//     set_type1_edge(graph, 21, 22);
-//     set_type1_edge(graph, 22, 23);
-//     set_type1_edge(graph, 23, 24);
-//     set_type1_edge(graph, 24, 25);
+    set_type1_edge(graph, 17, 18);
+    set_type1_edge(graph, 18, 19);
+    set_type1_edge(graph, 19, 20);
+    set_type1_edge(graph, 20, 21);
+    set_type1_edge(graph, 21, 22);
+    set_type1_edge(graph, 22, 23);
+    set_type1_edge(graph, 23, 24);
+    set_type1_edge(graph, 24, 25);
 
-//     set_type2_nonSwitchable_edge(graph, 8, 0);
-//     set_type2_nonSwitchable_edge(graph, 13, 24);
+    set_type2_nonSwitchable_edge(graph, 8, 0);
+    set_type2_nonSwitchable_edge(graph, 13, 24);
 
-//     set_type2_nonSwitchable_edge(graph, 17, 6);
-//     set_type2_nonSwitchable_edge(graph, 18, 7);
-//     set_type2_nonSwitchable_edge(graph, 19, 15);
-//     set_type2_nonSwitchable_edge(graph, 20, 16);
-//     set_type2_nonSwitchable_edge(graph, 25, 14);
+    set_type2_nonSwitchable_edge(graph, 17, 6);
+    set_type2_nonSwitchable_edge(graph, 18, 7);
+    set_type2_nonSwitchable_edge(graph, 19, 15);
+    set_type2_nonSwitchable_edge(graph, 20, 16);
+    set_type2_nonSwitchable_edge(graph, 25, 14);
 
-//     // vector<int> starts;
-//     // starts.push_back(0);
-//     // starts.push_back(8);
-//     // starts.push_back(15);
-//     // starts.push_back(17);
-//     // vector<int> sorted = *topologicalSort(graph, starts);
+    vector<int> starts;
+    starts.push_back(0);
+    starts.push_back(8);
+    starts.push_back(15);
+    starts.push_back(17);
+    sortResult tuple = topologicalSort(graph, make_pair(nullptr, nullptr), &starts, -1, -1);
+    vector<int> vertex_to_time = *(tuple.second);
+    vector<int> time_to_vertex = *(tuple.first);
     
-//     // print_graph_concise(graph);
-//     // cout<<"\n"<<endl;
-//     // for(int i = 0; i < (sorted).size(); i++){
-//     //     cout<<(sorted)[i]<<" ";
-//     // }
-//     // cout<<endl;
+    // print_graph_concise(graph);
+    // cout<<"\n"<<endl;
+    for(int i = 0; i < (vertex_to_time).size(); i++){
+        cout<<(vertex_to_time)[i]<<" ";
+    }
+    cout<<endl;
 
-//     cout<<check_cycle_nonSwitchable(graph, 13)<<endl;
-//     cout<<check_cycle_dfs(graph, 13)<<endl;
+    cout<<"\n"<<endl;
+    for(int i = 0; i < (time_to_vertex).size(); i++){
+        cout<<(time_to_vertex)[i]<<" ";
+    }
+    cout<<endl;
 
-//     return 0;
+    // cout<<check_cycle_nonSwitchable(graph, 13)<<endl;
+    // cout<<check_cycle_dfs(graph, 13)<<endl;
 
-// }
+    return 0;
+
+}
 
 // int main(){
 //     Graph graph = new_graph(15);
