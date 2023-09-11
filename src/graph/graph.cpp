@@ -744,13 +744,14 @@ void build_time_arr(Graph& graph, vector<bool>& visited, vector<int>* state, int
 
 vector<int>* check = nullptr;
 
-sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_starts, int u, int v) {
+sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_starts) {
     int graph_size = get<3>(graph);
 
     vector<int>* time_arr = state.first;
     vector<int>* vertex_arr = state.second;
 
     if(time_arr == nullptr && vertex_arr == nullptr && agent_starts != nullptr) {
+        // std::cout << "right case\n";
 
         vector<int> starts = *agent_starts;
         check = new vector<int>(*agent_starts);
@@ -764,21 +765,27 @@ sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_st
             build_time_arr(graph, visited, sorted_vertecies, starts[i]);
         }
 
+        // std::cout << "starting reverse\n";
         reverse((*sorted_vertecies).begin(), (*sorted_vertecies).end());
+
+        // std::cout << "vert size = " << (*sorted_vertecies).size() << ", graph size = " << graph_size << "\n";
         
         // Error scenario
-        if ((*sorted_vertecies).size() != graph_size){    
+        if ((*sorted_vertecies).size() != (unsigned long) (unsigned int)graph_size){  
+            // std::cout << "inside error case\n";
             sortResult ret_val = make_pair(nullptr, nullptr);
             return ret_val;
         }
 
-        vector<int>* sorted_times = new vector<int>;
+        // std::cout << "outside error case\n";
+        vector<int>* sorted_times = new vector<int>((*sorted_vertecies).size());
 
         for (int i = 0; i < graph_size; i++){
             (*sorted_times)[(*sorted_vertecies)[i]] = i;
         }
         
         sortResult ret_val = make_pair(sorted_vertecies, sorted_times);
+        // std::cout << "returned\n";
         return ret_val;
     }
     else if(agent_starts == nullptr) {
@@ -796,7 +803,7 @@ sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_st
         reverse((*sorted_vertecies).begin(), (*sorted_vertecies).end());
         
         // Error scenario
-        if ((*sorted_vertecies).size() != graph_size){    
+        if ((*sorted_vertecies).size() != (unsigned long) (unsigned int)graph_size){    
             sortResult ret_val = make_pair(nullptr, nullptr);
             return ret_val;
         }

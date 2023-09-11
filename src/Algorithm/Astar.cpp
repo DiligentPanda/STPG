@@ -48,7 +48,14 @@ class Compare {
 };
 
 ADG exploreNode(priority_queue<Node, vector<Node>, Compare> pq) {
+  int cnt = 0;
+  int pruned = 0;
+  int added = 0;
+  
+  microseconds timer(0);
+
   while (pq.size() > 0) {
+    cnt += 1;
     Node node = pq.top();
     pq.pop();
     
@@ -61,34 +68,33 @@ ADG exploreNode(priority_queue<Node, vector<Node>, Compare> pq) {
       int current = compute_vertex(get<2>(adg), agent, 0);
       currents.push_back(current);
     }
-    vector<int>* ts_tv;
-    vector<int>* ts_vt;
-    tie(ts_tv, ts_vt) = topologicalSort(graph, currents);
+
+    vector<int> &ts_vt = get<2>(node);
 
     int maxDiff = -1;
-    int maxI, maxJ;
+    int maxI = -1;
+    int maxJ = -1;
     for (int i = 0; i < get<3>(graph); i++) {
-      int iTime = (*ts_vt)[i];
-      set<int>& outNeib = get_switchable_outNeib(graph, i);
-      for (auto it = outNeib.begin(); it != outNeib.end(); it++) {
-        int j = *it;
-        int jTime = (*ts_vt)[j];
-        if (jTime > iTime) { // No need to revert
-          // Fix the edge
-          rem_type2_switchable_edge(graph, i, j);
-          set_type2_nonSwitchable_edge(graph, i, j);
-        } else {
-          int diff = iTime - jTime;
-          if (diff > maxDiff) {
-            maxDiff = diff;
-            maxI = i;
-            maxJ = j;
-          }
+      int iTime = ts_vt[i];
+      set<int> outNeib = get_switchable_outNeib(graph, i);
+      for (auto it : outNeib) {
+        int j = it;
+        int jTime = ts_vt[j];
+        int diff = iTime - jTime;
+        if (diff > maxDiff) {
+          maxDiff = diff;
+          maxI = i;
+          maxJ = j;
+          
         }
       }
     }
 
-    if (maxDiff < 0) { // All switchable obeys the sort
+    if (maxDiff < 0) { 
+      std::cout << "------------------------SORT TAKE TIME:::: " << timer.count() << "\n\n";
+      std::cout << "cnt=" << cnt << "\n" << std::flush;
+      std::cout << "pruned=" << pruned << "\n" << std::flush;
+      std::cout << "added=" << added << "\n" << std::flush;
       return adg;
     } else {
       ADG copy = copy_ADG(adg);
@@ -101,12 +107,24 @@ ADG exploreNode(priority_queue<Node, vector<Node>, Compare> pq) {
 
       if (check_cycle_nonSwitchable(graph, maxI)) { // Prune node
         free_graph(graph);
+        pruned += 1;
       } else {
+        vector<int>* newts_tv_init = nullptr;
+        vector<int>* newts_vt_init = nullptr;
+        sortResult newInitResult = make_pair(newts_tv_init, newts_vt_init);
+
         vector<int>* newts_tv;
         vector<int>* newts_vt;
-        tie(newts_tv, newts_vt) = topologicalSort(graph, currents);
+        
+        auto start = high_resolution_clock::now();
+        tie(newts_tv, newts_vt) = topologicalSort(graph, newInitResult, &currents);
+        auto stop = high_resolution_clock::now();
+        auto duration = duration_cast<microseconds>(stop - start);
+        timer += duration;
+
         int val = heuristic(adg, newts_tv);
-        pq.push(make_tuple(adg, val));
+        pq.push(make_tuple(adg, val, *newts_vt));
+        added += 1;
       }
 
       // Backward 
@@ -115,25 +133,58 @@ ADG exploreNode(priority_queue<Node, vector<Node>, Compare> pq) {
       // Fix the edge
       int backI = maxJ+1;
       int backJ = maxI-1;
-      assert((*ts_vt)[backJ] > (*ts_vt)[backI]); // (should obey the original sort)
 
-      rem_type2_switchable_edge(copyGraph, backI, backJ);
+      rem_type2_switchable_edge(copyGraph, maxI, maxJ);
       set_type2_nonSwitchable_edge(copyGraph, backI, backJ);
 
       if (check_cycle_nonSwitchable(copyGraph, backI)) { // Prune node
         free_graph(copyGraph);
       } else {
-        int val = heuristic(copy, ts_tv);
-        pq.push(make_tuple(copy, val));
+        vector<int>* newts_tv_init = nullptr;
+        vector<int>* newts_vt_init = nullptr;
+        sortResult newInitResult = make_pair(newts_tv_init, newts_vt_init);
+
+        vector<int>* newts_tv;
+        vector<int>* newts_vt;
+
+        auto start = high_resolution_clock::now();
+        tie(newts_tv, newts_vt) = topologicalSort(copyGraph, newInitResult, &currents);
+        auto stop = high_resolution_clock::now();
+        auto duration = duration_cast<microseconds>(stop - start);
+        timer += duration;
+
+        int val = heuristic(copy, newts_tv);
+        pq.push(make_tuple(copy, val, *newts_vt));
+        added += 1;
       }
     }
   }
+  std::cout << "cnt=" << cnt << "\n" << std::flush;
+  std::cout << "pruned=" << pruned << "\n" << std::flush;
+  std::cout << "added=" << added << "\n" << std::flush;
   throw invalid_argument("no solution found");
 }
 
 ADG Astar(ADG adg) {
   priority_queue<Node, vector<Node>, Compare> pq;
-  pq.push(make_tuple(adg, 0));
+
+  int agentCnt = get_agentCnt(adg);
+  Graph graph = get<0>(adg);
+
+  vector<int> currents;
+  for (int agent = 0; agent < agentCnt; agent ++) {
+    int current = compute_vertex(get<2>(adg), agent, 0);
+    currents.push_back(current);
+  }
+  
+  vector<int>* ts_tv_init = nullptr;
+  vector<int>* ts_vt_init = nullptr;
+  sortResult initResult = make_pair(ts_tv_init, ts_vt_init);
+
+  sortResult result = topologicalSort(graph, initResult, &currents);
+  vector<int>* ts_vt = result.second;
+
+  pq.push(make_tuple(adg, 0, *ts_vt));
   return exploreNode(pq);
 }
 
@@ -153,7 +204,13 @@ int main(int argc, char** argv) {
     }
   }
   
+  microseconds timer(0);
+  auto start = high_resolution_clock::now();
   ADG res = Astar(adg);
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<microseconds>(stop - start);
+  timer += duration;
+  std::cout << "------------------------REPLANNING TAKE TIME:::: " << timer.count() << "\n\n";
   std::cout<<"finished, result graph: \n";
 
   Simulator simulator_res(res);

@@ -17,6 +17,8 @@ int get_totalStateCnt(ADG &adg);
 
 int compute_vertex(vector<int> &accum_stateCnts, int agent, int state);
 
+pair<int, int> compute_agent_state(vector<int> &accum_stateCnts, int v);
+
 // Directed
 bool is_type2_edge(ADG &adg, int agent1, int state1, int agent2, int state2);
 
