@@ -373,6 +373,13 @@ void free_graph(Graph& graph){
     return;
 }
 
+void free_nonSwitchable(Graph& graph){
+    delete[] get<0>(graph).first;
+    delete[] get<0>(graph).second;
+
+    return;
+}
+
 void print_graph(Graph& graph){
     
     subGraph& type1G = get<0>(graph);
@@ -703,25 +710,33 @@ bool check_cycle_nonSwitchable_old(Graph& graph, int start){
     return check_cycle_NS_helper_old(graph, start, visited, parents);
 }
 
+bool isCyclicUtil(Graph &graph, int v, vector<bool> &visited,
+                         vector<bool> &recStack)
+{
+    if (visited[v] == false) {
+        visited[v] = true;
+        recStack[v] = true;
+ 
+        set<int> neighbors = get_nonSwitchable_outNeib(graph, v);
+        for (auto i = neighbors.begin(); i != neighbors.end(); i++){
+            if (!visited[*i]
+                && isCyclicUtil(graph, *i, visited, recStack))
+                return true;
+            else if (recStack[*i])
+                return true;
+        }
+    }
+ 
+    recStack[v] = false;
+    return false;
+}
+
 bool check_cycle_dfs(Graph& graph, int start) {
-    stack<int> bag;
     int graph_size = get<3>(graph);
     vector<bool> visited (graph_size, false);
+    vector<bool> recStack (graph_size, false);
 
-    bag.push(start);
-    while(bag.size() != 0) {
-        int vertex = bag.top();
-        bag.pop();
-        if (visited[vertex] == true){
-            return true;
-        }
-        visited[vertex] = true;
-        set<int> neighbors = get_nonSwitchable_outNeib(graph, vertex);
-        for (auto itr = neighbors.begin(); itr != neighbors.end(); itr++){
-            bag.push(*itr);
-        }
-    }  
-    return false;
+    return isCyclicUtil(graph, start, visited, recStack);
 }
 
 void build_time_arr(Graph& graph, vector<bool>& visited, vector<int>* sorted_vertecies, vector<int>* sorted_times, int current, int& time) {
@@ -752,7 +767,6 @@ sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_st
     vector<int>* vertex_arr = state.second;
 
     if(time_arr == nullptr && vertex_arr == nullptr && agent_starts != nullptr) {
-        cout<<"begin sort"<<endl;
         vector<int> starts = *agent_starts;
 
         vector<int>* sorted_vertecies = new vector<int>;
@@ -768,7 +782,6 @@ sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_st
         }
 
         sortResult ret_val = make_pair(sorted_vertecies, sorted_times);
-        // std::cout << "returned\n";
         return ret_val;
     }
     else if(agent_starts == nullptr) {
@@ -784,345 +797,3 @@ sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_st
 
     
 }
-
-// Slack Example 1.
-int main() {
-
-    Graph graph = new_graph(26);
-
-    set_type1_edge(graph, 0, 1);
-    set_type1_edge(graph, 1, 2);
-    set_type1_edge(graph, 2, 3);
-    set_type1_edge(graph, 3, 4);
-    set_type1_edge(graph, 4, 5);
-    set_type1_edge(graph, 5, 6);
-    set_type1_edge(graph, 6, 7);
-
-    set_type1_edge(graph, 8, 9);
-    set_type1_edge(graph, 9, 10);
-    set_type1_edge(graph, 10, 11);
-    set_type1_edge(graph, 11, 12);
-    set_type1_edge(graph, 12, 13);
-    set_type1_edge(graph, 13, 14);
-
-    set_type1_edge(graph, 15, 16);
-
-    set_type1_edge(graph, 17, 18);
-    set_type1_edge(graph, 18, 19);
-    set_type1_edge(graph, 19, 20);
-    set_type1_edge(graph, 20, 21);
-    set_type1_edge(graph, 21, 22);
-    set_type1_edge(graph, 22, 23);
-    set_type1_edge(graph, 23, 24);
-    set_type1_edge(graph, 24, 25);
-
-    set_type2_nonSwitchable_edge(graph, 8, 0);
-    set_type2_nonSwitchable_edge(graph, 13, 24);
-
-    set_type2_nonSwitchable_edge(graph, 17, 6);
-    set_type2_nonSwitchable_edge(graph, 18, 7);
-    set_type2_nonSwitchable_edge(graph, 19, 15);
-    set_type2_nonSwitchable_edge(graph, 20, 16);
-    set_type2_nonSwitchable_edge(graph, 25, 14);
-
-    vector<int> starts;
-    starts.push_back(0);
-    starts.push_back(8);
-    starts.push_back(15);
-    starts.push_back(17);
-    sortResult tuple = topologicalSort(graph, make_pair(nullptr, nullptr), &starts, -1, -1);
-    vector<int> vertex_to_time = *(tuple.second);
-    vector<int> time_to_vertex = *(tuple.first);
-    
-    // print_graph_concise(graph);
-    // cout<<"\n"<<endl;
-    for(int i = 0; i < (vertex_to_time).size(); i++){
-        cout<<(vertex_to_time)[i]<<" ";
-    }
-    cout<<endl;
-
-    cout<<"\n"<<endl;
-    for(int i = 0; i < (time_to_vertex).size(); i++){
-        cout<<(time_to_vertex)[i]<<" ";
-    }
-    cout<<endl;
-
-    // cout<<check_cycle_nonSwitchable(graph, 13)<<endl;
-    // cout<<check_cycle_dfs(graph, 13)<<endl;
-
-    return 0;
-
-}
-
-// int main(){
-//     Graph graph = new_graph(15);
-
-//     set_type1_edge(graph, 0, 1);
-//     set_type1_edge(graph, 1, 2);
-//     set_type1_edge(graph, 2, 3);
-//     set_type1_edge(graph, 4, 5);
-//     set_type1_edge(graph, 5, 6);
-//     set_type1_edge(graph, 6, 7);
-//     set_type1_edge(graph, 7, 8);
-//     set_type1_edge(graph, 9, 10);
-//     set_type1_edge(graph, 10, 11);
-//     set_type1_edge(graph, 11, 12);
-//     set_type1_edge(graph, 12, 13);
-//     set_type1_edge(graph, 13, 14);
-
-//     set_type2_nonSwitchable_edge(graph, 3, 6);
-//     set_type2_nonSwitchable_edge(graph, 5, 11);
-//     set_type2_nonSwitchable_edge(graph, 14, 2);
-
-//     cout<<check_cycle_nonSwitchable(graph, 14)<<endl;
-//     cout<<check_cycle_dfs(graph, 14)<<endl;
-
-//     return 0;
-// }
-
-/*int main(){
-    Graph graph = new_graph(10);
-
-//     set_type1_edge(graph, 0, 1);
-//     set_type1_edge(graph, 1, 2);
-//     set_type1_edge(graph, 2, 3);
-//     set_type1_edge(graph, 4, 5);
-//     set_type1_edge(graph, 5, 6);
-//     set_type1_edge(graph, 6, 7);
-//     set_type1_edge(graph, 7, 8);
-//     set_type1_edge(graph, 8, 9);
-
-//     cout<<check_cycle_nonSwitchable(graph, 0)<<endl;
-//     cout<<check_cycle_nonSwitchable(graph, 1)<<endl;
-//     cout<<"\n\n"<<endl;
-
-    // Cycle
-    // set_type2_nonSwitchable_edge(graph, 1, 6);
-    // set_type2_nonSwitchable_edge(graph, 8, 2);
-    // cout<<check_cycle_nonSwitchable(graph, 8)<<endl;
-
-    // Not Cycle
-    // set_type2_nonSwitchable_edge(graph, 6, 1);
-    // set_type2_nonSwitchable_edge(graph, 8, 2);
-    // cout<<check_cycle_nonSwitchable(graph, 8)<<endl;
-
-    // Not Cycle
-    // set_type2_nonSwitchable_edge(graph, 6, 1);
-    // set_type2_nonSwitchable_edge(graph, 2, 8);
-    // cout<<check_cycle_nonSwitchable(graph, 2)<<endl;
-
-    // Not Cycle
-    // set_type2_nonSwitchable_edge(graph, 1, 6);
-    // set_type2_nonSwitchable_edge(graph, 2, 8);
-    // cout<<check_cycle_nonSwitchable(graph, 2)<<endl;
-
-    
-    
-}*/
-
-/*int main() {
-
-
-    Graph graph = new_graph(5);
-
-    cout<<"graphC1 from graph"<<endl;
-    Graph graphC1 = copy_graph(graph);
-
-    set_type1_edge(graphC1, 1, 4);
-    set_type2_nonSwitchable_edge(graphC1, 1, 3);
-    set_type2_switchable_edge(graphC1, 1, 2);
-
-    print_graph(graph);
-    print_graph(graphC1);
-
-    cout<<"graphC2 from graphC1"<<endl;
-    Graph graphC2 = copy_graph(graphC1);
-
-    set_type1_edge(graphC1, 3, 0);
-
-    print_graph(graphC1);
-    print_graph(graphC2);
-    
-
-}*/
-
-
-/* int main() {
-
-
-    Graph graph = new_graph(5);
-
-    set_type1_edge(graph, 0, 1);
-    set_type1_edge(graph, 1, 2);
-    set_type2_nonSwitchable_edge(graph, 0, 3);
-    set_type2_nonSwitchable_edge(graph, 3, 1);
-    set_type1_edge(graph, 4, 1);
-    set_type2_nonSwitchable_edge(graph, 2, 4);
-
-    print_graph(graph);
-
-    cout<<"\n"<<check_cycle_nonSwitchable(graph, 0);
-
-    rem_type2_nonSwitchable_edge(graph, 0, 3);
-    cout<<"\n\n"<<check_cycle_nonSwitchable(graph, 0);
-
-    return 0;
-
-}*/ 
-
-
-
-// int main(){
-
-//     cout<<"Testing Graph.cpp"<<endl;
-  
-//     Graph graph = new_graph(5);
-
-//     cout<<"Empty Graph"<<endl;
-//     print_graph(graph);
-
-//     // Basic
-//     cout<<"Basic"<<endl;
-//     set_type1_edge(graph, 1, 2);
-
-//     print_graph(graph);
-
-//     // Set up some type 1 edges
-//     cout<<"Set up some type 1 edges"<<endl;
-//     set_type1_edge(graph, 2, 4);
-//     set_type1_edge(graph, 3, 4);
-
-//     print_graph(graph);
-
-//     // Duplicate insert
-//     cout<<"Duplicate insert"<<endl;
-//     set_type1_edge(graph, 3, 4);
-//     set_type1_edge(graph, 1, 2);
-
-//     print_graph(graph);
-
-//     // Set up some type 2 Non-Switchable Edges
-//     cout<<"Set up some type 2 Non-Switchable Edges"<<endl;
-//     set_type2_nonSwitchable_edge(graph, 1, 4);
-//     set_type2_nonSwitchable_edge(graph, 0, 1);
-//     set_type2_nonSwitchable_edge(graph, 2, 0);
-
-//     print_graph(graph);
-
-//     // Set up some type 2 Switchable Edges
-//     cout<<"Set up some type 2 Switchable Edges"<<endl;
-//     set_type2_switchable_edge(graph, 4, 0);
-//     set_type2_switchable_edge(graph, 4, 2);
-
-//     print_graph(graph);
-    
-//     // Get Out Non-Switchable Edges
-//     cout<<"Get Out Non-Switchable Edges"<<endl;
-//     set<int> outNeibNS = get_nonSwitchable_outNeib(graph, 2);
-//     cout<<"\n"<<endl;
-//     for(auto itr = outNeibNS.begin(); itr != outNeibNS.end(); itr++){
-//         cout<<*itr<<" ";
-//     }
-//     cout<<"\n"<<endl;
-
-//     // Get In Non-Switchable Edges
-//     cout<<"Get In Non-Switchable Edges"<<endl;
-//     set<int> inNeibNS = get_nonSwitchable_inNeib(graph, 4);
-//     cout<<"\n"<<endl;
-//     for(auto itr = inNeibNS.begin(); itr != inNeibNS.end(); itr++){
-//         cout<<*itr<<" ";
-//     }
-//     cout<<"\n"<<endl;
-
-//     // Get copy of Out Switchable Edges
-//     cout<<"Get Out Switchable Edges"<<endl;
-//     set<int> outNeibSC = get_switchable_outNeib(graph, 4);
-//     cout<<"\n"<<endl;
-//     for(auto itr = outNeibSC.begin(); itr != outNeibSC.end(); itr++){
-//         cout<<*itr<<" ";
-//     }
-//     cout<<"\n"<<endl;
-
-//     // Get copy of In Switchable Edges
-//     cout<<"Get In Switchable Edges"<<endl;
-//     set<int> inNeibSC = get_switchable_inNeib(graph, 2);
-//     cout<<"\n"<<endl;
-//     for(auto itr = inNeibSC.begin(); itr != inNeibSC.end(); itr++){
-//         cout<<*itr<<" ";
-//     }
-//     cout<<"\n"<<endl;
-
-//     // Check copy status
-//     auto itr1 = outNeibSC.find(0);
-//     auto itr2 = inNeibSC.find(4);
-//     outNeibSC.erase(itr1);
-//     inNeibSC.erase(itr2);
-
-//     print_graph(graph);
-
-//     // Get no-copy of Out Switchable Edges
-//     cout<<"Get Out Switchable Edges"<<endl;
-//     set<int>& outNeibS = get_switchable_outNeib(graph, 4);
-//     cout<<"\n"<<endl;
-//     for(auto itr = outNeibS.begin(); itr != outNeibS.end(); itr++){
-//         cout<<*itr<<" ";
-//     }
-//     cout<<"\n"<<endl;
-
-//     // Get no-copy of In Switchable Edges
-//     cout<<"Get In Switchable Edges"<<endl;
-//     set<int>& inNeibS = get_switchable_inNeib(graph, 2);
-//     cout<<"\n"<<endl;
-//     for(auto itr = inNeibS.begin(); itr != inNeibS.end(); itr++){
-//         cout<<*itr<<" ";
-//     }
-//     cout<<"\n"<<endl;
-
-//     // Uncomment to test that memory is actually aliased
-//     /*itr1 = outNeibS.find(0);
-//     itr2 = inNeibS.find(4);
-//     outNeibS.erase(itr1);
-//     inNeibS.erase(itr2);
-
-//     print_graph(graph);
-//     */
-
-//     // Get Out Edges
-//     /*cout<<"Get Out Edges"<<endl;
-//     set<int> outNeib = get_outNeighbors(graph, 4);
-//     for(auto itr = outNeib.begin(); itr != outNeib.end(); itr++){
-//         cout<<*itr<<" ";
-//     }
-//     cout<<"\n"<<endl;
-
-//     // Get In Edges
-//     cout<<"Get In Edges"<<endl;
-//     set<int> inNeib = get_inNeighbors(graph, 4);
-//     for(auto itr = inNeib.begin(); itr != inNeib.end(); itr++){
-//         cout<<*itr<<" ";
-//     }
-//     cout<<"\n"<<endl;
-
-//     // Remove type 1 edges
-//     cout<<"Remove type 1 edges"<<endl;
-//     rem_type1_edge(graph, 3, 4);
-
-//     print_graph(graph);
-
-//     // Remove type 2 Non-Switchable Edges
-//     cout<<"Remove type 2 Non-Switchable Edges"<<endl;
-//     rem_type2_nonSwitchable_edge(graph, 0, 1);
-
-//     print_graph(graph);
-
-//     // Remove type 2 Switchable Edges
-//     cout<<"Remove type 2 Switchable Edges"<<endl;
-//     rem_type2_switchable_edge(graph, 4, 2);
-
-//     print_graph(graph);
-// */
-// //    return 0;
-
-// }
-
-

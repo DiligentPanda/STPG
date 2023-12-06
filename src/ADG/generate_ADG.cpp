@@ -61,11 +61,13 @@ tuple<Paths, vector<int>> parse_soln(char* fileName) {
       }
     }
     file.close();
+  } else {
+    exit(0);
   }
   return make_tuple(paths, accum_stateCnts);
 }
 
-void add_type1_edges(Graph graph, Paths paths, vector<int> accum_stateCnts) {
+void add_type1_edges(Graph &graph, Paths &paths, vector<int> &accum_stateCnts) {
   int agentCnt = paths.size();
   for (int agent = 0; agent < agentCnt; agent++) {
     Path path = paths[agent];
@@ -82,7 +84,7 @@ void add_type1_edges(Graph graph, Paths paths, vector<int> accum_stateCnts) {
   }
 }
 
-void add_type2_edges(Graph graph, Paths paths, vector<int> accum_stateCnts) {
+void add_type2_edges(Graph &graph, Paths &paths, vector<int> &accum_stateCnts) {
   int agentCnt = paths.size();
   // Looping through agents
   for (int agent1 = 0; agent1 < agentCnt; agent1++) {
@@ -100,15 +102,30 @@ void add_type2_edges(Graph graph, Paths paths, vector<int> accum_stateCnts) {
           pair<Location, int> pair2 = path2[state2];
           Location location2 = get<0>(pair2);
 
-          if (same_locations(location1, location2)) {
+          int time1 = get<1>(pair1);
+          int time2 = get<1>(pair2);
+
+          if (same_locations(location1, location2) && (time1 >= 0) && (time2 >= 0)) {
             // Add a type2 edge
             int vertex1 = compute_vertex(accum_stateCnts, agent1, state1);
             int vertex2 = compute_vertex(accum_stateCnts, agent2, state2);
 
-            int time1 = get<1>(pair1);
-            int time2 = get<1>(pair2);
-            if (time1 < time2) set_type2_switchable_edge(graph, vertex1+1, vertex2);
-            else set_type2_switchable_edge(graph, vertex2+1, vertex1);
+            // Set edges -- fix the starting out-edges and ending in-edges
+            if (time1 < time2) {
+              if ((state1 == 0) || (state2 == stateCnt2 - 1)) {
+                set_type2_nonSwitchable_edge(graph, vertex1+1, vertex2);
+              } else {
+                set_type2_switchable_edge(graph, vertex1+1, vertex2);
+              }
+            }
+            else {
+              if ((state2 == 0) || (state1 == stateCnt1 - 1)) {
+                set_type2_nonSwitchable_edge(graph, vertex2+1, vertex1);
+              } else {
+                set_type2_switchable_edge(graph, vertex2+1, vertex1);
+              }
+            }
+
           }
         }
       }
@@ -123,6 +140,48 @@ ADG construct_ADG(char* fileName) {
   int sumStates = accum_stateCnts.back();
 
   Graph graph = new_graph(sumStates);
+  add_type1_edges(graph, paths, accum_stateCnts);
+  add_type2_edges(graph, paths, accum_stateCnts);
+
+  return make_tuple(graph, paths, accum_stateCnts);
+}
+
+ADG construct_delayed_ADG(ADG &adg, int delay, int delayed_agent, int delayed_state) {
+  int agentCnt = get_agentCnt(adg);
+  Paths paths;
+  vector<int> accum_stateCnts;
+
+  for (int agent = 0; agent < agentCnt; agent ++) {
+    if (agent != delayed_agent) {
+      paths.push_back((get<1>(adg))[agent]);
+    } else {
+      Path &ori_path = (get<1>(adg))[agent];
+      Path new_path;
+
+      for (int state = 0; state <= delayed_state; state ++) {
+        new_path.push_back(ori_path[state]);
+      }
+      pair<Location, int> repeat = make_pair(get<0>(new_path.back()), -1);
+      for (int state = 0; state < delay; state ++) {
+        new_path.push_back(repeat);
+      }
+      int ori_size = ori_path.size();
+      for (int state = delayed_state + 1; state < ori_size; state ++) {
+        new_path.push_back(ori_path[state]);
+      }
+
+      paths.push_back(new_path);
+    }
+
+    if (agent < delayed_agent) {
+      accum_stateCnts.push_back((get<2>(adg))[agent]);
+    } else {
+      accum_stateCnts.push_back((get<2>(adg))[agent] + delay);
+    }
+  }
+
+  Graph graph = new_graph(accum_stateCnts.back());
+
   add_type1_edges(graph, paths, accum_stateCnts);
   add_type2_edges(graph, paths, accum_stateCnts);
 

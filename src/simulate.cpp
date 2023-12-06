@@ -3,147 +3,103 @@
 
 #include "Algorithm/Astar.h"
 
-bool Simulator::amove(vector<int>& moved, int agent, int *timeSpent, int *delayer, int p, int d) {
-  if (moved[agent] == 1) {
-    return false;
-  }
-
-  moved[agent] = 1;
-  int state = states[agent];
-  if (state >= get_stateCnt(adg, agent) - 1) {
-    return false;
-  }
-  timeSpent[0] += 1;
-
-  if (delayer[0] == -1) // Not within a delay
-  {
-    random_device rd;  
-    mt19937 gen(rd());
-    uniform_int_distribution<> distrib(1, 100);
-    if (distrib(gen) <= p) {
-      delayer[0] = agent;
-      delayer[1] = d;
-    }
-  }
-
-  if (delayer[0] == agent && delayer[1] > 0) {
-    delayer[1] --;
-    return false;
-  }
-
-  int next_state = state + 1;
-
-  vector<pair<int, int>> dependencies_ns = get_nonSwitchable_inNeibPair(adg, agent, next_state);
-  vector<pair<int, int>> dependencies_s = get_switchable_inNeibPair(adg, agent, next_state);
-  for (pair<int, int> dependency: dependencies_ns) {
-    int dep_agent = get<0>(dependency);
-    int dep_state = get<1>(dependency);
-    
-    if (dep_agent != agent) {
-      if (dep_state > states[dep_agent]) {
-        return false;
-      } else if (dep_state == states[dep_agent]) {
-        if (!amove(moved, dep_agent, timeSpent, delayer, p, d)) {
-          return false;
-        }
-      }
-    }
-  }
-
-  for (pair<int, int> dependency: dependencies_s) {
-    int dep_agent = get<0>(dependency);
-    int dep_state = get<1>(dependency);
-    
-    if (dep_state > states[dep_agent]) {
-      return false;
-    } else if (dep_state == states[dep_agent]) {
-      if (!amove(moved, dep_agent, timeSpent, delayer, p, d)) {
-        return false;
-      }
-    }
-    assert(get_type2_nonSwitchable_edge(get<0>(adg), compute_vertex(get<2>(adg), dep_agent, dep_state), compute_vertex(get<2>(adg), agent, next_state)));
-  }
-
-  // Going to move. fix all outgoing switchable edges
-  for (pair<int, int> dependency: get_switchable_outNeibPair(adg, agent, next_state)) {
-    int dep_agent = get<0>(dependency);
-    int dep_state = get<1>(dependency);
-    fix_type2_edge(adg, agent, next_state, dep_agent, dep_state);
-  }
-
-  // All nonSwitchable dependencies resolved
-  timeSpent[1] += 1;
-  states[agent] += 1;
-  return true;
-}
-
-int Simulator::astep(int p, int d, int *delayer) {
-  int timeSpent[2] = {0};
+int Simulator::step_wdelay(int p, bool *delay_mark, int *delayed_agent) {
   int agentCnt = get_agentCnt(adg);
-  vector<int> moved(agentCnt, 0);
+
+  random_device rd;  
+  mt19937 gen(rd());
+  uniform_int_distribution<> distrib(1, 100);
+
+  vector<int> movable(agentCnt, 0);
+  int timeSpent = checkMovable(movable);
+  int moveCnt = 0;
+
+  if (distrib(gen) <= p) {
+    vector<int> candidates;
+    for (int agent = 0; agent < agentCnt; agent++) {
+      if (movable[agent] == 1) {
+        candidates.push_back(agent);
+      }
+    }
+    if (candidates.size() > 0) {
+      uniform_int_distribution<> distrib_agent(0, candidates.size()-1);
+      *delayed_agent = candidates[distrib_agent(gen)];
+      *delay_mark = true;
+      return 0;
+    }
+  }
 
   for (int agent = 0; agent < agentCnt; agent++) {
-    amove(moved, agent, timeSpent, delayer, p, d);
+    if (movable[agent] == 1) {
+      states[agent] += 1;
+      moveCnt += 1;
+    }
   }
-
-  if (timeSpent[1] == 0 && timeSpent[0] != 0) {
+  if (moveCnt == 0 && timeSpent != 0) {
     return -1;
   }
-  return timeSpent[0];
+  return timeSpent;
 }
 
-void print_for_replanning(ADG adg, vector<int> states, ofstream &outFile) {
-  outFile << "version 1"<< std::endl;;
-  for (int agent = 0; agent < get_agentCnt(adg); agent ++) {
-    Location current = get_state_target(adg, agent, states[agent]);
-    int i1 = get<1>(current);
-    int j1 = get<0>(current);
-    Location goal = get_state_target(adg, agent, get_stateCnt(adg, agent) - 1);
-    int i2 = get<1>(goal);
-    int j2 = get<0>(goal);
-    outFile << "0\trandom-32-32-20.map\t32\t32\t" << i1 << "\t" << j1 << "\t" << i2 << "\t" << j2 << "\t0.00"<< std::endl;;
-  }
-}
+int Simulator::simulate_wdelay(int p, int d, ofstream &outFile, int timeout, bool term_shortcut) {
+  int stepSpend = 1;
+  bool delay_mark = false;
+  int delayed_agent = -1;
 
-int Simulator::asimulate(int p, int d, ofstream &outFile) {
-  int stepSpend = 0;
-  int totalSpend = 0;
-  int delayer[2] = {-1, 0};
-
-  stepSpend = astep(p, d, delayer);
   while (stepSpend != 0) {
-    if (delayer[0] >= 0 && delayer[1] == 0) // a delay just ends
+    stepSpend = step_wdelay(p, &delay_mark, &delayed_agent);
+    if (delay_mark) // a delay just happened
     {
-      Simulator simulator_replan(adg, states);
-      ADG adg_copy = copy_ADG(adg);
-      Simulator simulator_original(adg_copy, states);
-      set_switchable_nonSwitchable(get<0>(simulator_original.adg));
-      int originalTime = heuristic(simulator_original);
-      std::cout << "original time spend = " << originalTime << "\n\n";
+      // print_for_replanning(adg, states, outFile);
 
-      // TODO: NOW TESTING FOR ONLY DELAY ONCE!!!!
-      microseconds timer(0);
+      int delayed_state = states[delayed_agent];
+
+      microseconds timer_constructADG(0);
       auto start = high_resolution_clock::now();
-      ADG replanned_adg = Astar(simulator_replan);
+      ADG adg_delayed = construct_delayed_ADG(adg, d, delayed_agent, delayed_state);
       auto stop = high_resolution_clock::now();
-      auto duration = duration_cast<microseconds>(stop - start);
-      timer += duration;
-      std::cout << "------------------------REPLANNING TAKE TIME:::: " << timer.count() << "\n\n";
-      
-      Simulator simulator_res(replanned_adg, states);
-      int timeSum = heuristic(simulator_res);
-      std::cout << "solution time spend = " << timeSum << "\n\n";
+      timer_constructADG += duration_cast<microseconds>(stop - start);
 
-      print_for_replanning(adg, states, outFile);
-      delayer[0] = -1; // set to indicate not immediately after a delay
+      ADG adg_delayed_copy = copy_ADG(adg_delayed);
+      set_switchable_nonSwitchable(get<0>(adg_delayed_copy));
+      Simulator simulator_original(adg_delayed_copy);
+      int originalTime = simulator_original.print_soln("ori.txt");
+      Simulator simulator_ori_trunc(adg_delayed_copy, states);
+      int oriTime_trunc = simulator_ori_trunc.print_soln("ori.txt");
+
+      microseconds timer(0);
+      start = high_resolution_clock::now();
+      Astar search(timeout, term_shortcut);
+      ADG replanned_adg = search.startExplore(adg_delayed);
+      stop = high_resolution_clock::now();
+      timer += duration_cast<microseconds>(stop - start);
+
+      if (duration_cast<seconds>(timer).count() >= timeout) {
+        outFile << timer.count() << "," << 
+        timer.count() + timer_constructADG.count() << ",,,,,";
+        search.print_stats(outFile);
+        exit(0);
+      }
+      
+      Simulator simulator_res(replanned_adg);
+      int timeSum = simulator_res.print_soln("out.txt");
+      Simulator simulator_res_trunc(replanned_adg, states);
+      int timeSum_trunc = simulator_res_trunc.print_soln("out.txt");
+
+      outFile << timer.count() << "," << 
+      timer.count() + timer_constructADG.count() << "," << 
+      originalTime << "," <<
+      timeSum << "," << 
+      oriTime_trunc << "," <<
+      timeSum_trunc << ",";
+      
+      search.print_stats(outFile);
       exit(0);
     }
-
     if (stepSpend < 0) return -1; // stuck
-    totalSpend += stepSpend;
-    stepSpend = astep(p, d, delayer);
   }
-  return totalSpend;
+  std::cout << "no delay happened\n";
+  return 0;
 }
 
 int main(int argc, char** argv) {
@@ -151,25 +107,25 @@ int main(int argc, char** argv) {
   int p = atoi(argv[2]);
   int d = atoi(argv[3]);
   const char* outFileName = argv[4];
+  int print_header = atoi(argv[5]);
+  int timeout = atoi(argv[6]);
+  int term_choice = atoi(argv[7]);
 
+  bool term_shortcut = (term_choice == 1);
   ADG adg = construct_ADG(fileName);
-  for (int agent = 0; agent < get_agentCnt(adg); agent++) {
-    for (pair<int, int> outNeigb: get_switchable_outNeibPair(adg, agent, 0)) {
-      // Fix starting edge
-      fix_type2_edge(adg, agent, 0, get<0>(outNeigb), get<1>(outNeigb));
-    }
-
-    for (pair<int, int> inNeigb: get_switchable_inNeibPair(adg, agent, get_stateCnt(adg, agent)-1)) {
-      // Fix ending edge
-      fix_type2_edge(adg, get<0>(inNeigb), get<1>(inNeigb), agent, get_stateCnt(adg, agent)-1);
-    }
-  }
 
   ofstream outFile;
-  outFile.open(outFileName);
+  outFile.open(outFileName, ios::app);
   if (outFile.is_open()) {
+    if (print_header) {
+      outFile << "search time,search + construct time,original total cost,"	
+      << "solution total cost,original remain cost,solution remain cost,"
+      << "explored node,pruned node,added node,heuristic time,branch time,"
+      << "sort time,priority queue time,copy&free graph time,dfs time" << endl;
+    }
+
     Simulator simulator(adg);
-    simulator.asimulate(p, d, outFile);
+    simulator.simulate_wdelay(p, d, outFile, timeout, term_shortcut);
     outFile.close();
   }
   return 0;
