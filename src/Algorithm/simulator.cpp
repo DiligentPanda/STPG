@@ -39,6 +39,64 @@ int Simulator::checkMovable(vector<int>& movable) {
   return timeSpent;
 }
 
+bool Simulator::incident_to_switchable(int *v_from, int *v_to) {
+  int agentCnt = get_agentCnt(adg);
+  Graph &graph = get<0>(adg);
+  for (int agent = 0; agent < agentCnt; agent++) {
+    int state = states[agent];
+    if (state >= get_stateCnt(adg, agent) - 1) continue;
+
+    state += 1;
+    set<int>& inNeib = get_switchable_inNeib(graph, compute_vertex(get<2>(adg), agent, state));
+    for (auto it = inNeib.begin(); it != inNeib.end(); it++) {
+      int from = *it;
+      *v_from = from;
+      *v_to = compute_vertex(get<2>(adg), agent, state);
+      return true;
+    }
+
+    if (state >= get_stateCnt(adg, agent) - 1) continue;
+    state += 1;
+    set<int>& outNeib = get_switchable_outNeib(graph, compute_vertex(get<2>(adg), agent, state));
+    for (auto it = outNeib.begin(); it != outNeib.end(); it++) {
+      int to = *it;
+      *v_to = to;
+      *v_from = compute_vertex(get<2>(adg), agent, state);
+      return true;
+    }
+  }
+  return false;
+}
+
+int Simulator::checkMovable(vector<int>& movable, vector<int>& haventStop) {
+  int timeSpent = 0;
+  int agentCnt = get_agentCnt(adg);
+  for (int agent = 0; agent < agentCnt; agent++) {
+    int state = states[agent];
+    if (state >= get_stateCnt(adg, agent) - 1) {
+      continue;
+    }
+    timeSpent += 1;
+    int next_state = state + 1;
+
+    vector<pair<int, int>> dependencies = get_nonSwitchable_inNeibPair(adg, agent, next_state);
+    movable[agent] = 1;
+    haventStop[agent] = 1;
+    for (pair<int, int> dependency: dependencies) {
+      int dep_agent = get<0>(dependency);
+      int dep_state = get<1>(dependency);
+      
+      if (dep_agent != agent) {
+        if (dep_state > states[dep_agent]) {
+          movable[agent] = 0;
+          break;
+        }
+      }
+    }
+  }
+  return timeSpent;
+}
+
 int Simulator::step(bool switchCheck) {
   int agentCnt = get_agentCnt(adg);
   vector<int> movable(agentCnt, 0);
@@ -53,7 +111,7 @@ int Simulator::step(bool switchCheck) {
   }
   if (moveCnt == 0 && timeSpent != 0) {
     std::cout << "err\n";
-    return -1;
+    exit(0);
   }
   return timeSpent;
 }
@@ -106,5 +164,18 @@ int Simulator::print_soln(const char* outFileName) {
     outFile.close();
   }
 
+  return totalSpend;
+}
+
+int Simulator::print_soln() {
+  int totalSpend = 0;
+  int stepSpend = 0;
+
+  stepSpend = step(false);
+  while (stepSpend != 0) {
+    totalSpend += stepSpend;
+    stepSpend = step(false);
+  }
+  
   return totalSpend;
 }

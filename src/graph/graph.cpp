@@ -373,6 +373,15 @@ void free_graph(Graph& graph){
     return;
 }
 
+void remove_all_switchable_edges(Graph& graph){
+    delete[] get<2>(graph).first;
+    delete[] get<2>(graph).second;
+
+    int n = get<3>(graph);
+    get<0>(get<2>(graph)) = new set<int>[n];
+    get<1>(get<2>(graph)) = new set<int>[n];
+}
+
 void free_nonSwitchable(Graph& graph){
     delete[] get<0>(graph).first;
     delete[] get<0>(graph).second;

@@ -23,6 +23,8 @@ typedef vector<Path> Paths;
 typedef tuple<Graph, Paths, vector<int>> ADG;
 typedef tuple<ADG, int, vector<int>*> Node;
 
+typedef tuple<ADG, int, int, vector<int>> slow_Node;
+
 
 #endif
 

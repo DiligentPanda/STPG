@@ -12,4 +12,4 @@ bool same_locations(Location location1, Location location2);
 
 ADG construct_ADG(char* fileName);
 
-ADG construct_delayed_ADG(ADG &adg, int delay, int delayed_agent, int delayed_state);
+ADG construct_delayed_ADG(ADG &adg, int dlow, int dhigh, vector<int> &delayed_agents, vector<int> &states, int *input_sw_cnt, ofstream &outFile_setup);

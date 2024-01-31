@@ -6,6 +6,8 @@
 
 #include "../graph/graph.h"
 #include "../types.h"
+#include <random>
+
 
 using namespace std;
 
