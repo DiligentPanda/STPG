@@ -1,4 +1,4 @@
-#include "Astar.h"
+#include "Algorithm/Astar.h"
 
 Astar::Astar() {
 }

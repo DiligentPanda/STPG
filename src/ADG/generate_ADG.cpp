@@ -1,4 +1,4 @@
-#include "generate_ADG.h"
+#include "ADG/generate_ADG.h"
 
 bool same_locations(Location location1, Location location2) {
   int i1 = location1.first;

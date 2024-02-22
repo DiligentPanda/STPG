@@ -1,5 +1,5 @@
-#include "ADG_utilities.h"
-#include "../types.h"
+#include "ADG/ADG_utilities.h"
+#include "types.h"
 
 int get_agentCnt(ADG &adg) {
   Paths &paths = get<1>(adg);

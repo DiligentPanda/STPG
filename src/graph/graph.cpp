@@ -1,6 +1,6 @@
 #include <stack>
 #include <algorithm>
-#include "graph.h"
+#include "graph/graph.h"
 
 using namespace std;
 
