@@ -47,6 +47,7 @@ bool Simulator::incident_to_switchable(int *v_from, int *v_to) {
     if (state >= get_stateCnt(adg, agent) - 1) continue;
 
     state += 1;
+    // get switchable type-2 edges from others pointing to this state
     set<int>& inNeib = get_switchable_inNeib(graph, compute_vertex(get<2>(adg), agent, state));
     for (auto it = inNeib.begin(); it != inNeib.end(); it++) {
       int from = *it;
@@ -56,7 +57,10 @@ bool Simulator::incident_to_switchable(int *v_from, int *v_to) {
     }
 
     if (state >= get_stateCnt(adg, agent) - 1) continue;
+    
+    
     state += 1;
+    // get switchable type-2 edges from this state pointing to others
     set<int>& outNeib = get_switchable_outNeib(graph, compute_vertex(get<2>(adg), agent, state));
     for (auto it = outNeib.begin(); it != outNeib.end(); it++) {
       int to = *it;
@@ -68,6 +72,7 @@ bool Simulator::incident_to_switchable(int *v_from, int *v_to) {
   return false;
 }
 
+// check if each agent is movable and doesn't arrive at its goal. haventStop=notArriveGoal
 int Simulator::checkMovable(vector<int>& movable, vector<int>& haventStop) {
   int timeSpent = 0;
   int agentCnt = get_agentCnt(adg);
@@ -141,6 +146,7 @@ int Simulator::print_soln(const char* outFileName) {
 
     stepSpend = step(false);
     while (stepSpend != 0) {
+      // output how many agents take actions at the step.
       outFile << "step=" << stepSpend << "\n";
       for (int agent = 0; agent < agentCnt; agent ++) {
         Location new_location = get<0>((paths[agent])[(states[agent])]);
@@ -154,6 +160,7 @@ int Simulator::print_soln(const char* outFileName) {
     }
 
     for (int agent = 0; agent < agentCnt; agent ++) {
+      // output each agent's modified path.
       outFile << "Agent " << agent << ": ";
       vector<Location> &expanded_path = expanded_paths[agent];
       for (Location location: expanded_path) {

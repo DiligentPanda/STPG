@@ -757,6 +757,7 @@ void build_time_arr(Graph& graph, vector<bool>& visited, vector<int>* sorted_ver
     // visit
     visited[current] = true;
 
+    // assign time to all successors first
     set<int> neighbors = get_nonSwitchable_outNeib(graph, current);
     for(auto itr = neighbors.begin(); itr != neighbors.end(); itr++){
         build_time_arr(graph, visited, sorted_vertecies, sorted_times, *itr, time);
@@ -769,6 +770,21 @@ void build_time_arr(Graph& graph, vector<bool>& visited, vector<int>* sorted_ver
     time--;
 }
 
+/* (incremental?) topological sort
+
+COMMENT(rivers): this is a recursive implementation, which might not be necessary. We can just count the in-/out-degree.
+TODO(rivers): it seems that the incremental version has not been implemented yet.
+
+input:
+    sortResult: (init) sorted restuls, including the following two arrays of the same size.
+        vertex global idx -> topological order array
+        topological order -> vertex global idx array 
+    agent_starts: current agent vertex local idxs
+    u: ?
+    v: ?
+return:
+    sortResult: see input sortResult
+*/ 
 sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_starts, int u, int v) {
     int graph_size = get<3>(graph);
 

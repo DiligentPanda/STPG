@@ -26,7 +26,8 @@ int Astar::calcTime(Simulator simulator) {
   return totalSpend;
 }
 
-
+// compute the longest path length from any current vertices to an agent's goal vertex.
+// the heuristic is the sum of the longest path length.
 int Astar::heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values) {
   Graph &graph = get<0>(adg);
 
@@ -129,6 +130,7 @@ ADG Astar::exploreNode() {
 
     int maxDiff, maxI, maxJ;
     auto start_branch = high_resolution_clock::now();
+    // maxI, maxJ returns a type 2 edge to branch (maxDiff is useless for now)
     tie(maxDiff, maxI, maxJ) = branch(graph, values);
     auto end_branch = high_resolution_clock::now();
     branchT += duration_cast<microseconds>(end_branch - start_branch);
@@ -152,6 +154,7 @@ ADG Astar::exploreNode() {
     termT += duration_cast<microseconds>(end_term - end_branch);
 
     if (terminate || ((duration_cast<seconds>(end_branch - start)).count() >= timeout)) {
+      // free all the search node in the priority queue.
       while (pq.size() > 0) {
         start_pq_pop = high_resolution_clock::now();
         Node* delete_node = pq.top();
@@ -171,6 +174,8 @@ ADG Astar::exploreNode() {
         end_pq_pop = high_resolution_clock::now();
         pqT += duration_cast<microseconds>(end_pq_pop - start_pq_pop);
       }
+
+      // return the current ADG by fix switchable edges to non-switchable.
       auto start_graph_free = high_resolution_clock::now();
       ADG res = copy_ADG(adg);
       free_underlying_graph(adg);
@@ -187,6 +192,8 @@ ADG Astar::exploreNode() {
       ADG copy = copy_ADG(adg);
       auto end_graph_copy = high_resolution_clock::now();
       copy_free_graphsT += duration_cast<microseconds>(end_graph_copy - start_graph_copy);
+
+      /* Following is the two branches. */
 
       // Forward
       // Fix the edge
@@ -295,6 +302,15 @@ ADG Astar::exploreNode() {
   throw invalid_argument("no solution found");
 }
 
+/*
+input:
+  states: current vertex idxs for all agents
+return:
+  terminate: true or false
+  v_from: the start of branching edge
+  v_to: the end of branching edge
+  g_delta: the increament in g value
+*/
 tuple<bool, int, int, int> Astar::slow_branch(ADG &adg, vector<int> *states) {
   // std::cout << "old states";
   // for (auto i: *states) {
@@ -503,16 +519,21 @@ ADG Astar::startExplore(ADG &adg, int input_sw_cnt) {
   vertex_cnt = get<3>(get<0>(adg));
   sw_edge_cnt = input_sw_cnt;
   // std::cout << "vertex_cnt = " << vertex_cnt << ", sw_edge_cnt = " << sw_edge_cnt << "\n";
+
+  /* Graph-Based Search */
   if (fast_version) {
     agentCnt = get_agentCnt(adg);
     Graph &graph = get<0>(adg);
 
     for (int agent = 0; agent < agentCnt; agent ++) {
+      // get current global vertex idx
       int current = compute_vertex(get<2>(adg), agent, 0);
       currents.push_back(current);
     }
     
+    // ts: topological sort, tv: topological order (time) -> vertex global idx
     vector<int>* ts_tv_init = nullptr;
+    // ts: topological sort, vt: vertex global idx -> topological order (time)
     vector<int>* ts_vt_init = nullptr;
     sortResult initResult = make_pair(ts_tv_init, ts_vt_init);
 
@@ -521,11 +542,14 @@ ADG Astar::startExplore(ADG &adg, int input_sw_cnt) {
     auto end_sort = high_resolution_clock::now();
     sortT += duration_cast<microseconds>(end_sort - start_sort);
 
+    // only keep the array from topological order (time) -> vertex global idx
     delete result.second;
     vector<int>* ts_tv = result.first;
-    vector<int>* node_values = new vector<int>(get<3>(graph), 0);
 
+    // initialize the array for longest path length from any current vertices to an agent's goal vertex.
+    vector<int>* node_values = new vector<int>(get<3>(graph), 0);
     auto start_heuristic = high_resolution_clock::now();
+    // compute the longest path length from any current vertices to an agent's goal vertex.
     int val = heuristic_graph(adg, ts_tv, node_values);
     auto end_heuristic = high_resolution_clock::now();
     heuristicT += duration_cast<microseconds>(end_heuristic - start_heuristic);
@@ -539,8 +563,11 @@ ADG Astar::startExplore(ADG &adg, int input_sw_cnt) {
     auto end_pq_push = high_resolution_clock::now();
     pqT += duration_cast<microseconds>(end_pq_push - start_pq_push);
 
+    // expand the node
     return exploreNode();
-  } else {
+  } 
+  /* Simulation-Based Search */
+  else {
     agentCnt = get_agentCnt(adg);
 
     slow_Node *root = new slow_Node;

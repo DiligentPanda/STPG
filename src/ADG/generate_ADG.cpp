@@ -205,6 +205,7 @@ ADG construct_delayed_ADG(ADG &adg, int dlow, int dhigh, vector<int> &delayed_ag
   Paths paths;
   vector<int> accum_stateCnts;
   
+  // TODO(rivers): it is a bad idea to generate random delay step here, should be put at the same place where whether to delay is decided.
   random_device rd;  
   mt19937 gen(rd());
   uniform_int_distribution<> distrib(dlow, dhigh);
@@ -223,6 +224,10 @@ ADG construct_delayed_ADG(ADG &adg, int dlow, int dhigh, vector<int> &delayed_ag
       for (int state = 0; state <= delayed_state; state ++) {
         new_path.push_back(ori_path[state]);
       }
+      // insert repeated current states for a multi-step delay.
+      // <Location, timestep>
+      // NOTE(rivers): it is not a bug if we don't specify the timestep here and change the timestep later.
+      // because now we still want to stick to the original plan.
       pair<Location, int> repeat = make_pair(get<0>(new_path.back()), -1);
       int delay = distrib(gen);
       outFile_setup << delay << "\n";
@@ -242,9 +247,11 @@ ADG construct_delayed_ADG(ADG &adg, int dlow, int dhigh, vector<int> &delayed_ag
 
   Graph graph = new_graph(accum_stateCnts.back());
 
+  // add dependencies from the old plan. We cannot directly copy because the idxs of some nodes are changed.
   add_type1_edges(graph, paths, accum_stateCnts);
   *input_sw_cnt = add_type2_edges_cnt(graph, paths, accum_stateCnts);
 
+  // set some switchable edges to non-swtichable because the reversed edge cannot point to a past state.
   for (int v = 0; v < get<3>(graph); v ++) {
     int agent, state;
     tie(agent, state) = compute_agent_state(accum_stateCnts, v);

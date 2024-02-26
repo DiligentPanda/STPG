@@ -6,6 +6,7 @@
 class Simulator {
   public:         
     ADG adg;
+    // how many states are visited by each agent. used to describe the execution state.
     vector<int> states;
     
     Simulator(ADG adg);

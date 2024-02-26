@@ -103,6 +103,7 @@ vector<pair<int, int>> get_switchable_outNeibPair(ADG &adg, int agent, int state
   return outNeighbors_pair;
 }
 
+// returns a vector of <agent_idx,state_idx>
 vector<pair<int, int>> get_nonSwitchable_inNeibPair(ADG &adg, int agent, int state) {
   Graph &graph = get<0>(adg);
   int v = compute_vertex(get<2>(adg), agent, state);

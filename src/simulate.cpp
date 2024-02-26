@@ -2,6 +2,8 @@
 
 #include "Algorithm/Astar.h"
 
+// print the state in which replanning (Switchable ADG optimization) happens.
+// The state include the current locations and target locations of all agents.
 void print_for_replanning(ADG &adg, vector<int> states, ofstream &outFile_path) {
   outFile_path << "version 1\n";
   int agentCnt = get_agentCnt(adg);
@@ -20,13 +22,16 @@ int Simulator::step_wdelay(int p, bool *delay_mark, vector<int> &delayed_agents)
   mt19937 gen(rd());
   uniform_int_distribution<> distrib(1, 1000);
 
+  // if dependencies are satisified, then an agent is movable
   vector<int> movable(agentCnt, 0);
+  // if an agent arrives its goal, then it has stopped.
   vector<int> haventStop(agentCnt, 0);
   int timeSpent = checkMovable(movable, haventStop);
   int moveCnt = 0;
 
   for (int agent = 0; agent < agentCnt; agent++) {
     if (haventStop[agent] == 1) {
+      // each agent is delayed independently
       if (distrib(gen) <= p) {
         delayed_agents[agent] = 1;
         *delay_mark = true;
@@ -34,19 +39,24 @@ int Simulator::step_wdelay(int p, bool *delay_mark, vector<int> &delayed_agents)
     }
   }
 
+  // if delayed
   if (*delay_mark) {
     return 0;
   }
 
   for (int agent = 0; agent < agentCnt; agent++) {
     if (movable[agent] == 1) {
+      // an agent moves to its next state if moveable
       states[agent] += 1;
       moveCnt += 1;
     }
   }
+  // if no agent can move but still cost time (namely, some agents haven't arrive their goals)
+  // this means a global deadlock happens.
   if (moveCnt == 0 && timeSpent != 0) {
     return -1;
   }
+  // return total time cost in this timestep.
   return timeSpent;
 }
 
@@ -58,14 +68,18 @@ int Simulator::simulate_wdelay(int p, int dlow, int dhigh, ofstream &outFile, of
 
   while (stepSpend != 0) {
     stepSpend = step_wdelay(p, &delay_mark, delayed_agents);
-    if (delay_mark) // a delay just happened
+    // if a delay just happened
+    // NOTE(rivers): multiple agents can be delayed independently at the same timestep.
+    if (delay_mark)
     {
       print_for_replanning(adg, states, outFile_path);
       outFile_path.close();
       // int delayed_state = states[delayed_agent];
 
+      // switchable edge count
       int input_sw_cnt;
 
+      // construct the delayed ADG by inserting dummy nodes
       microseconds timer_constructADG(0);
       auto start = high_resolution_clock::now();
       ADG adg_delayed = construct_delayed_ADG(adg, dlow, dhigh, delayed_agents, states, &input_sw_cnt, outFile_setup);
@@ -75,13 +89,17 @@ int Simulator::simulate_wdelay(int p, int dlow, int dhigh, ofstream &outFile, of
 
       ADG adg_delayed_copy = copy_ADG(adg_delayed);
       set_switchable_nonSwitchable(get<0>(adg_delayed_copy));
+      // simulate from the initial state
       Simulator simulator_original(adg_delayed_copy);
       int originalTime = simulator_original.print_soln();
+      // simulate from the current state
       Simulator simulator_ori_trunc(adg_delayed_copy, states);
       int oriTime_trunc = simulator_ori_trunc.print_soln();
 
+      // make a copy of delayed ADG for slow search later
       ADG adg_delayed_slow = copy_ADG(adg_delayed);
 
+      /* [start] Optimize Switchable ADG use graph-based search */
       microseconds timer(0);
       start = high_resolution_clock::now();
       Astar search(timeout, true);
@@ -109,7 +127,9 @@ int Simulator::simulate_wdelay(int p, int dlow, int dhigh, ofstream &outFile, of
       timeSum_trunc << ",";
       
       search.print_stats(outFile);
+      /* [ end ] Optimize Switchable ADG use graph-based search */
 
+      /* [start] Optimize Switchable ADG use simulation-based search */
       microseconds timer_slow(0);
       start = high_resolution_clock::now();
       Astar search_slow(timeout, false);
@@ -138,6 +158,8 @@ int Simulator::simulate_wdelay(int p, int dlow, int dhigh, ofstream &outFile, of
       
       search_slow.print_stats(outFile_slow);
       exit(0);
+      /* [ end ] Optimize Switchable ADG use simulation-based search */
+
     }
     if (stepSpend < 0) return -1; // stuck
   }
@@ -146,16 +168,25 @@ int Simulator::simulate_wdelay(int p, int dlow, int dhigh, ofstream &outFile, of
 }
 
 int main(int argc, char** argv) {
+  // mapf path file
   char* fileName = argv[1];
+  // delay probablity
   int p = atoi(argv[2]);
+  // lower bound of delay length
   int dlow = atoi(argv[3]);
+  // upper bound of delay length
   int dhigh = atoi(argv[4]);
+  // stats for graph-based module
   const char* outFileName = argv[5];
+  // stats for execution-based module
   const char* outFileName_slow = argv[6];
+  // output file for the start and goal locations when a delay happens
   const char* outFileName_path = argv[7];
+  // ? output file for the index of the delayed agents and the length of the delay
   const char* outFileName_setup = argv[8];
   int timeout = 90;
 
+  // construct ADG from paths
   ADG adg = construct_ADG(fileName);
 
   ofstream outFile;
