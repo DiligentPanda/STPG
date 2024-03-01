@@ -1,0 +1,2 @@
+./build/CBS-K -m /home/rivers/projects/Multi-Agent-via-Switchable-ADG/example/map/random-32-32-10.map -a /home/rivers/projects/Multi-Agent-via-Switchable-ADG/example/scen/scen-even/random-32-32-10-even-1.scen \
+-o ./test -s CBSH-RM -t 90 --kDelay 1 --diff-k --screen 0 --corridor True --target True --shrink -k 50 --ignore-train --printPath 
