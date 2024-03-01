@@ -1014,6 +1014,29 @@ void ICBSSearch::printPaths() const
 	}
 }
 
+
+void ICBSSearch::writePaths(const string & file_path) const
+{
+    ofstream out(file_path, std::ofstream::out); 
+
+    if (!out) {
+        std::cout<<"failed to write to "<<file_path<<std::endl;
+    }
+
+	for (int i = 0; i < num_of_agents; i++)
+	{
+		out << "Agent " << i <<": ";
+		for (int t = 0; t < paths[i]->size(); t++)
+			out <<"(" << paths[i]->at(t).location / num_col << "," << paths[i]->at(t).location % num_col << ")->";
+		out << std::endl;
+	}
+
+    out.close();
+}
+
+
+
+
 bool ICBSSearch::isValidTrain()
 {
     bool valid = true;

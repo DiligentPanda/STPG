@@ -141,7 +141,7 @@ elseif(APPLE)
 	set(Boost_USE_STATIC_RUNTIME OFF)
 
 	# Other boost packages still use normal boost library
-	FIND_PACKAGE(Boost REQUIRED COMPONENTS system program_options thread python3)
+	FIND_PACKAGE(Boost REQUIRED COMPONENTS system program_options thread python)
 	include_directories(${Boost_INCLUDE_DIRS})
 
 #	# Find py-boost include dir and py-boost lib

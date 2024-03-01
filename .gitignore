@@ -1,7 +1,8 @@
 .vscode/
 build/
 output/
-out.txt
+out*.txt
+path*.txt
 /test*
 
 # Prerequisites

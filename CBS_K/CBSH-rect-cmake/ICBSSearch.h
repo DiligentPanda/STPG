@@ -113,6 +113,7 @@ public:
 	// print
 	void printPaths() const;
 	void printPaths(Path& path) const;
+	void writePaths(const string & s) const;
 
 
 

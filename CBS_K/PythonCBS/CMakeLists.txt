@@ -129,7 +129,7 @@ elseif(APPLE)
 	set(Boost_USE_STATIC_RUNTIME OFF)
 
 	# Other boost packages still use normal boost library
-	FIND_PACKAGE(Boost REQUIRED COMPONENTS system program_options thread python3)
+	FIND_PACKAGE(Boost REQUIRED COMPONENTS system program_options thread python)
 	include_directories(${Boost_INCLUDE_DIRS})
 
 #	# Find py-boost include dir and py-boost lib
@@ -176,7 +176,7 @@ else()
 		SET(Boost_USE_STATIC_LIBS OFF)
 		SET(Boost_USE_MULTITHREADED ON)
 		SET(Boost_USE_STATIC_RUNTIME OFF)
-		FIND_PACKAGE(Boost REQUIRED COMPONENTS system program_options python3)
+		FIND_PACKAGE(Boost REQUIRED COMPONENTS system program_options python)
 		INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
 
 		TARGET_LINK_LIBRARIES(PythonCBS ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})

@@ -49,6 +49,7 @@ int main(int argc, char** argv)
 		("pairAnalysis",po::value<int>(),"perform 2 agent analysis")
 		("printFailedPair","print mdd and constraints for failed pair")
 		("printPath", "print path to stdout")
+		("writePath",po::value<std::string>()->default_value(""),"the path of a file to write paths")
 
 
             ;
@@ -150,6 +151,11 @@ int main(int argc, char** argv)
 
 	if (vm.count("printPath")){
 		icbs.printPaths();
+	}
+
+	const string & write_path=vm["writePath"].as<string>();
+	if (write_path.size()!=0) {
+		icbs.writePaths(write_path);
 	}
 
     if(vm.count("statistic")){
