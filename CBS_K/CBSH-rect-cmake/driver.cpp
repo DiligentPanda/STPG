@@ -17,6 +17,7 @@
 
 #include <boost/program_options.hpp>
 #include<boost/tokenizer.hpp>
+#include <chrono>
 
 int main(int argc, char** argv) 
 {
@@ -50,6 +51,7 @@ int main(int argc, char** argv)
 		("printFailedPair","print mdd and constraints for failed pair")
 		("printPath", "print path to stdout")
 		("writePath",po::value<std::string>()->default_value(""),"the path of a file to write paths")
+		("exitOnNoSolution",po::value<bool>()->default_value(false),"if there is no solution, return -1")
 
 
             ;
@@ -142,6 +144,17 @@ int main(int argc, char** argv)
 	
 	bool res;
 	res = icbs.runICBSSearch();
+
+	if (!res && vm["exitOnNoSolution"].as<bool>()) {
+		if (icbs.isTimeout()) {
+			cout<<"Solution not found. Timeout: "<<vm["cutoffTime"].as<float>()<<" seconds"<<std::endl;
+		}
+		else if (!res) {
+			cout<<"Solution not found. No Solution?"<<std::endl;
+		}
+		return -1;
+	}
+
 	bool validTrain = icbs.isValidTrain();
 	if (vm["screen"].as<int>() >= 1) {
 	    cout<<"Valid Train Plan: "<< validTrain<<" body conflicts: "<<icbs.num_body_conflict<<" goal conflict: "<<icbs.num_goal_conflict<<" self conflict: "<<icbs.num_self_conflict<<endl;
