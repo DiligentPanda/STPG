@@ -1,5 +1,5 @@
 # This code is based on the repo [Lazy-Train-and-K-CBS](https://github.com/nobodyczcz/Lazy-Train-and-K-CBS) commit a8a3d50aaee927e280cf1f0e5640e3c67e27dce3
-Since it is not updated frequently, we just include its code directly for simplicity. We are only interested in the k-robust CBS part with symmetry reasoning.
+Since it is not updated frequently, we just include its code directly for simplicity. We are only interested in the part of k-robust CBS with symmetry reasoning.
 
 ## About
 This repo contains codes for *Multi-Train Path Finding Revisited 
