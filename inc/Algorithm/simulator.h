@@ -23,6 +23,6 @@ class Simulator {
 
     int step_wdelay(int p, bool *delay_mark, vector<int> &delayed_agents);
     // bool amove(vector<int>& moved, int agent, int *timeSpent, int *delayer, int p, int d);
-    int simulate_wdelay(int p, int dlow, int dhigh, ofstream &outFile, ofstream &outFile_slow, ofstream &outFile_path, ofstream &outFile_setup, int timeout);
+    int simulate_wdelay(int p, int dlow, int dhigh, ofstream &outFile, ofstream &outFile_slow, ofstream &outFile_path, ofstream &outFile_setup, const char * outFileName_execution, int timeout);
 };
 #endif

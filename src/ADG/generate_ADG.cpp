@@ -38,7 +38,7 @@ tuple<Path, int> parse_path(string line) {
 }
 
 // Return all paths, accumulated counts of states, and States
-tuple<Paths, vector<int>> parse_soln(char* fileName) {
+tuple<Paths, vector<int>> parse_soln(const char* fileName) {
   Paths paths;
   vector<int> accum_stateCnts;
   int sumStates = 0;
@@ -187,7 +187,7 @@ int add_type2_edges_cnt(Graph &graph, Paths &paths, vector<int> &accum_stateCnts
   return cnt;
 }
 
-ADG construct_ADG(char* fileName) {
+ADG construct_ADG(const char* fileName) {
   Paths paths;
   vector<int> accum_stateCnts;
   tie(paths, accum_stateCnts) = parse_soln(fileName);

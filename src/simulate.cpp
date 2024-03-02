@@ -1,5 +1,5 @@
 #include <fstream>
-
+#include <boost/program_options.hpp>
 #include "Algorithm/Astar.h"
 
 // print the state in which replanning (Switchable ADG optimization) happens.
@@ -60,7 +60,7 @@ int Simulator::step_wdelay(int p, bool *delay_mark, vector<int> &delayed_agents)
   return timeSpent;
 }
 
-int Simulator::simulate_wdelay(int p, int dlow, int dhigh, ofstream &outFile, ofstream &outFile_slow, ofstream &outFile_path, ofstream &outFile_setup, int timeout) {
+int Simulator::simulate_wdelay(int p, int dlow, int dhigh, ofstream &outFile, ofstream &outFile_slow, ofstream &outFile_path, ofstream &outFile_setup, const char * outFileName_Execution, int timeout) {
   int agentCnt = get_agentCnt(adg);
   int stepSpend = 1;
   bool delay_mark = false;
@@ -115,7 +115,7 @@ int Simulator::simulate_wdelay(int p, int dlow, int dhigh, ofstream &outFile, of
       }
       
       Simulator simulator_res(replanned_adg);
-      int timeSum = simulator_res.print_soln("out.txt");
+      int timeSum = simulator_res.print_soln(outFileName_Execution);
       Simulator simulator_res_trunc(replanned_adg, states);
       int timeSum_trunc = simulator_res_trunc.print_soln();
 
@@ -168,23 +168,54 @@ int Simulator::simulate_wdelay(int p, int dlow, int dhigh, ofstream &outFile, of
 }
 
 int main(int argc, char** argv) {
+
+  namespace po = boost::program_options;
+  po::options_description desc("Switch ADG Optimization");
+  desc.add_options()
+    ("help", "show help message")
+    ("path_file,p",po::value<std::string>()->required(),"path file to construct ADG")
+    ("delay_prob,d",po::value<int>()->default_value(10),"delay probability*1000. need to be an integer")
+    ("delay_steps_low,l",po::value<int>()->default_value(10),"the lowerbound of delay steps")
+    ("delay_steps_high,h",po::value<int>()->default_value(20),"the upperbound of delay steps")
+    ("time_limit,t",po::value<int>()->required(),"time limit in seconds. need to be an integer")
+    ("graph_based_ofp,g",po::value<std::string>()->required(),"the output file path of graph-based search")
+    ("simulation_based_ofp,s",po::value<std::string>()->required(),"the output file path of simulation-based search")
+    ("location_ofp,c",po::value<std::string>()->required(),"the output file path of locations")
+    ("delay_setup_ofp,r",po::value<std::string>()->required(),"the output file path of delay setups")
+    ("execution_ofp,e",po::value<std::string>()->required(),"the output file path of execution")
+  ;
+
+  po::variables_map vm;
+	po::store(po::parse_command_line(argc, argv, desc), vm);
+
+	if (vm.count("help")) {
+		std::cout << desc << std::endl;
+		return 1;
+	}
+  
+	po::notify(vm);
+
   // mapf path file
-  char* fileName = argv[1];
+  const char* fileName = vm["path_file"].as<std::string>().c_str();
   // delay probablity
-  int p = atoi(argv[2]);
+  int p = vm["delay_prob"].as<int>();
   // lower bound of delay length
-  int dlow = atoi(argv[3]);
+  int dlow = vm["delay_steps_low"].as<int>();
   // upper bound of delay length
-  int dhigh = atoi(argv[4]);
+  int dhigh = vm["delay_steps_high"].as<int>();
+  // time limit
+  int timeout = vm["time_limit"].as<int>();
+
   // stats for graph-based module
-  const char* outFileName = argv[5];
+  const char* outFileName = vm["graph_based_ofp"].as<std::string>().c_str();
   // stats for execution-based module
-  const char* outFileName_slow = argv[6];
+  const char* outFileName_slow = vm["simulation_based_ofp"].as<std::string>().c_str();
   // output file for the start and goal locations when a delay happens
-  const char* outFileName_path = argv[7];
+  const char* outFileName_path = vm["location_ofp"].as<std::string>().c_str();
   // ? output file for the index of the delayed agents and the length of the delay
-  const char* outFileName_setup = argv[8];
-  int timeout = 90;
+  const char* outFileName_setup = vm["delay_setup_ofp"].as<std::string>().c_str();
+  // output file for the new execution after delay
+  const char* outFileName_execution = vm["execution_ofp"].as<std::string>().c_str();
 
   // construct ADG from paths
   ADG adg = construct_ADG(fileName);
@@ -206,7 +237,7 @@ int main(int argc, char** argv) {
     // }
 
     Simulator simulator(adg);
-    simulator.simulate_wdelay(p, dlow, dhigh, outFile, outFile_slow, outFile_path, outFile_setup, timeout);
+    simulator.simulate_wdelay(p, dlow, dhigh, outFile, outFile_slow, outFile_path, outFile_setup, outFileName_execution, timeout);
     outFile.close();
     outFile_slow.close();
   }
