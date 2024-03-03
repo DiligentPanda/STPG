@@ -13,6 +13,8 @@ fail_output_folder="example/fail"
 
 algos = "CBSH-RM"
 time_limit=180
+MAX_VIRTUAL_MEMORY = 8 * 1024 * 1024 # 8 GB
+skip=False
 
 instance_idxs=list(range(1,25+1)) # this is the number provided by the benchmark
 
@@ -54,13 +56,22 @@ def log_fail(output_name,result=None,exception=None):
 def run(cmd,output_name):
     try:
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-        
+
         if result.returncode == 0:
-            print("[SUCC] {}".format(cmd))
-            print(result.stdout)
-            
-            # TODO: we still need to check if timeout!
-            
+            stat_output_file_path = os.path.join(stat_output_folder,output_name+'.stat')
+            with open(stat_output_file_path) as f:
+                line=f.readline()
+                records=line.strip().split(",")
+                cost=int(records[6])
+            if cost>=0:
+                print("[SUCC] {}".format(cmd))
+                print(result.stdout)
+            else:
+                print("[FAIL] {}".format(cmd))
+                print("Solution not found! Probably run out of time.")
+                print(result.stdout)
+                print(result.stderr)
+                log_fail(output_name,result=result)
         else:
             print("[FAIL] {}".format(cmd))
             print(result.stdout)
@@ -93,14 +104,15 @@ for map_name,setting in maps.items():
             stat_output_file_path = os.path.join(stat_output_folder,output_name+'.stat')
             path_output_file_path = os.path.join(path_output_folder,output_name+'.path')
             
-            if os.path.exists(stat_output_file_path) and os.path.exists(path_output_file_path):
+            if skip and os.path.exists(stat_output_file_path) and os.path.exists(path_output_file_path):
                 print("{} exist. skip...".format(output_name))
                 continue
 
             print("run {}".format(output_name))    
 
             # we only require 1-robust, so --kDelay 1
-            cmd = f"{exe_path} -m {map_file_path} -a {scen_file_path}" \
+            cmd = f"ulimit -Sv {MAX_VIRTUAL_MEMORY} && " \
+                  f"{exe_path} -m {map_file_path} -a {scen_file_path}" \
                   f" -s {algos} -t {time_limit} -k {agent_num} --kDelay 1" \
                   f" -o {stat_output_file_path} --writePath {path_output_file_path}" \
                   f" --screen 0 --corridor True --target True --no-train-classify --ignore-train --exitOnNoSolution True"    

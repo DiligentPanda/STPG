@@ -15,6 +15,8 @@ delay_prob=10
 delay_steps_low=10
 delay_steps_high=20
 time_limit=90
+MAX_VIRTUAL_MEMORY = 8 * 1024 * 1024 # 8 GB
+skip=False
 
 instance_idxs=list(range(1,25+1)) # this is the number provided by the benchmark
 num_trials=6
@@ -22,9 +24,9 @@ num_trials=6
 # setting: [agent_num_start, agent_num_end, agent_num_step, max_process_num]
 maps = {
         "random-32-32-10":[25,50,5,32],
-        # "warehouse-10-20-10-2-1":[40,90,10,32],
-        # "Paris_1_256": [30,80,10,32],
-        # "lak303d": [15,35,4,32]
+        "warehouse-10-20-10-2-1":[40,90,10,32],
+        "Paris_1_256": [30,80,10,32],
+        "lak303d": [15,35,4,32]
        }
 
 main_output_folder=os.path.join(output_folder,"main")
@@ -114,14 +116,15 @@ for map_name,setting in maps.items():
             execution_ofp=os.path.join(aux_output_folder,trail_name+".exec")
             setup_ofp=os.path.join(aux_output_folder,trail_name+".setup")
             
-            if os.path.exists(graph_stats_ofp) and os.path.exists(simul_stats_ofp):
+            if skip and os.path.exists(graph_stats_ofp) and os.path.exists(simul_stats_ofp):
                 print("{} exist. skip...".format(trail_name))
                 continue                
     
             print("run {}".format(trail_name))    
 
             # we only require 1-robust, so --kDelay 1
-            cmd = f"{exe_path} -p {path_file_path} -d {delay_prob} -l {delay_steps_low} -h {delay_steps_high} -t {time_limit} " \
+            cmd = f"ulimit -Sv {MAX_VIRTUAL_MEMORY} && " \
+                  f"{exe_path} -p {path_file_path} -d {delay_prob} -l {delay_steps_low} -h {delay_steps_high} -t {time_limit} " \
                   f"-g {graph_stats_ofp} -s {simul_stats_ofp} " \
                   f"-c {locations_ofp} -e {execution_ofp} -r {setup_ofp}"
             
