@@ -332,6 +332,10 @@ tuple<bool, int, int, int> Astar::slow_branch(ADG &adg, vector<int> *states) {
 
   stepSpend = simulator.step(false);
   while (stepSpend != 0) {
+    if (stepSpend < 0) {
+      std::cout<<"fail in slow_branch()"<<std::endl;
+      exit(2);
+    } // stuck
     totalSpend += stepSpend;
     if (simulator.incident_to_switchable(&v_from, &v_to)) {
       *states = simulator.states;
