@@ -32,9 +32,9 @@ void ReservationTable::addPath(int agent_id, std::vector<PathEntry>* path) {
                 res_table[loc][t] = agentList();
             }
 
-
-            res_table[loc][t][agent_id] = AgentStep(agent_id, loc, t,head, cell);
-
+            if (!res_table[loc][t].count(agent_id))
+                res_table[loc][t][agent_id] = AgentStep(agent_id, loc, t, head, cell);
+                
             if(head) {
                 if (preStep != NULL) {
                     preStep->nextStep = &(res_table[loc][t][agent_id]);
