@@ -228,14 +228,14 @@ void simulate(
 
   // basic information
   stats["algo"]=algo;
-  stats["time_limit"]=time_limit;
+  stats["time_limit"]=time_limit*1000000; // in micro-seconds
   stats["path_fp"]=path_fp;
   stats["sit_fp"]=sit_fp;
 
   // default status
   stats["status"]="Fail";
-  stats["search_time"]=time_limit;
-  stats["total_time"]=time_limit;
+  stats["search_time"]=time_limit*1000000; // in micro-seconds
+  stats["total_time"]=time_limit*1000000; // in micro-seconds
   stats["ori_total_cost"]=originalTime;
   stats["ori_trunc_cost"]=oriTime_trunc;
   // implication: fail to replan, just use the original one
@@ -281,8 +281,8 @@ void simulate(
     stats["trunc_cost"]=timeSum_trunc;
   } else {
     stats["status"]="Timeout";
-    stats["search_time"]=time_limit;
-    stats["total_time"]=time_limit;
+    stats["search_time"]=time_limit*1000000; // in micro-seconds
+    stats["total_time"]=time_limit*1000000; // in micro-seconds
     stats["ori_total_cost"]=originalTime;
     stats["ori_trunc_cost"]=oriTime_trunc;
     // implication: fail to replan, just use the original one
