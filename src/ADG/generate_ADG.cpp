@@ -267,3 +267,64 @@ ADG construct_delayed_ADG(ADG &adg, int dlow, int dhigh, vector<int> &delayed_ag
 
   return make_tuple(graph, paths, accum_stateCnts);
 }
+
+ADG construct_delayed_ADG(ADG &adg, vector<int> & delay_steps, vector<int> &states, int *input_sw_cnt) {
+  int agentCnt = get_agentCnt(adg);
+  Paths paths;
+  vector<int> accum_stateCnts;
+
+  int delay_sum = 0;
+
+  for (int agent = 0; agent < agentCnt; agent ++) {
+    if (delay_steps[agent] == 0) {
+      paths.push_back((get<1>(adg))[agent]);
+    } else { // this is a delayed agent
+      Path &ori_path = (get<1>(adg))[agent];
+      Path new_path;
+      int delayed_state = states[agent];
+
+      for (int state = 0; state <= delayed_state; state ++) {
+        new_path.push_back(ori_path[state]);
+      }
+      // insert repeated current states for a multi-step delay.
+      // <Location, timestep>
+      // NOTE(rivers): it is not a bug if we don't specify the timestep here and change the timestep later.
+      // because now we still want to stick to the original plan.
+      pair<Location, int> repeat = make_pair(get<0>(new_path.back()), -1);
+      int delay = delay_steps[agent];
+      delay_sum += delay;
+      for (int state = 0; state < delay; state ++) {
+        new_path.push_back(repeat);
+      }
+      int ori_size = ori_path.size();
+      for (int state = delayed_state + 1; state < ori_size; state ++) {
+        new_path.push_back(ori_path[state]);
+      }
+      paths.push_back(new_path);
+    }
+
+    accum_stateCnts.push_back((get<2>(adg))[agent] + delay_sum);
+  }
+
+  Graph graph = new_graph(accum_stateCnts.back());
+
+  // add dependencies from the old plan. We cannot directly copy because the idxs of some nodes are changed.
+  add_type1_edges(graph, paths, accum_stateCnts);
+  *input_sw_cnt = add_type2_edges_cnt(graph, paths, accum_stateCnts);
+
+  // set some switchable edges to non-swtichable because the reversed edge cannot point to a past state.
+  for (int v = 0; v < get<3>(graph); v ++) {
+    int agent, state;
+    tie(agent, state) = compute_agent_state(accum_stateCnts, v);
+    if (state <= states[agent]) {
+      set<int> outNeib = get_switchable_outNeib(graph, v);
+      for (auto it: outNeib) {
+        rem_type2_switchable_edge(graph, v, it);
+        set_type2_nonSwitchable_edge(graph, v, it);
+        *input_sw_cnt = *input_sw_cnt - 1;
+      }
+    }
+  }
+
+  return make_tuple(graph, paths, accum_stateCnts);
+}

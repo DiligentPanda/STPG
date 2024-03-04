@@ -158,7 +158,7 @@ int Simulator::print_soln(const char* outFileName) {
         exit(2);
       }
       // output how many agents take actions at the step.
-      outFile << "step=" << stepSpend << "\n";
+      // outFile << "step=" << stepSpend << "\n";
       for (int agent = 0; agent < agentCnt; agent ++) {
         Location new_location = get<0>((paths[agent])[(states[agent])]);
         if (!((same_locations(new_location, (expanded_paths[agent]).back())) && 

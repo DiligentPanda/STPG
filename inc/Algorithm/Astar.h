@@ -7,6 +7,7 @@ using namespace std::chrono;
 
 #include "../ADG/ADG_utilities.h"
 #include "simulator.h"
+#include "nlohmann/json.hpp"
 
 class Astar {
   public:
@@ -21,6 +22,7 @@ class Astar {
 
     void print_stats();
     void print_stats(ofstream &outFile);
+    void print_stats(nlohmann::json & stats);
     
   private:
     class Compare {

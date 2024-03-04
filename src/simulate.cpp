@@ -1,6 +1,9 @@
 #include <fstream>
 #include <boost/program_options.hpp>
 #include "Algorithm/Astar.h"
+#include "nlohmann/json.hpp"
+
+using json=nlohmann::json;
 
 // print the state in which replanning (Switchable ADG optimization) happens.
 // The state include the current locations and target locations of all agents.
@@ -167,22 +170,145 @@ int Simulator::simulate_wdelay(int p, int dlow, int dhigh, ofstream &outFile, of
   return 0;
 }
 
+void simulate(
+  const string & path_fp, 
+  const string & sit_fp, 
+  int time_limit, 
+  const string & algo, 
+  const string & stat_ofp, 
+  const string & new_path_ofp
+) {
+  ADG adg=construct_ADG(path_fp.c_str());
+  ifstream in(sit_fp);
+  json data=json::parse(in);
+
+  int agent_num=get_agentCnt(adg);
+
+  vector<int> states=data.at("states").get<vector<int> >();
+  vector<int> delay_steps=data.at("delay_steps").get<vector<int> >();
+
+  // TODO(rivers): maybe check path_fp with the path_fp saved in sit_fp as well.
+  if (states.size()!=agent_num || delay_steps.size()!=agent_num) {
+    std::cout<<"size mismatch: "<<states.size()<<" "<<delay_steps.size()<<" "<<agent_num<<std::endl;
+    exit(50);
+  }
+
+  // switchable edge count
+  int input_sw_cnt;
+
+  // construct the delayed ADG by inserting dummy nodes
+  microseconds timer_constructADG(0);
+  auto start = high_resolution_clock::now();
+  ADG adg_delayed = construct_delayed_ADG(adg, delay_steps, states, &input_sw_cnt);
+  auto stop = high_resolution_clock::now();
+  timer_constructADG += duration_cast<microseconds>(stop - start);
+
+  // simulate without replanning
+  ADG adg_delayed_copy = copy_ADG(adg_delayed);
+  set_switchable_nonSwitchable(get<0>(adg_delayed_copy));
+  // simulate from the initial state
+  Simulator simulator_original(adg_delayed_copy);
+  int originalTime = simulator_original.print_soln();
+  // simulate from the current state
+  Simulator simulator_ori_trunc(adg_delayed_copy, states);
+  int oriTime_trunc = simulator_ori_trunc.print_soln();
+
+  // replanning ADG
+  Astar search;
+  if (algo=="graph") {
+    search=Astar(time_limit, true);
+  } else if (algo=="exec") {
+    search=Astar(time_limit, false);
+  } else {
+    std::cout<<"unknown algorithm: "<<algo<<std::endl;  
+  }
+
+
+  json stats;
+
+  // basic information
+  stats["algo"]=algo;
+  stats["time_limit"]=time_limit;
+  stats["path_fp"]=path_fp;
+  stats["sit_fp"]=sit_fp;
+
+  // default status
+  stats["status"]="Fail";
+  stats["search_time"]=time_limit;
+  stats["total_time"]=time_limit;
+  stats["ori_total_cost"]=originalTime;
+  stats["ori_trunc_cost"]=oriTime_trunc;
+  // implication: fail to replan, just use the original one
+  stats["total_cost"]=originalTime;
+  stats["trunc_cost"]=oriTime_trunc;
+  stats["explored_node"]=nullptr;
+  stats["pruned_node"]=nullptr;
+  stats["added_node"]=nullptr;
+  stats["vertex"]=nullptr;
+  stats["sw_edge"]=nullptr;
+  stats["heuristic_time"]=nullptr;
+  stats["branch_time"]=nullptr;
+  stats["sort_time"]=nullptr;
+  stats["priority_queue_time"]=nullptr;
+  stats["copy_free_graphs_time"]=nullptr;
+  stats["termination_time"]=nullptr;
+  stats["dfs_time"]=nullptr;
+  
+  std::ofstream out(stat_ofp);
+  out<<stats.dump(4)<<std::endl;
+  out.close();
+
+  microseconds timer(0);
+  start = high_resolution_clock::now();
+  ADG replanned_adg = search.startExplore(adg_delayed, input_sw_cnt);
+  stop = high_resolution_clock::now();
+  timer += duration_cast<microseconds>(stop - start);
+
+
+  if (duration_cast<seconds>(timer).count() < time_limit) {
+    // simulate with new paths
+    Simulator simulator_res(replanned_adg);
+    int timeSum = simulator_res.print_soln(new_path_ofp.c_str());
+    Simulator simulator_res_trunc(replanned_adg, states);
+    int timeSum_trunc = simulator_res_trunc.print_soln();
+
+    stats["status"]="Succ";
+    stats["search_time"]=timer.count();
+    stats["total_time"]=timer.count() + timer_constructADG.count();
+    stats["ori_total_cost"]=originalTime;
+    stats["ori_trunc_cost"]=oriTime_trunc;
+    stats["total_cost"]=timeSum;
+    stats["trunc_cost"]=timeSum_trunc;
+  } else {
+    stats["status"]="Timeout";
+    stats["search_time"]=time_limit;
+    stats["total_time"]=time_limit;
+    stats["ori_total_cost"]=originalTime;
+    stats["ori_trunc_cost"]=oriTime_trunc;
+    // implication: fail to replan, just use the original one
+    stats["total_cost"]=originalTime;
+    stats["trunc_cost"]=oriTime_trunc;
+  }
+
+  search.print_stats(stats);
+
+  out.open(stat_ofp);
+  out<<stats.dump(4)<<std::endl;
+  out.close();
+}
+
 int main(int argc, char** argv) {
 
   namespace po = boost::program_options;
   po::options_description desc("Switch ADG Optimization");
   desc.add_options()
     ("help", "show help message")
-    ("path_file,p",po::value<std::string>()->required(),"path file to construct ADG")
-    ("delay_prob,d",po::value<int>()->default_value(10),"delay probability*1000. need to be an integer")
-    ("delay_steps_low,l",po::value<int>()->default_value(10),"the lowerbound of delay steps")
-    ("delay_steps_high,h",po::value<int>()->default_value(20),"the upperbound of delay steps")
+    ("path_fp,p",po::value<std::string>()->required(),"path file to construct ADG")
+    ("sit_fp,s",po::value<std::string>()->required(),"situation file to construct delayed ADG")
     ("time_limit,t",po::value<int>()->required(),"time limit in seconds. need to be an integer")
-    ("graph_based_ofp,g",po::value<std::string>()->required(),"the output file path of graph-based search")
-    ("simulation_based_ofp,s",po::value<std::string>()->required(),"the output file path of simulation-based search")
-    ("location_ofp,c",po::value<std::string>()->required(),"the output file path of locations")
-    ("delay_setup_ofp,r",po::value<std::string>()->required(),"the output file path of delay setups")
-    ("execution_ofp,e",po::value<std::string>()->required(),"the output file path of execution")
+    ("algo,a",po::value<std::string>()->required(),"replaning algorithm to use, [exec, graph]")
+    ("stat_ofp,o",po::value<std::string>()->required(),"the output file path of statistics")
+    ("new_path_ofp,n",po::value<std::string>()->required(),"the output file path of new paths")
   ;
 
   po::variables_map vm;
@@ -195,51 +321,21 @@ int main(int argc, char** argv) {
   
 	po::notify(vm);
 
-  // mapf path file
-  const char* fileName = vm["path_file"].as<std::string>().c_str();
-  // delay probablity
-  int p = vm["delay_prob"].as<int>();
-  // lower bound of delay length
-  int dlow = vm["delay_steps_low"].as<int>();
-  // upper bound of delay length
-  int dhigh = vm["delay_steps_high"].as<int>();
-  // time limit
-  int timeout = vm["time_limit"].as<int>();
+  string path_fp=vm.at("path_fp").as<string>();
+  string sit_fp=vm.at("sit_fp").as<string>();
+  int time_limit=vm.at("time_limit").as<int>();
+  string algo=vm.at("algo").as<string>();
+  string stat_ofp=vm.at("stat_ofp").as<string>();
+  string new_path_ofp=vm.at("new_path_ofp").as<string>();
 
-  // stats for graph-based module
-  const char* outFileName = vm["graph_based_ofp"].as<std::string>().c_str();
-  // stats for execution-based module
-  const char* outFileName_slow = vm["simulation_based_ofp"].as<std::string>().c_str();
-  // output file for the start and goal locations when a delay happens
-  const char* outFileName_path = vm["location_ofp"].as<std::string>().c_str();
-  // ? output file for the index of the delayed agents and the length of the delay
-  const char* outFileName_setup = vm["delay_setup_ofp"].as<std::string>().c_str();
-  // output file for the new execution after delay
-  const char* outFileName_execution = vm["execution_ofp"].as<std::string>().c_str();
+  simulate(
+    path_fp,
+    sit_fp,
+    time_limit,
+    algo,
+    stat_ofp,
+    new_path_ofp
+  );
 
-  // construct ADG from paths
-  ADG adg = construct_ADG(fileName);
-
-  ofstream outFile;
-  outFile.open(outFileName, ios::app);
-  ofstream outFile_slow;
-  outFile_slow.open(outFileName_slow, ios::app);
-  ofstream outFile_path;
-  outFile_path.open(outFileName_path, ios::app);
-  ofstream outFile_setup;
-  outFile_setup.open(outFileName_setup, ios::app);
-  if (outFile.is_open()) {
-    // if (print_header) {
-    //   outFile << "search time,search + construct time,original total cost,"	
-    //   << "solution total cost,original remain cost,solution remain cost,"
-    //   << "explored node,pruned node,added node,heuristic time,branch time,"
-    //   << "sort time,priority queue time,copy&free graph time,dfs time" << endl;
-    // }
-
-    Simulator simulator(adg);
-    simulator.simulate_wdelay(p, dlow, dhigh, outFile, outFile_slow, outFile_path, outFile_setup, outFileName_execution, timeout);
-    outFile.close();
-    outFile_slow.close();
-  }
   return 0;
 }

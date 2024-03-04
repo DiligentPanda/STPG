@@ -8,7 +8,6 @@ import time
 import multiprocessing
 import pandas as pd
 
-exe_path="./build/sadg"
 path_folder="example/path"
 file_names_ofp="example/path_file_names.csv"
 stats_ofp="example/path_stats.csv"

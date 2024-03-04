@@ -4,22 +4,16 @@ import multiprocessing
 import pandas as pd
 import subprocess
 
-exe_path="./build/simulate"
+exe_path="./build/generate"
 path_folder="example/path"
-sit_folder="example/sit"
 file_names_fp="example/path_file_names.csv"
-exp_desc="exp" # describe the experiments
 
-timestamp=time.strftime("%Y_%m_%d_%H_%M_%S")
-# TODO(rivers): merge output into one or separate them somehow?
-output_folder="output/{}_{}".format(timestamp,exp_desc)
-path_list_ofp=os.path.join(output_folder,"path_file_names.csv")
+output_folder="example/"
 delay_prob=10
 delay_steps_low=10
 delay_steps_high=20
 time_limit=90
-algos=["graph","exec"] # ["graph","exec"]
-MAX_VIRTUAL_MEMORY = 8 * 1024 * 1024 # 8 GB
+MAX_VIRTUAL_MEMORY = 1 * 1024 * 1024 # 1 GB
 skip=False
 
 instance_idxs=list(range(1,25+1)) # this is the number provided by the benchmark
@@ -27,19 +21,17 @@ num_sits=6
 
 # setting: [agent_num_start, agent_num_end, agent_num_step, max_process_num]
 maps = {
-        "random-32-32-10":[25,50,5,32],
-        "warehouse-10-20-10-2-1":[40,90,10,32],
-        "Paris_1_256": [30,80,10,32],
-        "lak303d": [15,35,4,32]
+        "random-32-32-10":[25,50,5,128],
+        "warehouse-10-20-10-2-1":[40,90,10,128],
+        "Paris_1_256": [30,80,10,128],
+        "lak303d": [15,35,4,128]
        }
 
-stat_output_folder=os.path.join(output_folder,"stat")
-fail_output_folder=os.path.join(output_folder,"fail")
-new_path_output_folder=os.path.join(output_folder,"path")
+sit_output_folder=os.path.join(output_folder,"sit")
+fail_output_folder=os.path.join(output_folder,"sit_fail")
 
-os.makedirs(stat_output_folder,exist_ok=True)
+os.makedirs(sit_output_folder,exist_ok=True)
 os.makedirs(fail_output_folder,exist_ok=True)
-os.makedirs(new_path_output_folder,exist_ok=True)
 
 df=pd.read_csv(file_names_fp,index_col="index")
 df.sort_values(by=["map_name","agent_num","instance_idx"],inplace=True,ignore_index=True)
@@ -64,8 +56,7 @@ def keep(row):
     return True
 
 df = df[df.apply(keep,axis=1)]
-df = df.reset_index(drop=True)
-df.to_csv(path_list_ofp,index_label="index")
+# df = df.reset_index(drop=True)
 
 def log_fail(output_name,result=None,exception=None):
     fail_output_file_path=os.path.join(fail_output_folder,output_name+".fail")
@@ -110,29 +101,18 @@ for map_name,setting in maps.items():
     output_names=[]
     for exp in exps:
         path_file_name,map_name,instance_idx,agent_num=exp
-        path_file_path=os.path.join(path_folder,path_file_name)
-        for sit_idx in range(num_sits):
-            sit_name="map_{}_ins_{}_an_{}_sit_{}".format(map_name,instance_idx,agent_num,sit_idx)
-            sit_file_path=os.path.join(sit_folder,sit_name+".json")
-            for algo in algos: 
-                trail_name="{}_algo_{}".format(sit_name,algo)
-                output_names.append(trail_name)
-                stat_ofp=os.path.join(stat_output_folder,trail_name+".json")
-                new_path_ofp=os.path.join(new_path_output_folder,trail_name+".path")
-                
-                if skip and os.path.exists(stat_ofp) and os.path.exists(new_path_ofp):
-                    print("{} exist. skip...".format(trail_name))
-                    continue                
+        path_file_path=os.path.join(path_folder,path_file_name)    
         
-                print("run {}".format(trail_name))    
+        output_names.append(path_file_name)   
 
-                # we only require 1-robust, so --kDelay 1
-                cmd = f"ulimit -Sv {MAX_VIRTUAL_MEMORY} &&" \
-                    f" {exe_path} -p {path_file_path} -s {sit_file_path}" \
-                    f" -t {time_limit} -a {algo}" \
-                    f" -o {stat_ofp} -n {new_path_ofp}"
-                
-                cmds.append(cmd)
+        print("run {}".format(path_file_name))    
+
+        # we only require 1-robust, so --kDelay 1
+        cmd = f"ulimit -Sv {MAX_VIRTUAL_MEMORY} &&" \
+            f" {exe_path} -p {path_file_path} -n {num_sits}" \
+            f" -o {sit_output_folder} -d {delay_prob} -l {delay_steps_low} -h {delay_steps_high}"
+        
+        cmds.append(cmd)
         
     # for cmd,output_name in zip(cmds,output_names):
     #     print(output_name,cmd)

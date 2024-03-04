@@ -80,6 +80,21 @@ tuple<int, int, int> Astar::branch(Graph &graph, vector<int> *values) {
   return make_tuple(maxDiff, maxI, maxJ);
 }
 
+void Astar::print_stats(nlohmann::json & stats) {
+  stats["explored_node"]=explored_node_cnt;
+  stats["pruned_node"]=pruned_node_cnt;
+  stats["added_node"]=added_node_cnt;
+  stats["vertex"]=vertex_cnt;
+  stats["sw_edge"]=sw_edge_cnt;
+  stats["heuristic_time"]=heuristicT.count();
+  stats["branch_time"]=branchT.count();
+  stats["sort_time"]=sortT.count();
+  stats["priority_queue_time"]=pqT.count();
+  stats["copy_free_graphs_time"]=copy_free_graphsT.count();
+  stats["termination_time"]=termT.count();
+  stats["dfs_time"]=dfsT.count();
+}
+
 void Astar::print_stats(ofstream &outFile) {
     outFile << explored_node_cnt << "," << 
     pruned_node_cnt << "," << 

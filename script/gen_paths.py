@@ -9,7 +9,7 @@ scen_folder="example/scen/scen-even"
 # timestamp=time.strftime("%Y_%m_%d_%H_%M_%S")
 stat_output_folder="example/stat"
 path_output_folder="example/path"
-fail_output_folder="example/fail"
+fail_output_folder="example/path_fail"
 
 algos = "CBSH-RM"
 time_limit=180
