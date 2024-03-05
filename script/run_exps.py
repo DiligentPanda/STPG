@@ -11,14 +11,15 @@ file_names_fp="example/path_file_names.csv"
 exp_desc="exp" # describe the experiments
 
 timestamp=time.strftime("%Y_%m_%d_%H_%M_%S")
+exp_name="{}_{}".format(timestamp,exp_desc)
 # TODO(rivers): merge output into one or separate them somehow?
-output_folder="output/{}_{}".format(timestamp,exp_desc)
+output_folder="output/{}".format(exp_name)
 path_list_ofp=os.path.join(output_folder,"path_file_names.csv")
 delay_prob=10
 delay_steps_low=10
 delay_steps_high=20
 time_limit=90
-algos=["graph","exec"] # ["graph","exec"]
+algos=["graph","enhanced"] # ["graph","exec","enhanced"]
 MAX_VIRTUAL_MEMORY = 8 * 1024 * 1024 # 8 GB
 skip=False
 
@@ -27,10 +28,10 @@ num_sits=6
 
 # setting: [agent_num_start, agent_num_end, agent_num_step, max_process_num]
 maps = {
-        "random-32-32-10":[25,50,5,32],
-        "warehouse-10-20-10-2-1":[40,90,10,32],
-        "Paris_1_256": [30,80,10,32],
-        "lak303d": [15,35,4,32]
+        "random-32-32-10":[25,50,5,8],
+        "warehouse-10-20-10-2-1":[40,90,10,8],
+        "Paris_1_256": [30,80,10,16],
+        "lak303d": [15,35,4,16]
        }
 
 stat_output_folder=os.path.join(output_folder,"stat")

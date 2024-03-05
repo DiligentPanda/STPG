@@ -1,6 +1,7 @@
 #include <stack>
 #include <algorithm>
 #include "graph/graph.h"
+#include <cstdlib>
 
 using namespace std;
 
@@ -315,6 +316,50 @@ void set_switchable_nonSwitchable(Graph& graph){
             graph2NS.second[i].insert(*itr);
         }
         graph2S.second[i].clear();
+    }
+
+    return;
+}
+
+void reverse_nonSwitchable_edges_basedOn_LongestPathValues(Graph& graph, vector<int> *values) {
+    int graph_size = get<3>(graph);
+    subGraph& graph2S = get<2>(graph);
+    auto & times=*values;
+
+    std::vector<std::pair<int,int> > need_to_reverse;
+    for (int i=0;i<graph_size;++i) {
+        // find all out neighbors
+        for (auto itr=graph2S.first[i].begin(); itr!=graph2S.first[i].end();++itr) {
+            int j=*itr;
+
+            int time_i=times[i];
+            int time_j=times[j];
+
+            int back_i=j+1;
+            int back_j=i-1;
+            int time_back_i=times[back_i];
+            int time_back_j=times[back_j];
+
+            if (time_i>=time_j && time_i-time_j<=1) {
+                std::cout<<"error in set_switchable_nonSwitchable_basedOn_LongestPath: conflict not solved yet!"<<std::endl;
+                std::cout<<"time_i="<<time_i<<" time_j="<<time_j<<std::endl;
+                std::cout<<"time_back_i="<<time_back_i<<" time_back_j="<<time_back_j<<std::endl;
+                exit(200);
+            } else if (time_i>time_j) {
+                // need to reverse
+                need_to_reverse.emplace_back(i,j);
+            }
+        }
+    }
+
+    for (auto & p: need_to_reverse) {
+        int i=p.first;
+        int j=p.second;
+        int back_i=j+1;
+        int back_j=i-1;
+        
+        rem_type2_switchable_edge(graph,i,j);
+        set_type2_switchable_edge(graph,back_i,back_j);
     }
 
     return;

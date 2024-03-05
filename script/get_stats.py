@@ -3,7 +3,7 @@ import os
 import numpy as np
 import json
 
-result_folder="output/2024_03_04_00_04_03_exp"
+result_folder="output/2024_03_04_21_50_01_exp"
 stat_folder=os.path.join(result_folder,"stat")
 stats_ofp=os.path.join(result_folder,"stats.csv")
 stat_summary_ofp=os.path.join(result_folder,"stat_summary.csv")
@@ -11,7 +11,7 @@ path_list_fp=os.path.join(result_folder,"path_file_names.csv")
 time_limit=90
 num_sits=6
 check_missing=True
-algos=["exec","graph"]
+algos=["graph","enhanced"] # ["graph","exec","enhanced"]
 
 exp_headers=["map_name","agent_num","instance_idx","sit_idx"]
 result_headers=["algo","status","search_time","total_time","ori_total_cost","total_cost","ori_trunc_cost","trunc_cost",

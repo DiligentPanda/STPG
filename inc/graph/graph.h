@@ -74,3 +74,5 @@ bool check_cycle_nonSwitchable_old(Graph& graph, int start);
 // vector<int>* topologicalSort(Graph& graph, vector<int> starts);
 
 sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_starts, int u, int v);
+
+void reverse_nonSwitchable_edges_basedOn_LongestPathValues(Graph& graph, vector<int> *values);

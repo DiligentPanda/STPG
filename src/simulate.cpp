@@ -215,8 +215,10 @@ void simulate(
 
   // replanning ADG
   Astar search;
-  if (algo=="graph") {
-    search=Astar(time_limit, true);
+  if (algo=="enhanced") {
+    search=Astar(time_limit, true, true);
+  } else if (algo=="graph") {
+    search=Astar(time_limit, true, false);
   } else if (algo=="exec") {
     search=Astar(time_limit, false);
   } else {
@@ -306,7 +308,7 @@ int main(int argc, char** argv) {
     ("path_fp,p",po::value<std::string>()->required(),"path file to construct ADG")
     ("sit_fp,s",po::value<std::string>()->required(),"situation file to construct delayed ADG")
     ("time_limit,t",po::value<int>()->required(),"time limit in seconds. need to be an integer")
-    ("algo,a",po::value<std::string>()->required(),"replaning algorithm to use, [exec, graph]")
+    ("algo,a",po::value<std::string>()->required(),"replaning algorithm to use, [exec, graph, enhanced]")
     ("stat_ofp,o",po::value<std::string>()->required(),"the output file path of statistics")
     ("new_path_ofp,n",po::value<std::string>()->required(),"the output file path of new paths")
   ;

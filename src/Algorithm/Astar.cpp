@@ -1,4 +1,5 @@
 #include "Algorithm/Astar.h"
+#include <algorithm>
 
 Astar::Astar() {
 }
@@ -7,9 +8,10 @@ Astar::Astar(int input_timeout) {
   timeout = input_timeout;
 }
 
-Astar::Astar(int input_timeout, bool input_fast_version) {
+Astar::Astar(int input_timeout, bool input_fast_version, bool input_enhanced_version) {
   timeout = input_timeout;
   fast_version = input_fast_version;
+  enhanced_version = input_enhanced_version;
 }
 
 
@@ -69,11 +71,51 @@ tuple<int, int, int> Astar::branch(Graph &graph, vector<int> *values) {
         maxI = i;
         maxJ = j;
       }
+      // rivers: it is a bug that we only check maxDiff>0, it should be maxDiff>=0
+      // rivers: well, it is not a bug, it is just a design choice if termermination checks maxDiff<0.
       if (maxDiff > 0) {
         break;
       } 
     }
     if (maxDiff > 0) {
+      break;
+    } 
+  }
+  return make_tuple(maxDiff, maxI, maxJ);
+}
+
+tuple<int, int, int> Astar::enhanced_branch(Graph &graph, vector<int> *values) {
+  int maxDiff = -1;
+  int maxI = -1;
+  int maxJ = -1;
+  for (int i = 0; i < get<3>(graph); i++) {
+    int iTime = values->at(i);
+    set<int> &outNeib = get_switchable_outNeib(graph, i);
+    for (auto it : outNeib) {
+      int j = it;
+      int backI = j+1;
+      int backJ = i-1;
+      int jTime = values->at(j);
+      int backITime = values->at(backI);
+      int backJTime = values->at(backJ);
+      int diff = iTime - jTime;
+      int backDiff = backITime - backJTime;
+
+      // TODO(rivers): should we try to find maxDiff
+      if (diff>=0 && backDiff>=0) {
+        int _diff = std::min(diff,backDiff);
+        if (_diff>maxDiff) {
+          maxDiff=_diff;
+          maxI=i;
+          maxJ=j;
+        }
+      }
+      // rivers: it is at most 1.
+      if (maxDiff>=1) {
+        break;
+      }
+    }
+    if (maxDiff>=1) {
       break;
     } 
   }
@@ -146,7 +188,11 @@ ADG Astar::exploreNode() {
     int maxDiff, maxI, maxJ;
     auto start_branch = high_resolution_clock::now();
     // maxI, maxJ returns a type 2 edge to branch (maxDiff is useless for now)
-    tie(maxDiff, maxI, maxJ) = branch(graph, values);
+    if (enhanced_version) {
+      tie(maxDiff, maxI, maxJ) = enhanced_branch(graph, values);  
+    } else {
+      tie(maxDiff, maxI, maxJ) = branch(graph, values);
+    }
     auto end_branch = high_resolution_clock::now();
     branchT += duration_cast<microseconds>(end_branch - start_branch);
 
@@ -196,6 +242,10 @@ ADG Astar::exploreNode() {
       free_underlying_graph(adg);
       auto end_graph_free = high_resolution_clock::now();
       copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
+
+      if (terminate && enhanced_version) {
+        reverse_nonSwitchable_edges_basedOn_LongestPathValues(get<0>(res),values);
+      }
 
       delete values;
       delete node;
