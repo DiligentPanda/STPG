@@ -23,10 +23,11 @@ elseif(NOT Boost_FOUND)
 endif()
 
 file(GLOB_RECURSE SOURCES "src/**.cpp")
-list(FILTER SOURCES EXCLUDE REGEX "(src/simulate.cpp)|(src/generate.cpp)")
+list(FILTER SOURCES EXCLUDE REGEX "(src/simulate.cpp)|(src/generate.cpp)|(src/enumerate_grouping.cpp)")
 
 set(SIMULATE_SOURCES ${SOURCES} "src/simulate.cpp")
 set(GENERATE_SOURCES ${SOURCES} "src/generate.cpp")
+set(GROUPING_SOURCES ${SOURCES} "src/enumerate_grouping.cpp")
 
 add_executable(simulate ${SIMULATE_SOURCES})
 target_include_directories(simulate PUBLIC "inc")
@@ -38,21 +39,15 @@ target_include_directories(generate PUBLIC "inc")
 target_include_directories(generate PUBLIC ${Boost_INCLUDE_DIRS})
 target_link_libraries(generate ${Boost_LIBRARIES})
 
+add_executable(enumerate_grouping ${GROUPING_SOURCES})
+target_include_directories(enumerate_grouping PUBLIC "inc")
+
 add_custom_target(clean_all
     COMMAND ${CMAKE_BUILD_TOOL} clean
     COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/CMakeCache.txt
     COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/simulate
     COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/generate
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/enumerate_grouping
     COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/build
     COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/*.so
-)
-
-
-set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
-    "
-    ${CMAKE_BINARY_DIR}/simulate;
-    ${CMAKE_BINARY_DIR}/generate;
-    ${CMAKE_BINARY_DIR}/build;
-    ${CMAKE_BINARY_DIR}/*.so
-    "
 )

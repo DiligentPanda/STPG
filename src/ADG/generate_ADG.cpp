@@ -200,6 +200,26 @@ ADG construct_ADG(const char* fileName) {
   return make_tuple(graph, paths, accum_stateCnts);
 }
 
+// duplication=true means allowing consecutive vertices in a path to be duplicate.
+ADG construct_ADG(std::vector<Path> & paths, bool duplication) {
+  if (duplication) {
+    std::cout<<"not supported duplication now"<<std::endl;
+  }
+
+  std::vector<int> accum_state_cnts;
+  int sum_states_cnt=0;
+  for (const auto & path: paths) {
+      sum_states_cnt+=path.size();
+      accum_state_cnts.push_back(sum_states_cnt);
+  }
+
+  Graph graph = new_graph(sum_states_cnt);
+  add_type1_edges(graph, paths, accum_state_cnts);
+  add_type2_edges(graph, paths, accum_state_cnts);
+
+  return make_tuple(graph, paths, accum_state_cnts);
+}
+
 ADG construct_delayed_ADG(ADG &adg, int dlow, int dhigh, vector<int> &delayed_agents, vector<int> &states, int *input_sw_cnt, ofstream &outFile_setup) {
   int agentCnt = get_agentCnt(adg);
   Paths paths;
