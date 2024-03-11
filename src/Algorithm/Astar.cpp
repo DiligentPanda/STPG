@@ -1,5 +1,6 @@
 #include "Algorithm/Astar.h"
 #include <algorithm>
+#include <limits.h>
 
 Astar::Astar() {
 }
@@ -8,10 +9,23 @@ Astar::Astar(int input_timeout) {
   timeout = input_timeout;
 }
 
-Astar::Astar(int input_timeout, bool input_fast_version, bool input_enhanced_version) {
+Astar::Astar(int input_timeout, bool input_fast_version, const string & _branch_order, uint random_seed): rng(random_seed) {
   timeout = input_timeout;
   fast_version = input_fast_version;
-  enhanced_version = input_enhanced_version;
+  if (_branch_order=="default") {
+    branch_order=BranchOrder::DEFAULT;
+  } else if (_branch_order=="conflict") {
+    branch_order=BranchOrder::CONFLICT;
+  } else if (_branch_order=="largest_diff") {
+    branch_order=BranchOrder::LARGEST_DIFF;
+  } else if (_branch_order=="random") {
+    branch_order=BranchOrder::RANDOM;
+  } else if (_branch_order=="earliest") {
+    branch_order=BranchOrder::EARLIEST;
+  } else {
+    std::cout<<"unkown branch order"<<std::endl;
+    exit(177);
+  }
 }
 
 
@@ -59,28 +73,87 @@ tuple<int, int, int> Astar::branch(Graph &graph, vector<int> *values) {
   int maxDiff = -1;
   int maxI = -1;
   int maxJ = -1;
-  for (int i = 0; i < get<3>(graph); i++) {
-    int iTime = values->at(i);
-    set<int> &outNeib = get_switchable_outNeib(graph, i);
-    for (auto it : outNeib) {
-      int j = it;
-      int jTime = values->at(j);
-      int diff = iTime - jTime;
-      if (diff > maxDiff) {
-        maxDiff = diff;
-        maxI = i;
-        maxJ = j;
+
+  if (branch_order==BranchOrder::DEFAULT) {
+    for (int i = 0; i < get<3>(graph); i++) {
+      int iTime = values->at(i);
+      set<int> &outNeib = get_switchable_outNeib(graph, i);
+      for (auto it : outNeib) {
+        int j = it;
+        int jTime = values->at(j);
+        int diff = iTime - jTime;
+        if (diff > maxDiff) {
+          maxDiff = diff;
+          maxI = i;
+          maxJ = j;
+        }
+        // rivers: it is a bug that we only check maxDiff>0, it should be maxDiff>=0
+        // rivers: well, it is not a bug, it is just a design choice if termermination checks maxDiff<0.
+        if (maxDiff > 0) {
+          break;
+        } 
       }
-      // rivers: it is a bug that we only check maxDiff>0, it should be maxDiff>=0
-      // rivers: well, it is not a bug, it is just a design choice if termermination checks maxDiff<0.
       if (maxDiff > 0) {
         break;
       } 
     }
-    if (maxDiff > 0) {
-      break;
-    } 
+  } else if (branch_order==BranchOrder::LARGEST_DIFF) {
+    for (int i = 0; i < get<3>(graph); i++) {
+      int iTime = values->at(i);
+      set<int> &outNeib = get_switchable_outNeib(graph, i);
+      for (auto it : outNeib) {
+        int j = it;
+        int jTime = values->at(j);
+        int diff = iTime - jTime;
+        if (diff > maxDiff) {
+          maxDiff = diff;
+          maxI = i;
+          maxJ = j;
+        }
+      }
+    }
+  } else if (branch_order==BranchOrder::EARLIEST) {
+    int earliest_t=INT_MAX;
+    for (int i = 0; i < get<3>(graph); i++) {
+      int iTime = values->at(i);
+      set<int> &outNeib = get_switchable_outNeib(graph, i);
+      for (auto it : outNeib) {
+        int j = it;
+        int jTime = values->at(j);
+        int diff = iTime - jTime;
+        if (diff>=0 && jTime<earliest_t) {
+          maxDiff = diff;
+          maxI = i;
+          maxJ = j;
+          earliest_t=jTime;
+        }
+      }
+    }
+  } else if (branch_order==BranchOrder::RANDOM) {
+
+    std::vector<std::tuple<int,int,int> > tuples;
+    for (int i = 0; i < get<3>(graph); i++) {
+      int iTime = values->at(i);
+      set<int> &outNeib = get_switchable_outNeib(graph, i);
+      for (auto it : outNeib) {
+        int j = it;
+        int jTime = values->at(j);
+        int diff = iTime - jTime;
+        if (diff>=0) {
+          tuples.emplace_back(diff,i,j);
+        }
+      }
+    }
+
+    if (tuples.size()>0) {
+      int random_idx=rng()%tuples.size();
+      std::tie(maxDiff,maxI,maxJ)=tuples[random_idx];
+    }
+  } else {
+    std::cout<<"unknown branch order"<<std::endl;
+    exit(178);
   }
+
   return make_tuple(maxDiff, maxI, maxJ);
 }
 
@@ -188,7 +261,7 @@ ADG Astar::exploreNode() {
     int maxDiff, maxI, maxJ;
     auto start_branch = high_resolution_clock::now();
     // maxI, maxJ returns a type 2 edge to branch (maxDiff is useless for now)
-    if (enhanced_version) {
+    if (branch_order==BranchOrder::CONFLICT) {
       tie(maxDiff, maxI, maxJ) = enhanced_branch(graph, values);  
     } else {
       tie(maxDiff, maxI, maxJ) = branch(graph, values);
@@ -243,7 +316,7 @@ ADG Astar::exploreNode() {
       auto end_graph_free = high_resolution_clock::now();
       copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
 
-      if (terminate && enhanced_version) {
+      if (terminate && branch_order==BranchOrder::CONFLICT) {
         reverse_nonSwitchable_edges_basedOn_LongestPathValues(get<0>(res),values);
       }
 

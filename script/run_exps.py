@@ -19,7 +19,8 @@ delay_prob=10
 delay_steps_low=10
 delay_steps_high=20
 time_limit=90
-algos=["graph","enhanced"] # ["graph","exec","enhanced"]
+algos=["graph"] # ["graph","exec"]
+branch_orders=["default","conflict","largest_diff","random","earliest"]
 MAX_VIRTUAL_MEMORY = 8 * 1024 * 1024 # 8 GB
 skip=False
 
@@ -28,9 +29,9 @@ num_sits=6
 
 # setting: [agent_num_start, agent_num_end, agent_num_step, max_process_num]
 maps = {
-        "random-32-32-10":[25,50,5,8],
-        "warehouse-10-20-10-2-1":[40,90,10,8],
-        "Paris_1_256": [30,80,10,16],
+        # "random-32-32-10":[25,50,5,8],
+        # "warehouse-10-20-10-2-1":[40,90,10,8],
+        # "Paris_1_256": [30,80,10,16],
         "lak303d": [15,35,4,16]
        }
 
@@ -115,25 +116,26 @@ for map_name,setting in maps.items():
         for sit_idx in range(num_sits):
             sit_name="map_{}_ins_{}_an_{}_sit_{}".format(map_name,instance_idx,agent_num,sit_idx)
             sit_file_path=os.path.join(sit_folder,sit_name+".json")
-            for algo in algos: 
-                trail_name="{}_algo_{}".format(sit_name,algo)
-                output_names.append(trail_name)
-                stat_ofp=os.path.join(stat_output_folder,trail_name+".json")
-                new_path_ofp=os.path.join(new_path_output_folder,trail_name+".path")
-                
-                if skip and os.path.exists(stat_ofp) and os.path.exists(new_path_ofp):
-                    print("{} exist. skip...".format(trail_name))
-                    continue                
-        
-                print("run {}".format(trail_name))    
+            for algo in algos:
+                for branch_order in branch_orders: 
+                    trail_name="{}_algo_{}_{}".format(sit_name,algo,branch_order)
+                    output_names.append(trail_name)
+                    stat_ofp=os.path.join(stat_output_folder,trail_name+".json")
+                    new_path_ofp=os.path.join(new_path_output_folder,trail_name+".path")
+                    
+                    if skip and os.path.exists(stat_ofp) and os.path.exists(new_path_ofp):
+                        print("{} exist. skip...".format(trail_name))
+                        continue                
+            
+                    print("run {}".format(trail_name))    
 
-                # we only require 1-robust, so --kDelay 1
-                cmd = f"ulimit -Sv {MAX_VIRTUAL_MEMORY} &&" \
-                    f" {exe_path} -p {path_file_path} -s {sit_file_path}" \
-                    f" -t {time_limit} -a {algo}" \
-                    f" -o {stat_ofp} -n {new_path_ofp}"
-                
-                cmds.append(cmd)
+                    # we only require 1-robust, so --kDelay 1
+                    cmd = f"ulimit -Sv {MAX_VIRTUAL_MEMORY} &&" \
+                        f" {exe_path} -p {path_file_path} -s {sit_file_path}" \
+                        f" -t {time_limit} -a {algo} -b {branch_order}" \
+                        f" -o {stat_ofp} -n {new_path_ofp}"
+                    
+                    cmds.append(cmd)
         
     # for cmd,output_name in zip(cmds,output_names):
     #     print(output_name,cmd)

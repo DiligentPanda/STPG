@@ -9,11 +9,19 @@ using namespace std::chrono;
 #include "simulator.h"
 #include "nlohmann/json.hpp"
 
+enum BranchOrder {
+  DEFAULT,
+  CONFLICT,
+  LARGEST_DIFF,
+  RANDOM,
+  EARLIEST
+};
+
 class Astar {
   public:
     Astar();
     Astar(int input_timeout);
-    Astar(int input_timeout, bool input_fast_version, bool input_enhanced_version=false);
+    Astar(int input_timeout, bool input_fast_version, const string & branch_order="default", uint random_seed=0);
     ADG startExplore(ADG &adg, int input_sw_cnt);
     int heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values);
     int slow_heuristic(ADG &adg, vector<int> &states);
@@ -81,6 +89,7 @@ class Astar {
     int agentCnt = 0;
 
     bool fast_version = false;
-    bool enhanced_version = false;
+    BranchOrder branch_order=BranchOrder::DEFAULT;  
+    std::mt19937 rng;
 };
 #endif

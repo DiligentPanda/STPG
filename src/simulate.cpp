@@ -175,6 +175,8 @@ void simulate(
   const string & sit_fp, 
   int time_limit, 
   const string & algo, 
+  const string & branch_order,
+  uint random_seed,
   const string & stat_ofp, 
   const string & new_path_ofp
 ) {
@@ -215,12 +217,10 @@ void simulate(
 
   // replanning ADG
   Astar search;
-  if (algo=="enhanced") {
-    search=Astar(time_limit, true, true);
-  } else if (algo=="graph") {
-    search=Astar(time_limit, true, false);
+  if (algo=="graph") {
+    search=Astar(time_limit, true, branch_order, random_seed);
   } else if (algo=="exec") {
-    search=Astar(time_limit, false);
+    search=Astar(time_limit, false, branch_order, random_seed);
   } else {
     std::cout<<"unknown algorithm: "<<algo<<std::endl;  
   }
@@ -230,6 +230,8 @@ void simulate(
 
   // basic information
   stats["algo"]=algo;
+  stats["branch_order"]=branch_order;
+  stats["random_seed"]=random_seed;
   stats["time_limit"]=time_limit*1000000; // in micro-seconds
   stats["path_fp"]=path_fp;
   stats["sit_fp"]=sit_fp;
@@ -311,6 +313,8 @@ int main(int argc, char** argv) {
     ("algo,a",po::value<std::string>()->required(),"replaning algorithm to use, [exec, graph, enhanced]")
     ("stat_ofp,o",po::value<std::string>()->required(),"the output file path of statistics")
     ("new_path_ofp,n",po::value<std::string>()->required(),"the output file path of new paths")
+    ("branch_order,b",po::value<std::string>()->required(),"the branch order to use, [default, conflict, largest_diff, random, earliest]")
+    ("random_seed,r",po::value<uint>()->default_value(0),"random seed")
   ;
 
   po::variables_map vm;
@@ -327,14 +331,19 @@ int main(int argc, char** argv) {
   string sit_fp=vm.at("sit_fp").as<string>();
   int time_limit=vm.at("time_limit").as<int>();
   string algo=vm.at("algo").as<string>();
+  string branch_order=vm.at("branch_order").as<string>();
+  uint random_seed=vm.at("random_seed").as<uint>();
   string stat_ofp=vm.at("stat_ofp").as<string>();
   string new_path_ofp=vm.at("new_path_ofp").as<string>();
+
 
   simulate(
     path_fp,
     sit_fp,
     time_limit,
     algo,
+    branch_order,
+    random_seed,
     stat_ofp,
     new_path_ofp
   );
