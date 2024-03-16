@@ -67,6 +67,8 @@ bool check_cycle_nonSwitchable(Graph& graph, int start);
 
 bool check_cycle_dfs(Graph& graph, int start);
 
+bool check_cycle_dfs(Graph& graph, std::vector<int>& starts);
+
 void remove_all_switchable_edges(Graph& graph);
 
 bool check_cycle_nonSwitchable_old(Graph& graph, int start);
@@ -76,3 +78,7 @@ bool check_cycle_nonSwitchable_old(Graph& graph, int start);
 sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_starts, int u, int v);
 
 void reverse_nonSwitchable_edges_basedOn_LongestPathValues(Graph& graph, vector<int> *values);
+
+std::pair<int,int> fix_switchable_edge(Graph & graph, int out_state_idx, int in_state_idx, bool reverse);
+
+std::vector<std::pair<int,int> > fix_switchable_edges(Graph & graph, std::vector<std::pair<int,int> > & edges, bool reverse);

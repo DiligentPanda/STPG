@@ -106,7 +106,7 @@ int Simulator::simulate_wdelay(int p, int dlow, int dhigh, ofstream &outFile, of
       microseconds timer(0);
       start = high_resolution_clock::now();
       Astar search(timeout, true);
-      ADG replanned_adg = search.startExplore(adg_delayed, input_sw_cnt);
+      ADG replanned_adg = search.startExplore(adg_delayed, input_sw_cnt, states);
       stop = high_resolution_clock::now();
       timer += duration_cast<microseconds>(stop - start);
 
@@ -136,7 +136,7 @@ int Simulator::simulate_wdelay(int p, int dlow, int dhigh, ofstream &outFile, of
       microseconds timer_slow(0);
       start = high_resolution_clock::now();
       Astar search_slow(timeout, false);
-      ADG replanned_slow = search_slow.startExplore(adg_delayed_slow, input_sw_cnt);
+      ADG replanned_slow = search_slow.startExplore(adg_delayed_slow, input_sw_cnt, states);
       stop = high_resolution_clock::now();
       timer_slow += duration_cast<microseconds>(stop - start);
 
@@ -176,6 +176,7 @@ void simulate(
   int time_limit, 
   const string & algo, 
   const string & branch_order,
+  bool use_grouping,
   uint random_seed,
   const string & stat_ofp, 
   const string & new_path_ofp
@@ -218,19 +219,19 @@ void simulate(
   // replanning ADG
   Astar search;
   if (algo=="graph") {
-    search=Astar(time_limit, true, branch_order, random_seed);
+    search=Astar(time_limit, true, branch_order,  use_grouping, random_seed);
   } else if (algo=="exec") {
-    search=Astar(time_limit, false, branch_order, random_seed);
+    search=Astar(time_limit, false, branch_order, use_grouping, random_seed);
   } else {
     std::cout<<"unknown algorithm: "<<algo<<std::endl;  
   }
-
 
   json stats;
 
   // basic information
   stats["algo"]=algo;
   stats["branch_order"]=branch_order;
+  stats["use_grouping"]=use_grouping;
   stats["random_seed"]=random_seed;
   stats["time_limit"]=time_limit*1000000; // in micro-seconds
   stats["path_fp"]=path_fp;
@@ -257,6 +258,7 @@ void simulate(
   stats["copy_free_graphs_time"]=nullptr;
   stats["termination_time"]=nullptr;
   stats["dfs_time"]=nullptr;
+  stats["grouping_time"]=nullptr;
   
   std::ofstream out(stat_ofp);
   out<<stats.dump(4)<<std::endl;
@@ -264,7 +266,7 @@ void simulate(
 
   microseconds timer(0);
   start = high_resolution_clock::now();
-  ADG replanned_adg = search.startExplore(adg_delayed, input_sw_cnt);
+  ADG replanned_adg = search.startExplore(adg_delayed, input_sw_cnt, states);
   stop = high_resolution_clock::now();
   timer += duration_cast<microseconds>(stop - start);
 
@@ -314,6 +316,7 @@ int main(int argc, char** argv) {
     ("stat_ofp,o",po::value<std::string>()->required(),"the output file path of statistics")
     ("new_path_ofp,n",po::value<std::string>()->required(),"the output file path of new paths")
     ("branch_order,b",po::value<std::string>()->required(),"the branch order to use, [default, conflict, largest_diff, random, earliest]")
+    ("use_grouping,g",po::value<bool>()->required(),"whether to use grouping")
     ("random_seed,r",po::value<uint>()->default_value(0),"random seed")
   ;
 
@@ -335,7 +338,7 @@ int main(int argc, char** argv) {
   uint random_seed=vm.at("random_seed").as<uint>();
   string stat_ofp=vm.at("stat_ofp").as<string>();
   string new_path_ofp=vm.at("new_path_ofp").as<string>();
-
+  bool use_grouping=vm.at("use_grouping").as<bool>();
 
   simulate(
     path_fp,
@@ -343,6 +346,7 @@ int main(int argc, char** argv) {
     time_limit,
     algo,
     branch_order,
+    use_grouping,
     random_seed,
     stat_ofp,
     new_path_ofp

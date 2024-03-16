@@ -8,6 +8,9 @@ using namespace std::chrono;
 #include "../ADG/ADG_utilities.h"
 #include "simulator.h"
 #include "nlohmann/json.hpp"
+#include "group/group.h"
+#include <memory>
+#include <vector>
 
 enum BranchOrder {
   DEFAULT,
@@ -21,8 +24,8 @@ class Astar {
   public:
     Astar();
     Astar(int input_timeout);
-    Astar(int input_timeout, bool input_fast_version, const string & branch_order="default", uint random_seed=0);
-    ADG startExplore(ADG &adg, int input_sw_cnt);
+    Astar(int input_timeout, bool input_fast_version, const string & branch_order="default", bool use_grouping=false, uint random_seed=0);
+    ADG startExplore(ADG &adg, int input_sw_cnt, vector<int> & states);
     int heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values);
     int slow_heuristic(ADG &adg, vector<int> &states);
 
@@ -64,6 +67,7 @@ class Astar {
     tuple<int, int, int> branch(Graph &graph, vector<int> *values);
     tuple<bool, int, int, int> slow_branch(ADG &adg, vector<int> *states);
 
+    microseconds groupingT = std::chrono::microseconds::zero();
     microseconds heuristicT = std::chrono::microseconds::zero();
     microseconds branchT = std::chrono::microseconds::zero();
     microseconds sortT = std::chrono::microseconds::zero();
@@ -91,5 +95,8 @@ class Astar {
     bool fast_version = false;
     BranchOrder branch_order=BranchOrder::DEFAULT;  
     std::mt19937 rng;
+
+    bool use_grouping=false;
+    std::shared_ptr<GroupManager> group_manager;
 };
 #endif

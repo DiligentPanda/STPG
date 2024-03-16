@@ -1,6 +1,7 @@
 #include "Algorithm/Astar.h"
 #include <algorithm>
 #include <limits.h>
+#include "group/group.h"
 
 Astar::Astar() {
 }
@@ -9,7 +10,7 @@ Astar::Astar(int input_timeout) {
   timeout = input_timeout;
 }
 
-Astar::Astar(int input_timeout, bool input_fast_version, const string & _branch_order, uint random_seed): rng(random_seed) {
+Astar::Astar(int input_timeout, bool input_fast_version, const string & _branch_order, bool use_grouping, uint random_seed): rng(random_seed) {
   timeout = input_timeout;
   fast_version = input_fast_version;
   if (_branch_order=="default") {
@@ -26,6 +27,7 @@ Astar::Astar(int input_timeout, bool input_fast_version, const string & _branch_
     std::cout<<"unkown branch order"<<std::endl;
     exit(177);
   }
+  this->use_grouping=use_grouping;
 }
 
 
@@ -208,6 +210,7 @@ void Astar::print_stats(nlohmann::json & stats) {
   stats["copy_free_graphs_time"]=copy_free_graphsT.count();
   stats["termination_time"]=termT.count();
   stats["dfs_time"]=dfsT.count();
+  stats["grouping_time"]=groupingT.count();
 }
 
 void Astar::print_stats(ofstream &outFile) {
@@ -331,107 +334,134 @@ ADG Astar::exploreNode() {
       auto end_graph_copy = high_resolution_clock::now();
       copy_free_graphsT += duration_cast<microseconds>(end_graph_copy - start_graph_copy);
 
+
       /* Following is the two branches. */
 
-      // Forward
-      // Fix the edge
-      rem_type2_switchable_edge(graph, maxI, maxJ);
-      set_type2_nonSwitchable_edge(graph, maxI, maxJ);
+      {
+        // Forward
+        // Fix the edge
+        bool pruned;
+        if (!use_grouping) {
+          auto fixed_edge=fix_switchable_edge(graph, maxI, maxJ, false);
+          auto start_dfs = high_resolution_clock::now();
+          pruned = check_cycle_dfs(graph, fixed_edge.first);
+          auto end_dfs = high_resolution_clock::now();
+          dfsT += duration_cast<microseconds>(end_dfs - start_dfs);
+        } else {
+          // get the group of edges
+          std::vector<std::pair<int,int> > edges= group_manager->get_groupable_edges(maxI, maxJ);
+          auto fixed_edges=fix_switchable_edges(graph, edges, false);
+          auto start_dfs = high_resolution_clock::now();
+          std::vector<int> out_states;
+          std::for_each(begin(fixed_edges), end(fixed_edges), [&out_states](std::pair<int,int> & edge) {
+              out_states.emplace_back(edge.first);
+          });
+          pruned = check_cycle_dfs(graph,out_states);
+          auto end_dfs = high_resolution_clock::now();
+          dfsT += duration_cast<microseconds>(end_dfs - start_dfs);
+        }
 
-      auto start_dfs = high_resolution_clock::now();
-      bool pruned_forward = check_cycle_dfs(graph, maxI);
-      auto end_dfs = high_resolution_clock::now();
-      dfsT += duration_cast<microseconds>(end_dfs - start_dfs);
+        if (pruned) { // Prune node
+          auto start_graph_free = high_resolution_clock::now();
+          free_graph(graph);
+          auto end_graph_free = high_resolution_clock::now();
+          copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
+          pruned_node_cnt += 1;
+        } else {
+          vector<int>* newts_tv_init = nullptr;
+          vector<int>* newts_vt_init = nullptr;
+          sortResult newInitResult = make_pair(newts_tv_init, newts_vt_init);
 
-      if (pruned_forward) { // Prune node
-        auto start_graph_free = high_resolution_clock::now();
-        free_graph(graph);
-        auto end_graph_free = high_resolution_clock::now();
-        copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
-        pruned_node_cnt += 1;
-      } else {
-        vector<int>* newts_tv_init = nullptr;
-        vector<int>* newts_vt_init = nullptr;
-        sortResult newInitResult = make_pair(newts_tv_init, newts_vt_init);
+          vector<int>* newts_tv;
+          vector<int>* newts_vt;
+          vector<int>* node_values = new vector<int>(get<3>(graph), 0);
 
-        vector<int>* newts_tv;
-        vector<int>* newts_vt;
-        vector<int>* node_values = new vector<int>(get<3>(graph), 0);
+          auto start_sort = high_resolution_clock::now();
+          tie(newts_tv, newts_vt) = topologicalSort(graph, newInitResult, &currents, -1, -1);
+          auto end_sort = high_resolution_clock::now();
+          int val = heuristic_graph(adg, newts_tv, node_values);
+          auto end_heuristic = high_resolution_clock::now();
 
-        auto start_sort = high_resolution_clock::now();
-        tie(newts_tv, newts_vt) = topologicalSort(graph, newInitResult, &currents, -1, -1);
-        auto end_sort = high_resolution_clock::now();
-        int val = heuristic_graph(adg, newts_tv, node_values);
-        auto end_heuristic = high_resolution_clock::now();
+          sortT += duration_cast<microseconds>(end_sort - start_sort);
+          heuristicT += duration_cast<microseconds>(end_heuristic - end_sort);
 
-        sortT += duration_cast<microseconds>(end_sort - start_sort);
-        heuristicT += duration_cast<microseconds>(end_heuristic - end_sort);
+          delete newts_tv;
+          delete newts_vt;
 
-        delete newts_tv;
-        delete newts_vt;
+          Node *forward_node = new Node;
+          *forward_node = make_tuple(adg, val, node_values);
 
-        Node *forward_node = new Node;
-        *forward_node = make_tuple(adg, val, node_values);
+          auto start_pq_push = high_resolution_clock::now();
+          pq.push(forward_node);
+          auto end_pq_push = high_resolution_clock::now();
+          pqT += duration_cast<microseconds>(end_pq_push - start_pq_push);
 
-        auto start_pq_push = high_resolution_clock::now();
-        pq.push(forward_node);
-        auto end_pq_push = high_resolution_clock::now();
-        pqT += duration_cast<microseconds>(end_pq_push - start_pq_push);
-
-        added_node_cnt += 1;
+          added_node_cnt += 1;
+        }
       }
 
-      // Backward 
-      Graph &copyGraph = get<0>(copy);
+      {
+        // Backward 
+        Graph &graph = get<0>(copy);
 
-      // Fix the edge
-      int backI = maxJ+1;
-      int backJ = maxI-1;
+        bool pruned;
+        if (!use_grouping) {
+          auto fixed_edge=fix_switchable_edge(graph, maxI, maxJ, true);
+          auto start_dfs = high_resolution_clock::now();
+          pruned = check_cycle_dfs(graph, fixed_edge.first);
+          auto end_dfs = high_resolution_clock::now();
+          dfsT += duration_cast<microseconds>(end_dfs - start_dfs);
+        } else {
+          // get the group of edges
+          std::vector<std::pair<int,int> > edges= group_manager->get_groupable_edges(maxI, maxJ);
+          auto fixed_edges=fix_switchable_edges(graph, edges, true);
+          auto start_dfs = high_resolution_clock::now();
+          std::vector<int> out_states;
+          std::for_each(begin(fixed_edges), end(fixed_edges), [&out_states](std::pair<int,int> & edge) {
+              out_states.emplace_back(edge.first);
+          });
+          pruned = check_cycle_dfs(graph,out_states);
+          auto end_dfs = high_resolution_clock::now();
+          dfsT += duration_cast<microseconds>(end_dfs - start_dfs);
+        }
 
-      rem_type2_switchable_edge(copyGraph, maxI, maxJ);
-      set_type2_nonSwitchable_edge(copyGraph, backI, backJ);
+        if (pruned) { // Prune node
+          auto start_graph_free = high_resolution_clock::now();
+          free_graph(graph);
+          auto end_graph_free = high_resolution_clock::now();
+          copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
+          pruned_node_cnt += 1;
+        } else {
+          vector<int>* newts_tv_init = nullptr;
+          vector<int>* newts_vt_init = nullptr;
+          sortResult newInitResult = make_pair(newts_tv_init, newts_vt_init);
 
-      start_dfs = high_resolution_clock::now();
-      bool pruned_backward = check_cycle_dfs(copyGraph, backI);
-      end_dfs = high_resolution_clock::now();
-      dfsT += duration_cast<microseconds>(end_dfs - start_dfs);
+          vector<int>* newts_tv;
+          vector<int>* newts_vt;
+          vector<int>* node_values = new vector<int>(get<3>(graph), 0);
 
-      if (pruned_backward) { // Prune node
-        auto start_graph_free = high_resolution_clock::now();
-        free_graph(copyGraph);
-        auto end_graph_free = high_resolution_clock::now();
-        copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
-        pruned_node_cnt += 1;
-      } else {
-        vector<int>* newts_tv_init = nullptr;
-        vector<int>* newts_vt_init = nullptr;
-        sortResult newInitResult = make_pair(newts_tv_init, newts_vt_init);
+          auto start_sort = high_resolution_clock::now();
+          tie(newts_tv, newts_vt) = topologicalSort(graph, newInitResult, &currents, -1, -1);
+          auto end_sort = high_resolution_clock::now();
+          int val = heuristic_graph(copy, newts_tv, node_values);
+          auto end_heuristic = high_resolution_clock::now();
 
-        vector<int>* newts_tv;
-        vector<int>* newts_vt;
-        vector<int>* node_values = new vector<int>(get<3>(copyGraph), 0);
+          sortT += duration_cast<microseconds>(end_sort - start_sort);
+          heuristicT += duration_cast<microseconds>(end_heuristic - end_sort);
 
-        auto start_sort = high_resolution_clock::now();
-        tie(newts_tv, newts_vt) = topologicalSort(copyGraph, newInitResult, &currents, -1, -1);
-        auto end_sort = high_resolution_clock::now();
-        int val = heuristic_graph(copy, newts_tv, node_values);
-        auto end_heuristic = high_resolution_clock::now();
+          delete newts_tv;
+          delete newts_vt;
 
-        sortT += duration_cast<microseconds>(end_sort - start_sort);
-        heuristicT += duration_cast<microseconds>(end_heuristic - end_sort);
+          Node *backward_node = new Node;
+          *backward_node = make_tuple(copy, val, node_values);
 
-        delete newts_tv;
-        delete newts_vt;
+          auto start_pq_push = high_resolution_clock::now();
+          pq.push(backward_node);
+          auto end_pq_push = high_resolution_clock::now();
+          pqT += duration_cast<microseconds>(end_pq_push - start_pq_push);
 
-        Node *backward_node = new Node;
-        *backward_node = make_tuple(copy, val, node_values);
-
-        auto start_pq_push = high_resolution_clock::now();
-        pq.push(backward_node);
-        auto end_pq_push = high_resolution_clock::now();
-        pqT += duration_cast<microseconds>(end_pq_push - start_pq_push);
-
-        added_node_cnt += 1;
+          added_node_cnt += 1;
+        }
       }
     }
     delete values;
@@ -657,7 +687,19 @@ ADG Astar::slow_exploreNode() {
   throw invalid_argument("no solution found");
 }
 
-ADG Astar::startExplore(ADG &adg, int input_sw_cnt) {
+ADG Astar::startExplore(ADG & adg, int input_sw_cnt, vector<int> & states) {
+  
+  // TODO(rivers): if use grouping
+  if (use_grouping) {
+    // std::cout<<"input_sw_cnt: "<<input_sw_cnt<<std::endl;
+    auto start = high_resolution_clock::now();
+    group_manager=std::make_shared<GroupManager>(adg, states);
+    auto end = high_resolution_clock::now();
+    groupingT += duration_cast<microseconds>(end - start);
+    // std::cout<<"group size: "<<group_manager->groups.size()<<std::endl;
+   // group_manager->print_groups();
+  }
+
   vertex_cnt = get<3>(get<0>(adg));
   sw_edge_cnt = input_sw_cnt;
   // std::cout << "vertex_cnt = " << vertex_cnt << ", sw_edge_cnt = " << sw_edge_cnt << "\n";

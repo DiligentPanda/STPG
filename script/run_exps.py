@@ -20,7 +20,8 @@ delay_steps_low=10
 delay_steps_high=20
 time_limit=90
 algos=["graph"] # ["graph","exec"]
-branch_orders=["default","conflict","largest_diff","random","earliest"]
+branch_orders=["conflict"] #["default","conflict","largest_diff","random","earliest"]
+use_groupings=["false","true"]
 MAX_VIRTUAL_MEMORY = 8 * 1024 * 1024 # 8 GB
 skip=False
 
@@ -118,24 +119,25 @@ for map_name,setting in maps.items():
             sit_file_path=os.path.join(sit_folder,sit_name+".json")
             for algo in algos:
                 for branch_order in branch_orders: 
-                    trail_name="{}_algo_{}_{}".format(sit_name,algo,branch_order)
-                    output_names.append(trail_name)
-                    stat_ofp=os.path.join(stat_output_folder,trail_name+".json")
-                    new_path_ofp=os.path.join(new_path_output_folder,trail_name+".path")
-                    
-                    if skip and os.path.exists(stat_ofp) and os.path.exists(new_path_ofp):
-                        print("{} exist. skip...".format(trail_name))
-                        continue                
-            
-                    print("run {}".format(trail_name))    
+                    for use_grouping in use_groupings:
+                        trail_name="{}_algo_{}_br_{}_gp_{}".format(sit_name,algo,branch_order,use_grouping)
+                        output_names.append(trail_name)
+                        stat_ofp=os.path.join(stat_output_folder,trail_name+".json")
+                        new_path_ofp=os.path.join(new_path_output_folder,trail_name+".path")
+                        
+                        if skip and os.path.exists(stat_ofp) and os.path.exists(new_path_ofp):
+                            print("{} exist. skip...".format(trail_name))
+                            continue                
+                
+                        print("run {}".format(trail_name))    
 
-                    # we only require 1-robust, so --kDelay 1
-                    cmd = f"ulimit -Sv {MAX_VIRTUAL_MEMORY} &&" \
-                        f" {exe_path} -p {path_file_path} -s {sit_file_path}" \
-                        f" -t {time_limit} -a {algo} -b {branch_order}" \
-                        f" -o {stat_ofp} -n {new_path_ofp}"
-                    
-                    cmds.append(cmd)
+                        # we only require 1-robust, so --kDelay 1
+                        cmd = f"ulimit -Sv {MAX_VIRTUAL_MEMORY} &&" \
+                            f" {exe_path} -p {path_file_path} -s {sit_file_path}" \
+                            f" -t {time_limit} -a {algo} -b {branch_order} -g {use_grouping}" \
+                            f" -o {stat_ofp} -n {new_path_ofp}"
+                        
+                        cmds.append(cmd)
         
     # for cmd,output_name in zip(cmds,output_names):
     #     print(output_name,cmd)
