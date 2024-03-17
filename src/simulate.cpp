@@ -177,6 +177,7 @@ void simulate(
   const string & algo, 
   const string & branch_order,
   bool use_grouping,
+  const string & heuristic,
   uint random_seed,
   const string & stat_ofp, 
   const string & new_path_ofp
@@ -219,9 +220,9 @@ void simulate(
   // replanning ADG
   Astar search;
   if (algo=="graph") {
-    search=Astar(time_limit, true, branch_order,  use_grouping, random_seed);
+    search=Astar(time_limit, true, branch_order,  use_grouping, heuristic, random_seed);
   } else if (algo=="exec") {
-    search=Astar(time_limit, false, branch_order, use_grouping, random_seed);
+    search=Astar(time_limit, false, branch_order, use_grouping, heuristic, random_seed);
   } else {
     std::cout<<"unknown algorithm: "<<algo<<std::endl;  
   }
@@ -232,6 +233,7 @@ void simulate(
   stats["algo"]=algo;
   stats["branch_order"]=branch_order;
   stats["use_grouping"]=use_grouping;
+  stats["heuristic"]=heuristic;
   stats["random_seed"]=random_seed;
   stats["time_limit"]=time_limit*1000000; // in micro-seconds
   stats["path_fp"]=path_fp;
@@ -251,6 +253,7 @@ void simulate(
   stats["added_node"]=nullptr;
   stats["vertex"]=nullptr;
   stats["sw_edge"]=nullptr;
+  stats["extra_heuristic_time"]=nullptr;
   stats["heuristic_time"]=nullptr;
   stats["branch_time"]=nullptr;
   stats["sort_time"]=nullptr;
@@ -312,11 +315,12 @@ int main(int argc, char** argv) {
     ("path_fp,p",po::value<std::string>()->required(),"path file to construct ADG")
     ("sit_fp,s",po::value<std::string>()->required(),"situation file to construct delayed ADG")
     ("time_limit,t",po::value<int>()->required(),"time limit in seconds. need to be an integer")
-    ("algo,a",po::value<std::string>()->required(),"replaning algorithm to use, [exec, graph, enhanced]")
+    ("algo,a",po::value<std::string>()->required(),"replaning algorithm to use, [exec, graph]")
     ("stat_ofp,o",po::value<std::string>()->required(),"the output file path of statistics")
     ("new_path_ofp,n",po::value<std::string>()->required(),"the output file path of new paths")
     ("branch_order,b",po::value<std::string>()->required(),"the branch order to use, [default, conflict, largest_diff, random, earliest]")
     ("use_grouping,g",po::value<bool>()->required(),"whether to use grouping")
+    ("heuristic,h",po::value<std::string>()->required(),"the heuristic to use, [zero, cg_greedy]")
     ("random_seed,r",po::value<uint>()->default_value(0),"random seed")
   ;
 
@@ -339,6 +343,7 @@ int main(int argc, char** argv) {
   string stat_ofp=vm.at("stat_ofp").as<string>();
   string new_path_ofp=vm.at("new_path_ofp").as<string>();
   bool use_grouping=vm.at("use_grouping").as<bool>();
+  string heuristic=vm.at("heuristic").as<string>();
 
   simulate(
     path_fp,
@@ -347,6 +352,7 @@ int main(int argc, char** argv) {
     algo,
     branch_order,
     use_grouping,
+    heuristic,
     random_seed,
     stat_ofp,
     new_path_ofp

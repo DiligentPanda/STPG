@@ -20,19 +20,22 @@ delay_steps_low=10
 delay_steps_high=20
 time_limit=90
 algos=["graph"] # ["graph","exec"]
-branch_orders=["conflict"] #["default","conflict","largest_diff","random","earliest"]
-use_groupings=["false","true"]
+branch_orders=["largest_diff"] #,"random","earliest"]
+use_groupings=["true"]
+heuristics=["zero","cg_greedy","wcg_greedy"]
 MAX_VIRTUAL_MEMORY = 8 * 1024 * 1024 # 8 GB
 skip=False
 
 instance_idxs=list(range(1,25+1)) # this is the number provided by the benchmark
 num_sits=6
 
+subprocess.check_output("./compile.sh", shell=True) 
+
 # setting: [agent_num_start, agent_num_end, agent_num_step, max_process_num]
 maps = {
         # "random-32-32-10":[25,50,5,8],
         # "warehouse-10-20-10-2-1":[40,90,10,8],
-        # "Paris_1_256": [30,80,10,16],
+        "Paris_1_256": [30,80,10,16],
         "lak303d": [15,35,4,16]
        }
 
@@ -120,25 +123,26 @@ for map_name,setting in maps.items():
             for algo in algos:
                 for branch_order in branch_orders: 
                     for use_grouping in use_groupings:
-                        trail_name="{}_algo_{}_br_{}_gp_{}".format(sit_name,algo,branch_order,use_grouping)
-                        output_names.append(trail_name)
-                        stat_ofp=os.path.join(stat_output_folder,trail_name+".json")
-                        new_path_ofp=os.path.join(new_path_output_folder,trail_name+".path")
-                        
-                        if skip and os.path.exists(stat_ofp) and os.path.exists(new_path_ofp):
-                            print("{} exist. skip...".format(trail_name))
-                            continue                
-                
-                        print("run {}".format(trail_name))    
+                        for heuristic in heuristics:
+                            trial_name="{}_algo_{}_br_{}_gp_{}_heu_{}".format(sit_name,algo,branch_order,use_grouping,heuristic)
+                            output_names.append(trial_name)
+                            stat_ofp=os.path.join(stat_output_folder,trial_name+".json")
+                            new_path_ofp=os.path.join(new_path_output_folder,trial_name+".path")
+                            
+                            if skip and os.path.exists(stat_ofp) and os.path.exists(new_path_ofp):
+                                print("{} exist. skip...".format(trial_name))
+                                continue                
+                    
+                            print("run {}".format(trial_name))    
 
-                        # we only require 1-robust, so --kDelay 1
-                        cmd = f"ulimit -Sv {MAX_VIRTUAL_MEMORY} &&" \
-                            f" {exe_path} -p {path_file_path} -s {sit_file_path}" \
-                            f" -t {time_limit} -a {algo} -b {branch_order} -g {use_grouping}" \
-                            f" -o {stat_ofp} -n {new_path_ofp}"
-                        
-                        cmds.append(cmd)
-        
+                            # we only require 1-robust, so --kDelay 1
+                            cmd = f"ulimit -Sv {MAX_VIRTUAL_MEMORY} &&" \
+                                f" {exe_path} -p {path_file_path} -s {sit_file_path}" \
+                                f" -t {time_limit} -a {algo} -b {branch_order} -g {use_grouping} -h {heuristic}" \
+                                f" -o {stat_ofp} -n {new_path_ofp}"
+                            
+                            cmds.append(cmd)
+            
     # for cmd,output_name in zip(cmds,output_names):
     #     print(output_name,cmd)
             

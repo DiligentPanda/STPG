@@ -340,27 +340,20 @@ void reverse_nonSwitchable_edges_basedOn_LongestPathValues(Graph& graph, vector<
             int time_back_i=times[back_i];
             int time_back_j=times[back_j];
 
-            if (time_i>=time_j && time_i-time_j<=1) {
-                std::cout<<"error in set_switchable_nonSwitchable_basedOn_LongestPath: conflict not solved yet!"<<std::endl;
-                std::cout<<"time_i="<<time_i<<" time_j="<<time_j<<std::endl;
-                std::cout<<"time_back_i="<<time_back_i<<" time_back_j="<<time_back_j<<std::endl;
-                exit(200);
-            } else if (time_i>time_j) {
+            if (time_i>=time_j) {
+                if (time_back_i>=time_back_j) {
+                    std::cout<<"error in set_switchable_nonSwitchable_basedOn_LongestPath: conflict not solved yet!"<<std::endl;
+                    std::cout<<"time_i="<<time_i<<" time_j="<<time_j<<std::endl;
+                    std::cout<<"time_back_i="<<time_back_i<<" time_back_j="<<time_back_j<<std::endl;
+                    exit(200);
+                }
                 // need to reverse
                 need_to_reverse.emplace_back(i,j);
             }
         }
     }
 
-    for (auto & p: need_to_reverse) {
-        int i=p.first;
-        int j=p.second;
-        int back_i=j+1;
-        int back_j=i-1;
-        
-        rem_type2_switchable_edge(graph,i,j);
-        set_type2_switchable_edge(graph,back_i,back_j);
-    }
+    fix_switchable_edges(graph, need_to_reverse, true);
 
     return;
 }
@@ -837,8 +830,8 @@ TODO(rivers): it seems that the incremental version has not been implemented yet
 
 input:
     sortResult: (init) sorted restuls, including the following two arrays of the same size.
-        vertex global idx -> topological order array
-        topological order -> vertex global idx array 
+        topological order -> vertex global idx
+        vertex global idx -> topological order
     agent_starts: current agent vertex local idxs
     u: ?
     v: ?
@@ -847,7 +840,7 @@ return:
 */ 
 sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_starts, int u, int v) {
     int graph_size = get<3>(graph);
-
+  
     vector<int>* time_arr = state.first;
     vector<int>* vertex_arr = state.second;
 

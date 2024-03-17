@@ -10,7 +10,7 @@ Astar::Astar(int input_timeout) {
   timeout = input_timeout;
 }
 
-Astar::Astar(int input_timeout, bool input_fast_version, const string & _branch_order, bool use_grouping, uint random_seed): rng(random_seed) {
+Astar::Astar(int input_timeout, bool input_fast_version, const string & _branch_order, bool use_grouping, const string & _heuristic, uint random_seed): rng(random_seed) {
   timeout = input_timeout;
   fast_version = input_fast_version;
   if (_branch_order=="default") {
@@ -24,10 +24,24 @@ Astar::Astar(int input_timeout, bool input_fast_version, const string & _branch_
   } else if (_branch_order=="earliest") {
     branch_order=BranchOrder::EARLIEST;
   } else {
-    std::cout<<"unkown branch order"<<std::endl;
+    std::cout<<"unknown branch order: "<<_branch_order<<std::endl;
     exit(177);
   }
+
+  HeuristicType heuristic;
+  if (_heuristic=="zero") {
+    heuristic=HeuristicType::ZERO;
+  } else if (_heuristic=="cg_greedy") {
+    heuristic=HeuristicType::CG_GREEDY;
+  } else if (_heuristic=="wcg_greedy") {
+    heuristic=HeuristicType::WCG_GREEDY;
+  } else {
+    std::cout<<"unknown heuristic: "<<_heuristic<<std::endl;
+    exit(18);
+  }
+
   this->use_grouping=use_grouping;
+  this->heuristic_manager=std::make_shared<HeuristicManager>(heuristic);
 }
 
 
@@ -63,6 +77,14 @@ int Astar::heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values) {
     int goalVert = compute_vertex(get<2>(adg), agent, get_stateCnt(adg, agent) - 1);
     sum += values->at(goalVert);
   }
+
+  // TODO(rivers): set time limit;
+  // add an extra admissible heuristic
+  auto start = high_resolution_clock::now();
+  int h= heuristic_manager->computeInformedHeuristics(adg, *ts, *values, 0);
+  auto end = high_resolution_clock::now();
+  extraHeuristicT += duration_cast<microseconds>(end - start);
+  sum+=h;
 
   // int partial_cost = compute_partial_cost(adg);
   // if (partial_cost != sum) {
@@ -204,6 +226,7 @@ void Astar::print_stats(nlohmann::json & stats) {
   stats["vertex"]=vertex_cnt;
   stats["sw_edge"]=sw_edge_cnt;
   stats["heuristic_time"]=heuristicT.count();
+  stats["extra_heuristic_time"]=extraHeuristicT.count();
   stats["branch_time"]=branchT.count();
   stats["sort_time"]=sortT.count();
   stats["priority_queue_time"]=pqT.count();
