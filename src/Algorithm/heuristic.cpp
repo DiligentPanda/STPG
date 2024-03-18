@@ -82,10 +82,12 @@ void HeuristicManager::buildCardinalConflictGraph(ADG & adg, vector<int> & tp_or
                     for (auto aj: on_whose_critical_paths[j]) {
                         if (!weighted) {
                             CG[ai*num_of_agents+aj]=1;
+                            CG[aj*num_of_agents+ai]=1;
                         } else {
                             int cost=std::min(diff,back_diff)+1;
                             if (CG[ai*num_of_agents+aj]<cost) {
                                 CG[ai*num_of_agents+aj]=cost;
+                                CG[aj*num_of_agents+ai]=cost;
                             }
                         }
                     }
