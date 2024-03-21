@@ -1,7 +1,12 @@
 .vscode/
 build/
 output/
-out.txt
+out*.txt
+path*.txt
+/test*
+example/path
+example/fail
+example/stat
 
 # Prerequisites
 *.d

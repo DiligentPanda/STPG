@@ -115,8 +115,15 @@ int Simulator::step(bool switchCheck) {
     }
   }
   if (moveCnt == 0 && timeSpent != 0) {
-    std::cout << "err\n";
-    exit(0);
+    std::cout << "err: "<<moveCnt<<" "<<timeSpent<<std::endl;
+    Paths &paths = get<1>(adg);
+    int agentCnt=get_agentCnt(adg);
+    for (auto agent=0;agent<agentCnt;++agent) {
+      cout<<agent<<": "<<states[agent]<<" "<<get_stateCnt(adg, agent)-1<<std::endl;
+      Location new_location = get<0>((paths[agent])[(states[agent])]);
+      cout<<new_location.first<<" "<<new_location.second<<std::endl;
+    }
+    return -1;
   }
   return timeSpent;
 }
@@ -146,8 +153,12 @@ int Simulator::print_soln(const char* outFileName) {
 
     stepSpend = step(false);
     while (stepSpend != 0) {
+      if (stepSpend<0) {
+        std::cout<<"fail in print_soln(outFileName)"<<std::endl;
+        exit(2);
+      }
       // output how many agents take actions at the step.
-      outFile << "step=" << stepSpend << "\n";
+      // outFile << "step=" << stepSpend << "\n";
       for (int agent = 0; agent < agentCnt; agent ++) {
         Location new_location = get<0>((paths[agent])[(states[agent])]);
         if (!((same_locations(new_location, (expanded_paths[agent]).back())) && 
@@ -180,6 +191,10 @@ int Simulator::print_soln() {
 
   stepSpend = step(false);
   while (stepSpend != 0) {
+    if (stepSpend<0) {
+      std::cout<<"fail in print_soln()"<<std::endl;
+      exit(2);
+    }
     totalSpend += stepSpend;
     stepSpend = step(false);
   }

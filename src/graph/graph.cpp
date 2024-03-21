@@ -1,6 +1,7 @@
 #include <stack>
 #include <algorithm>
 #include "graph/graph.h"
+#include <cstdlib>
 
 using namespace std;
 
@@ -316,6 +317,43 @@ void set_switchable_nonSwitchable(Graph& graph){
         }
         graph2S.second[i].clear();
     }
+
+    return;
+}
+
+void reverse_nonSwitchable_edges_basedOn_LongestPathValues(Graph& graph, vector<int> *values) {
+    int graph_size = get<3>(graph);
+    subGraph& graph2S = get<2>(graph);
+    auto & times=*values;
+
+    std::vector<std::pair<int,int> > need_to_reverse;
+    for (int i=0;i<graph_size;++i) {
+        // find all out neighbors
+        for (auto itr=graph2S.first[i].begin(); itr!=graph2S.first[i].end();++itr) {
+            int j=*itr;
+
+            int time_i=times[i];
+            int time_j=times[j];
+
+            int back_i=j+1;
+            int back_j=i-1;
+            int time_back_i=times[back_i];
+            int time_back_j=times[back_j];
+
+            if (time_i>=time_j) {
+                if (time_back_i>=time_back_j) {
+                    std::cout<<"error in set_switchable_nonSwitchable_basedOn_LongestPath: conflict not solved yet!"<<std::endl;
+                    std::cout<<"time_i="<<time_i<<" time_j="<<time_j<<std::endl;
+                    std::cout<<"time_back_i="<<time_back_i<<" time_back_j="<<time_back_j<<std::endl;
+                    exit(200);
+                }
+                // need to reverse
+                need_to_reverse.emplace_back(i,j);
+            }
+        }
+    }
+
+    fix_switchable_edges(graph, need_to_reverse, true);
 
     return;
 }
@@ -748,6 +786,21 @@ bool check_cycle_dfs(Graph& graph, int start) {
     return isCyclicUtil(graph, start, visited, recStack);
 }
 
+bool check_cycle_dfs(Graph& graph, std::vector<int>& starts) {
+  int graph_size = get<3>(graph);
+  vector<bool> visited (graph_size, false);
+  vector<bool> recStack (graph_size, false);
+  
+  for (auto start: starts) {
+    if (!visited[start]) {
+      if (isCyclicUtil(graph, start, visited, recStack)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 void build_time_arr(Graph& graph, vector<bool>& visited, vector<int>* sorted_vertecies, vector<int>* sorted_times, int current, int& time) {
     if(visited[current] == true){
         // revisit
@@ -777,8 +830,8 @@ TODO(rivers): it seems that the incremental version has not been implemented yet
 
 input:
     sortResult: (init) sorted restuls, including the following two arrays of the same size.
-        vertex global idx -> topological order array
-        topological order -> vertex global idx array 
+        topological order -> vertex global idx
+        vertex global idx -> topological order
     agent_starts: current agent vertex local idxs
     u: ?
     v: ?
@@ -787,7 +840,7 @@ return:
 */ 
 sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_starts, int u, int v) {
     int graph_size = get<3>(graph);
-
+  
     vector<int>* time_arr = state.first;
     vector<int>* vertex_arr = state.second;
 
@@ -821,4 +874,27 @@ sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_st
     }
 
     
+}
+
+std::pair<int,int> fix_switchable_edge(Graph & graph, int out_state_idx, int in_state_idx, bool reverse) {
+    rem_type2_switchable_edge(graph, out_state_idx, in_state_idx);
+    if (!reverse){
+      set_type2_nonSwitchable_edge(graph, out_state_idx, in_state_idx);
+      return {out_state_idx, in_state_idx};
+    } else {
+      int back_out_state_idx=in_state_idx+1;
+      int back_in_state_idx=out_state_idx-1;
+      set_type2_nonSwitchable_edge(graph, back_out_state_idx, back_in_state_idx);
+      return {back_out_state_idx, back_in_state_idx};
+    }
+}
+
+std::vector<std::pair<int,int> > fix_switchable_edges(Graph & graph, std::vector<std::pair<int,int> > & edges, bool reverse) {
+  std::vector<std::pair<int,int> > fixed_edges;
+
+  for (auto & edge:edges) {
+    fixed_edges.emplace_back(fix_switchable_edge(graph,edge.first,edge.second,reverse));
+  }
+
+  return fixed_edges;
 }

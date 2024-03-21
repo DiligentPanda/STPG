@@ -5,15 +5,28 @@
 #include <chrono>
 using namespace std::chrono;
 
-#include "../ADG/ADG_utilities.h"
+#include "ADG/ADG_utilities.h"
 #include "simulator.h"
+#include "nlohmann/json.hpp"
+#include "group/group.h"
+#include <memory>
+#include <vector>
+#include "Algorithm/heuristic.h"
+
+enum BranchOrder {
+  DEFAULT,
+  CONFLICT,
+  LARGEST_DIFF,
+  RANDOM,
+  EARLIEST
+};
 
 class Astar {
   public:
     Astar();
     Astar(int input_timeout);
-    Astar(int input_timeout, bool input_fast_version);
-    ADG startExplore(ADG &adg, int input_sw_cnt);
+    Astar(int input_timeout, bool input_fast_version, const string & branch_order="default", bool use_grouping=false, const string & _heuristic="zero", uint random_seed=0);
+    ADG startExplore(ADG &adg, int input_sw_cnt, vector<int> & states);
     int heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values);
     int slow_heuristic(ADG &adg, vector<int> &states);
 
@@ -21,6 +34,7 @@ class Astar {
 
     void print_stats();
     void print_stats(ofstream &outFile);
+    void print_stats(nlohmann::json & stats);
     
   private:
     class Compare {
@@ -50,9 +64,12 @@ class Astar {
     int calcTime(Simulator simulator);
     ADG exploreNode();
     ADG slow_exploreNode();
+    tuple<int, int, int> enhanced_branch(Graph &graph, vector<int> *values);
     tuple<int, int, int> branch(Graph &graph, vector<int> *values);
     tuple<bool, int, int, int> slow_branch(ADG &adg, vector<int> *states);
 
+    microseconds extraHeuristicT = std::chrono::microseconds::zero();
+    microseconds groupingT = std::chrono::microseconds::zero();
     microseconds heuristicT = std::chrono::microseconds::zero();
     microseconds branchT = std::chrono::microseconds::zero();
     microseconds sortT = std::chrono::microseconds::zero();
@@ -78,5 +95,11 @@ class Astar {
     int agentCnt = 0;
 
     bool fast_version = false;
+    BranchOrder branch_order=BranchOrder::DEFAULT;  
+    std::mt19937 rng;
+
+    bool use_grouping=false;
+    std::shared_ptr<GroupManager> group_manager;
+    std::shared_ptr<HeuristicManager> heuristic_manager;
 };
 #endif

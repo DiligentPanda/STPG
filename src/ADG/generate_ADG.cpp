@@ -38,7 +38,7 @@ tuple<Path, int> parse_path(string line) {
 }
 
 // Return all paths, accumulated counts of states, and States
-tuple<Paths, vector<int>> parse_soln(char* fileName) {
+tuple<Paths, vector<int>> parse_soln(const char* fileName) {
   Paths paths;
   vector<int> accum_stateCnts;
   int sumStates = 0;
@@ -161,21 +161,36 @@ int add_type2_edges_cnt(Graph &graph, Paths &paths, vector<int> &accum_stateCnts
             int vertex1 = compute_vertex(accum_stateCnts, agent1, state1);
             int vertex2 = compute_vertex(accum_stateCnts, agent2, state2);
 
+
+
+            //std::cout<<"agent1:"<<agent1<<",  state1:"<<state1<<", time1:"<<time1<<", location1:"<<get<0>(location1)<<","<<get<1>(location1)<<std::endl;
+            //std::cout<<"agent2:"<<agent2<<",  state2:"<<state2<<", time2:"<<time2<<", location2:"<<get<0>(location2)<<","<<get<1>(location2)<<std::endl;
+
             // Set edges -- fix the starting out-edges and ending in-edges
             if (time1 < time2) {
               if ((state1 == 0) || (state2 == stateCnt2 - 1)) {
-                set_type2_nonSwitchable_edge(graph, vertex1+1, vertex2);
+                if (state1<stateCnt1-1) {
+                  set_type2_nonSwitchable_edge(graph, vertex1+1, vertex2);
+                  //std::cout<<"nsw: "<<vertex1+1<<","<<vertex2<<","<<stateCnt1<<std::endl;
+                }
               } else {
-                set_type2_switchable_edge(graph, vertex1+1, vertex2);
-                cnt += 1;
+                if (state1<stateCnt1-1) {
+                  set_type2_switchable_edge(graph, vertex1+1, vertex2);
+                  cnt += 1;
+                  //std::cout<<"sw: "<<vertex1+1<<","<<vertex2<<std::endl;
+                }
               }
             }
             else {
               if ((state2 == 0) || (state1 == stateCnt1 - 1)) {
-                set_type2_nonSwitchable_edge(graph, vertex2+1, vertex1);
+                if (state2<stateCnt2-1) {
+                  set_type2_nonSwitchable_edge(graph, vertex2+1, vertex1);
+                }
               } else {
-                set_type2_switchable_edge(graph, vertex2+1, vertex1);
-                cnt += 1;
+                if (state2<stateCnt2-1) {
+                  set_type2_switchable_edge(graph, vertex2+1, vertex1);
+                  cnt += 1;
+                }
               }
             }
 
@@ -187,7 +202,7 @@ int add_type2_edges_cnt(Graph &graph, Paths &paths, vector<int> &accum_stateCnts
   return cnt;
 }
 
-ADG construct_ADG(char* fileName) {
+ADG construct_ADG(const char* fileName) {
   Paths paths;
   vector<int> accum_stateCnts;
   tie(paths, accum_stateCnts) = parse_soln(fileName);
@@ -198,6 +213,26 @@ ADG construct_ADG(char* fileName) {
   add_type2_edges(graph, paths, accum_stateCnts);
 
   return make_tuple(graph, paths, accum_stateCnts);
+}
+
+// duplication=true means allowing consecutive vertices in a path to be duplicate.
+ADG construct_ADG(std::vector<Path> & paths, bool duplication) {
+  if (duplication) {
+    std::cout<<"not supported duplication now"<<std::endl;
+  }
+
+  std::vector<int> accum_state_cnts;
+  int sum_states_cnt=0;
+  for (const auto & path: paths) {
+      sum_states_cnt+=path.size();
+      accum_state_cnts.push_back(sum_states_cnt);
+  }
+
+  Graph graph = new_graph(sum_states_cnt);
+  add_type1_edges(graph, paths, accum_state_cnts);
+  add_type2_edges(graph, paths, accum_state_cnts);
+
+  return make_tuple(graph, paths, accum_state_cnts);
 }
 
 ADG construct_delayed_ADG(ADG &adg, int dlow, int dhigh, vector<int> &delayed_agents, vector<int> &states, int *input_sw_cnt, ofstream &outFile_setup) {
@@ -255,7 +290,69 @@ ADG construct_delayed_ADG(ADG &adg, int dlow, int dhigh, vector<int> &delayed_ag
   for (int v = 0; v < get<3>(graph); v ++) {
     int agent, state;
     tie(agent, state) = compute_agent_state(accum_stateCnts, v);
-    if (state <= states[agent]) {
+    if (state-1 <= states[agent]) {
+      set<int> outNeib = get_switchable_outNeib(graph, v);
+      for (auto it: outNeib) {
+        rem_type2_switchable_edge(graph, v, it);
+        set_type2_nonSwitchable_edge(graph, v, it);
+        *input_sw_cnt = *input_sw_cnt - 1;
+      }
+    }
+  }
+
+  return make_tuple(graph, paths, accum_stateCnts);
+}
+
+ADG construct_delayed_ADG(ADG &adg, vector<int> & delay_steps, vector<int> &states, int *input_sw_cnt) {
+  int agentCnt = get_agentCnt(adg);
+  Paths paths;
+  vector<int> accum_stateCnts;
+
+  int delay_sum = 0;
+
+  for (int agent = 0; agent < agentCnt; agent ++) {
+    if (delay_steps[agent] == 0) {
+      paths.push_back((get<1>(adg))[agent]);
+    } else { // this is a delayed agent
+      Path &ori_path = (get<1>(adg))[agent];
+      Path new_path;
+      int delayed_state = states[agent];
+
+      for (int state = 0; state <= delayed_state; state ++) {
+        new_path.push_back(ori_path[state]);
+      }
+      // insert repeated current states for a multi-step delay.
+      // <Location, timestep>
+      // NOTE(rivers): it is not a bug if we don't specify the timestep here and change the timestep later.
+      // because now we still want to stick to the original plan.
+      pair<Location, int> repeat = make_pair(get<0>(new_path.back()), -1);
+      int delay = delay_steps[agent];
+      delay_sum += delay;
+      for (int state = 0; state < delay; state ++) {
+        new_path.push_back(repeat);
+      }
+      int ori_size = ori_path.size();
+      for (int state = delayed_state + 1; state < ori_size; state ++) {
+        new_path.push_back(ori_path[state]);
+      }
+      paths.push_back(new_path);
+    }
+
+    accum_stateCnts.push_back((get<2>(adg))[agent] + delay_sum);
+  }
+
+  Graph graph = new_graph(accum_stateCnts.back());
+
+  // add dependencies from the old plan. We cannot directly copy because the idxs of some nodes are changed.
+  add_type1_edges(graph, paths, accum_stateCnts);
+  *input_sw_cnt = add_type2_edges_cnt(graph, paths, accum_stateCnts);
+
+  // set some switchable edges to non-swtichable because the reversed edge cannot point to a past state.
+  // TODO(rivers): I suggest we move this part into add_type2_edges* for clarity by passing in a state vector directly. 
+  for (int v = 0; v < get<3>(graph); v ++) {
+    int agent, state;
+    tie(agent, state) = compute_agent_state(accum_stateCnts, v);
+    if (state-1 <= states[agent]) {
       set<int> outNeib = get_switchable_outNeib(graph, v);
       for (auto it: outNeib) {
         rem_type2_switchable_edge(graph, v, it);
