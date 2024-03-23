@@ -26,11 +26,11 @@ public:
     Graph & graph;
     int num_states; // used for encoding edge_id=out_state_idx*num_states+in_state_idx
 
-    // pra
     GroupManager(ADG & _adg, std::vector<int> & _states): states(_states), adg(copy_ADG(_adg)), graph(get<0>(adg)), num_states(get<3>(graph)) {
         build();
     };
 
+    // BUG(rivers): don't use int to encode, would overflow in the future.
     int get_edge_id(int out_idx, int in_idx) {
         return out_idx*num_states+in_idx;
     }
@@ -214,19 +214,29 @@ public:
         }
     }
 
-    std::unordered_set<int> & get_equivalent_group(int edge_id) {
+    bool get_equivalent_group(int edge_id, std::unordered_set<int> & group) {
         if (edge_id2group_id.count(edge_id)==0) {
-            std::cout<<"edge_id not found"<<std::endl;
-            exit(1207);
+            return false;
         }
 
         auto & group_id=edge_id2group_id[edge_id];
-        return groups[group_id];
+        group=groups[group_id];
+        return true;
     }
 
     std::vector<std::pair<int,int> > get_groupable_edges(int out_idx, int in_idx) {
         int edge_id=get_edge_id(out_idx, in_idx);
-        auto & group=get_equivalent_group(edge_id);
+        std::unordered_set<int> group;
+        bool found=get_equivalent_group(edge_id,group);
+        if (!found) {
+            std::cout<<"edge_id"<<edge_id<<" not found"<<std::endl;
+            int agent_idx,state_idx;
+            std::tie(agent_idx,state_idx)=compute_agent_state(get<2>(adg),out_idx);
+            std::cout<<"out_idx: agent_idx="<<agent_idx<<",state_idx="<<state_idx<<",current states: "<<states[agent_idx]<<std::endl;
+            std::tie(agent_idx,state_idx)=compute_agent_state(get<2>(adg),in_idx);
+            std::cout<<"in_idx: agent_idx="<<agent_idx<<",state_idx="<<state_idx<<",current states: "<<states[agent_idx]<<std::endl;
+            exit(1234);
+        }
 
         std::vector<std::pair<int,int> > edges;
         for (auto & edge_id: group) {

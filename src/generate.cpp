@@ -34,7 +34,7 @@ bool save_situation_file(const string & situation_fp, const string & path_fp, co
   return true;
 }
 
-void gen_random_situation(const string & path_fp, uint seed, int delay_prob, int delay_steps_low, int delay_steps_high, const string & situation_fp) {
+void gen_random_situation(int idx, const string & path_fp, uint seed, int delay_prob, int delay_steps_low, int delay_steps_high, const string & situation_fp) {
   ADG adg=construct_ADG(path_fp.c_str());
   Simulator simulator(adg);
   int num_agents=get_agentCnt(adg);
@@ -45,10 +45,21 @@ void gen_random_situation(const string & path_fp, uint seed, int delay_prob, int
 
   std::vector<int> delay_steps_vec(num_agents,0);
 
+  auto & accum_state_cnts=get<2>(adg);
+  std::vector<int> state_cnts;
+  state_cnts.push_back(accum_state_cnts[0]);
+  for (int i=1;i<accum_state_cnts.size();++i) {
+    state_cnts.push_back(accum_state_cnts[i]-accum_state_cnts[i-1]);
+  }
+
   int stepSpend = 1;
   bool delayed = false;
   while (stepSpend != 0) {
     for (int aid=0;aid<num_agents;++aid) {
+      // if arrived, don't consider delay
+      if (simulator.states[aid]>=state_cnts[aid]-1) {
+        continue;
+      }
       if (delay_distrib(rng)<delay_prob) {
         int delay_steps=delay_steps_distrib(rng);
         delay_steps_vec[aid]=delay_steps;
@@ -63,7 +74,7 @@ void gen_random_situation(const string & path_fp, uint seed, int delay_prob, int
       }
       break;
     }
-    stepSpend = simulator.step(false);
+    stepSpend = simulator.step(true);
     if (stepSpend < 0) {
       cout<<"Stuck in gen_random_situation(): "+situation_fp<<std::endl;
       exit(99);
@@ -91,7 +102,7 @@ void gen_random_situations(const string & path_fp, int num, int delay_prob, int 
     auto _situation_fp=_situation_fd / (file_name.string()+"_sit_"+std::to_string(idx)+".json");
     string situation_fp=_situation_fp.string();
     uint seed=default_seed+seed_step*idx;
-    gen_random_situation(path_fp,seed,delay_prob, delay_steps_low, delay_steps_high, situation_fp);
+    gen_random_situation(idx, path_fp,seed,delay_prob, delay_steps_low, delay_steps_high, situation_fp);
   }
 }
 

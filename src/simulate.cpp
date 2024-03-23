@@ -29,7 +29,7 @@ int Simulator::step_wdelay(int p, bool *delay_mark, vector<int> &delayed_agents)
   vector<int> movable(agentCnt, 0);
   // if an agent arrives its goal, then it has stopped.
   vector<int> haventStop(agentCnt, 0);
-  int timeSpent = checkMovable(movable, haventStop);
+  int timeSpent = checkMovable(movable, haventStop, true);
   int moveCnt = 0;
 
   for (int agent = 0; agent < agentCnt; agent++) {

@@ -11,7 +11,7 @@ Simulator::Simulator(ADG input_adg, vector<int> visited_states) {
   states = visited_states;
 }
 
-int Simulator::checkMovable(vector<int>& movable) {
+int Simulator::checkMovable(vector<int>& movable, bool switchCheck) {
   int timeSpent = 0;
   int agentCnt = get_agentCnt(adg);
   for (int agent = 0; agent < agentCnt; agent++) {
@@ -22,7 +22,13 @@ int Simulator::checkMovable(vector<int>& movable) {
     timeSpent += 1;
     int next_state = state + 1;
 
-    vector<pair<int, int>> dependencies = get_nonSwitchable_inNeibPair(adg, agent, next_state);
+    vector<pair<int, int>> dependencies;
+    if (!switchCheck) {
+      dependencies = get_nonSwitchable_inNeibPair(adg, agent, next_state);
+    } else {
+      dependencies = get_inNeibPair(adg, agent, next_state);
+    }
+
     movable[agent] = 1;
     for (pair<int, int> dependency: dependencies) {
       int dep_agent = get<0>(dependency);
@@ -73,7 +79,7 @@ bool Simulator::incident_to_switchable(int *v_from, int *v_to) {
 }
 
 // check if each agent is movable and doesn't arrive at its goal. haventStop=notArriveGoal
-int Simulator::checkMovable(vector<int>& movable, vector<int>& haventStop) {
+int Simulator::checkMovable(vector<int>& movable, vector<int>& haventStop, bool switchCheck) {
   int timeSpent = 0;
   int agentCnt = get_agentCnt(adg);
   for (int agent = 0; agent < agentCnt; agent++) {
@@ -84,7 +90,13 @@ int Simulator::checkMovable(vector<int>& movable, vector<int>& haventStop) {
     timeSpent += 1;
     int next_state = state + 1;
 
-    vector<pair<int, int>> dependencies = get_nonSwitchable_inNeibPair(adg, agent, next_state);
+    vector<pair<int, int>> dependencies;
+    if (!switchCheck) {
+      dependencies = get_nonSwitchable_inNeibPair(adg, agent, next_state);
+    } else {
+      dependencies = get_inNeibPair(adg, agent, next_state);
+    }
+
     movable[agent] = 1;
     haventStop[agent] = 1;
     for (pair<int, int> dependency: dependencies) {
@@ -105,7 +117,7 @@ int Simulator::checkMovable(vector<int>& movable, vector<int>& haventStop) {
 int Simulator::step(bool switchCheck) {
   int agentCnt = get_agentCnt(adg);
   vector<int> movable(agentCnt, 0);
-  int timeSpent = checkMovable(movable);
+  int timeSpent = checkMovable(movable, switchCheck);
   int moveCnt = 0;
 
   for (int agent = 0; agent < agentCnt; agent++) {
@@ -151,7 +163,7 @@ int Simulator::print_soln(const char* outFileName) {
       expanded_paths.push_back(expanded_path);
     }
 
-    stepSpend = step(false);
+    stepSpend = step(true);
     while (stepSpend != 0) {
       if (stepSpend<0) {
         std::cout<<"fail in print_soln(outFileName)"<<std::endl;
@@ -167,7 +179,7 @@ int Simulator::print_soln(const char* outFileName) {
         }
       }
       totalSpend += stepSpend;
-      stepSpend = step(false);
+      stepSpend = step(true);
     }
 
     for (int agent = 0; agent < agentCnt; agent ++) {
@@ -189,14 +201,14 @@ int Simulator::print_soln() {
   int totalSpend = 0;
   int stepSpend = 0;
 
-  stepSpend = step(false);
+  stepSpend = step(true);
   while (stepSpend != 0) {
     if (stepSpend<0) {
       std::cout<<"fail in print_soln()"<<std::endl;
       exit(2);
     }
     totalSpend += stepSpend;
-    stepSpend = step(false);
+    stepSpend = step(true);
   }
   
   return totalSpend;

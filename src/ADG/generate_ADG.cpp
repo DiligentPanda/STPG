@@ -347,8 +347,9 @@ ADG construct_delayed_ADG(ADG &adg, vector<int> & delay_steps, vector<int> &stat
   add_type1_edges(graph, paths, accum_stateCnts);
   *input_sw_cnt = add_type2_edges_cnt(graph, paths, accum_stateCnts);
 
-  // set some switchable edges to non-swtichable because the reversed edge cannot point to a past state.
+  // set some switchable edges to non-swtichable because an edge cannot point out from a past state and the reversed edge cannot point to a past state.
   // TODO(rivers): I suggest we move this part into add_type2_edges* for clarity by passing in a state vector directly. 
+  // TODO(rivers): double check here
   for (int v = 0; v < get<3>(graph); v ++) {
     int agent, state;
     tie(agent, state) = compute_agent_state(accum_stateCnts, v);
