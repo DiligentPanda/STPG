@@ -234,6 +234,33 @@ void Astar::print_stats(nlohmann::json & stats) {
   stats["termination_time"]=termT.count();
   stats["dfs_time"]=dfsT.count();
   stats["grouping_time"]=groupingT.count();
+  if (use_grouping) {
+    auto & groups=group_manager->groups;
+    stats["group"]=groups.size();
+    stats["group_merge_edge"]=group_manager->group_merge_edge_cnt;
+    float group_size_max=0;
+    float group_size_avg=0;
+    float group_size_min=sw_edge_cnt;
+    for (int i=0;i<(int)groups.size();++i) {
+      if((int)groups[i].size()>group_size_max) {
+        group_size_max=groups[i].size();
+      }
+      if ((int)groups[i].size()<group_size_min) {
+        group_size_min=groups[i].size();
+      }
+      group_size_avg+=groups[i].size();
+    }
+    group_size_avg/=groups.size();
+    stats["group_size_max"]=group_size_max;
+    stats["group_size_min"]=group_size_min;
+    stats["group_size_avg"]=group_size_avg;
+  } else {
+    stats["group"]=sw_edge_cnt;
+    stats["group_merge_edge"]=0;
+    stats["group_size_max"]=1;
+    stats["group_size_min"]=1;
+    stats["group_size_avg"]=1;
+  }
 }
 
 void Astar::print_stats(ofstream &outFile) {

@@ -26,6 +26,9 @@ public:
     Graph & graph;
     int num_states; // used for encoding edge_id=out_state_idx*num_states+in_state_idx
 
+    // we don't count any merge with size 1 group, which is just a single edge.
+    int group_merge_edge_cnt=0;
+
     GroupManager(ADG & _adg, std::vector<int> & _states): states(_states), adg(copy_ADG(_adg)), graph(get<0>(adg)), num_states(get<3>(graph)) {
         build();
     };
@@ -139,7 +142,7 @@ public:
                 
                 int edge_id=get_edge_id(out_state_idx,in_state_idx);
                 group.emplace(edge_id);
-                crossing_searched.emplace(edge_id);
+                parallel_searched.emplace(edge_id);
                 // check if the next edge exists
                 ++out_state_idx;
                 ++in_state_idx;
@@ -151,18 +154,29 @@ public:
     // We model each group as an vertex. Two groups are adjecent if they share an edge.
     // We use disjoint sets to merge groups. We can ensure that finally each edge is in only one "locally maximal" group.
     void merge_groups(Groups & groups) {
-
         std::vector<std::pair<int,int> > graph_edges;
 
         // build graphs
-        for (auto i=0;i<groups.size();++i) {
+        for (size_t i=0;i<groups.size();++i) {
             auto & group_i=groups[i];
             std::unordered_set<int> edge_set(group_i.begin(),group_i.end());
-            for (auto j=0;j<groups.size();++j) {
+            for (size_t j=i+1;j<groups.size();++j) {
                 auto & group_j=groups[j];
                 for (int edge_id: group_j) {
                     if (edge_set.count(edge_id)>0) {
                         graph_edges.emplace_back(i,j);
+                        if (group_i.size()>1 && group_j.size()>1) {
+                            // std::cout<<"group i: "<<group_i.size()<<" group j: "<<group_j.size()<<" "<<group_merge_edge_cnt<<std::endl;
+                            // std::cout<<"group i: "<<std::endl;
+                            // for (auto edge_id: group_i) {
+                            //     std::cout<<get_out_idx(edge_id)<<"->"<<get_in_idx(edge_id)<<",";
+                            // }
+                            // std::cout<<"group j: "<<std::endl;
+                            // for (auto edge_id: group_j) {
+                            //     std::cout<<get_out_idx(edge_id)<<"->"<<get_in_idx(edge_id)<<",";
+                            // }
+                            ++group_merge_edge_cnt;
+                        }
                         break;
                     }
                 }
@@ -185,7 +199,7 @@ public:
             boost::associative_property_map<std::unordered_map<int,int> >
         > dsets(rank_pmap,parent_pmap);
 
-        for (int i=0;i<groups.size();++i) {
+        for (int i=0;i<(int)groups.size();++i) {
             dsets.make_set(i);
         }
 
@@ -194,7 +208,7 @@ public:
         }
 
         std::unordered_map<int,std::vector<int> > collections;
-        for (int i=0;i<groups.size();++i) {
+        for (int i=0;i<(int)groups.size();++i) {
             int collection_id=dsets.find_set(i);
             collections[collection_id].push_back(i);
         }
@@ -253,7 +267,7 @@ public:
     }
 
     void print_groups() {
-        for (int i=0;i<groups.size();++i) {
+        for (size_t i=0;i<groups.size();++i) {
             auto & group=groups[i];
             std::cout<<"group "<<i<<": ";
             print_group(group);

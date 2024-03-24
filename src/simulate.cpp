@@ -262,6 +262,11 @@ void simulate(
   stats["termination_time"]=nullptr;
   stats["dfs_time"]=nullptr;
   stats["grouping_time"]=nullptr;
+  stats["group"]=nullptr;
+  stats["group_merge_edge"]=nullptr;
+  stats["group_size_max"]=nullptr;
+  stats["group_size_min"]=nullptr;
+  stats["group_size_avg"]=nullptr;
   
   std::ofstream out(stat_ofp);
   out<<stats.dump(4)<<std::endl;
