@@ -155,10 +155,10 @@ public:
         std::vector<std::pair<int,int> > graph_edges;
 
         // build graphs
-        for (auto i=0;i<groups.size();++i) {
+        for (size_t i=0;i<groups.size();++i) {
             auto & group_i=groups[i];
             std::unordered_set<int> edge_set(group_i.begin(),group_i.end());
-            for (auto j=0;j<groups.size();++j) {
+            for (size_t j=0;j<groups.size();++j) {
                 auto & group_j=groups[j];
                 for (int edge_id: group_j) {
                     if (edge_set.count(edge_id)>0) {
@@ -185,7 +185,7 @@ public:
             boost::associative_property_map<std::unordered_map<int,int> >
         > dsets(rank_pmap,parent_pmap);
 
-        for (int i=0;i<groups.size();++i) {
+        for (size_t i=0;i<groups.size();++i) {
             dsets.make_set(i);
         }
 
@@ -194,7 +194,7 @@ public:
         }
 
         std::unordered_map<int,std::vector<int> > collections;
-        for (int i=0;i<groups.size();++i) {
+        for (size_t i=0;i<groups.size();++i) {
             int collection_id=dsets.find_set(i);
             collections[collection_id].push_back(i);
         }
@@ -243,7 +243,7 @@ public:
     }
 
     void print_groups() {
-        for (int i=0;i<groups.size();++i) {
+        for (size_t i=0;i<groups.size();++i) {
             auto & group=groups[i];
             std::cout<<"group "<<i<<": ";
             print_group(group);
