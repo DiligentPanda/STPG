@@ -10,7 +10,7 @@ Astar::Astar(int input_timeout) {
   timeout = input_timeout;
 }
 
-Astar::Astar(int input_timeout, bool input_fast_version, const string & _branch_order, bool use_grouping, const string & _heuristic, uint random_seed): rng(random_seed) {
+Astar::Astar(int input_timeout, bool input_fast_version, const string & _branch_order, bool use_grouping, const string & _heuristic, bool early_termination, uint random_seed): rng(random_seed) {
   timeout = input_timeout;
   fast_version = input_fast_version;
   if (_branch_order=="default") {
@@ -41,6 +41,7 @@ Astar::Astar(int input_timeout, bool input_fast_version, const string & _branch_
   }
 
   this->use_grouping=use_grouping;
+  this->early_termination=early_termination;
   this->heuristic_manager=std::make_shared<HeuristicManager>(heuristic);
 }
 
@@ -219,6 +220,44 @@ tuple<int, int, int> Astar::enhanced_branch(Graph &graph, vector<int> *values) {
   return make_tuple(maxDiff, maxI, maxJ);
 }
 
+bool Astar::terminated(Graph &graph, vector<int> *values) {
+  if (early_termination) {
+    for (int i = 0; i < get<3>(graph); i++) {
+      int iTime = values->at(i);
+      set<int> &outNeib = get_switchable_outNeib(graph, i);
+      for (auto it : outNeib) {
+        int j = it;
+        int backI = j+1;
+        int backJ = i-1;
+        int jTime = values->at(j);
+        int backITime = values->at(backI);
+        int backJTime = values->at(backJ);
+        int diff = iTime - jTime;
+        int backDiff = backITime - backJTime;
+
+        if (diff>=0 && backDiff>=0) {
+          return false;
+        }
+      }
+    }
+    return true;
+  } else {
+    for (int i = 0; i < get<3>(graph); i++) {
+      int iTime = values->at(i);
+      set<int> &outNeib = get_switchable_outNeib(graph, i);
+      for (auto it : outNeib) {
+        int j = it;
+        int jTime = values->at(j);
+        int diff = iTime - jTime;
+        if (diff >= 0) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+}
+
 void Astar::print_stats(nlohmann::json & stats) {
   stats["explored_node"]=explored_node_cnt;
   stats["pruned_node"]=pruned_node_cnt;
@@ -325,7 +364,7 @@ ADG Astar::exploreNode() {
     bool terminate = true;
 
     if (true) {
-      terminate = (maxDiff < 0);
+      terminate = terminated(graph, values);
     } else {
       for (int v = 0; v < get<3>(graph); v ++) {
         set<int>& outNeib = get_switchable_outNeib(graph, v);
@@ -369,7 +408,7 @@ ADG Astar::exploreNode() {
       auto end_graph_free = high_resolution_clock::now();
       copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
 
-      if (terminate && branch_order==BranchOrder::CONFLICT) {
+      if (terminate && early_termination) {
         reverse_nonSwitchable_edges_basedOn_LongestPathValues(get<0>(res),values);
       }
 

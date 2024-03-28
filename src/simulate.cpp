@@ -178,6 +178,7 @@ void simulate(
   const string & branch_order,
   bool use_grouping,
   const string & heuristic,
+  bool early_termination,
   uint random_seed,
   const string & stat_ofp, 
   const string & new_path_ofp
@@ -220,9 +221,9 @@ void simulate(
   // replanning ADG
   Astar search;
   if (algo=="graph") {
-    search=Astar(time_limit, true, branch_order,  use_grouping, heuristic, random_seed);
+    search=Astar(time_limit, true, branch_order,  use_grouping, heuristic, early_termination, random_seed);
   } else if (algo=="exec") {
-    search=Astar(time_limit, false, branch_order, use_grouping, heuristic, random_seed);
+    search=Astar(time_limit, false, branch_order, use_grouping, heuristic, early_termination, random_seed);
   } else {
     std::cout<<"unknown algorithm: "<<algo<<std::endl;  
   }
@@ -234,6 +235,7 @@ void simulate(
   stats["branch_order"]=branch_order;
   stats["use_grouping"]=use_grouping;
   stats["heuristic"]=heuristic;
+  stats["early_termination"]=early_termination;
   stats["random_seed"]=random_seed;
   stats["time_limit"]=time_limit*1000000; // in micro-seconds
   stats["path_fp"]=path_fp;
@@ -326,6 +328,7 @@ int main(int argc, char** argv) {
     ("branch_order,b",po::value<std::string>()->required(),"the branch order to use, [default, conflict, largest_diff, random, earliest]")
     ("use_grouping,g",po::value<bool>()->required(),"whether to use grouping")
     ("heuristic,h",po::value<std::string>()->required(),"the heuristic to use, [zero, cg_greedy]")
+    ("early_termination,e",po::value<bool>()->required(),"whether to use early termination")
     ("random_seed,r",po::value<uint>()->default_value(0),"random seed")
   ;
 
@@ -349,6 +352,7 @@ int main(int argc, char** argv) {
   string new_path_ofp=vm.at("new_path_ofp").as<string>();
   bool use_grouping=vm.at("use_grouping").as<bool>();
   string heuristic=vm.at("heuristic").as<string>();
+  bool early_termination=vm.at("early_termination").as<bool>();
 
   simulate(
     path_fp,
@@ -358,6 +362,7 @@ int main(int argc, char** argv) {
     branch_order,
     use_grouping,
     heuristic,
+    early_termination,
     random_seed,
     stat_ofp,
     new_path_ofp
