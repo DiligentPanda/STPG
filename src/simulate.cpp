@@ -193,7 +193,7 @@ void simulate(
   vector<int> delay_steps=data.at("delay_steps").get<vector<int> >();
 
   // TODO(rivers): maybe check path_fp with the path_fp saved in sit_fp as well.
-  if (states.size()!=agent_num || delay_steps.size()!=agent_num) {
+  if ((int)states.size()!=agent_num || (int)delay_steps.size()!=agent_num) {
     std::cout<<"size mismatch: "<<states.size()<<" "<<delay_steps.size()<<" "<<agent_num<<std::endl;
     exit(50);
   }

@@ -48,7 +48,7 @@ void gen_random_situation(int idx, const string & path_fp, uint seed, int delay_
   auto & accum_state_cnts=get<2>(adg);
   std::vector<int> state_cnts;
   state_cnts.push_back(accum_state_cnts[0]);
-  for (int i=1;i<accum_state_cnts.size();++i) {
+  for (int i=1;i<(int)accum_state_cnts.size();++i) {
     state_cnts.push_back(accum_state_cnts[i]-accum_state_cnts[i-1]);
   }
 
