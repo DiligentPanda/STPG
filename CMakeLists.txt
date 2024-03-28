@@ -22,12 +22,18 @@ elseif(NOT Boost_FOUND)
   message(FATAL_ERROR "Unable to find correct Boost version. Did you set BOOST_ROOT?")
 endif()
 
+# Find SFML packages
+find_package(SFML 2.5 COMPONENTS graphics window system REQUIRED)
+
 file(GLOB_RECURSE SOURCES "src/**.cpp")
-list(FILTER SOURCES EXCLUDE REGEX "(src/simulate.cpp)|(src/generate.cpp)|(src/enumerate_grouping.cpp)")
+list(FILTER SOURCES EXCLUDE REGEX "(src/simulate.cpp)|(src/generate.cpp)|(src/enumerate_grouping.cpp)|(src/visualize.cpp)")
+
+
 
 set(SIMULATE_SOURCES ${SOURCES} "src/simulate.cpp")
 set(GENERATE_SOURCES ${SOURCES} "src/generate.cpp")
 set(GROUPING_SOURCES ${SOURCES} "src/enumerate_grouping.cpp")
+set(VISUALIZE_SOURCES ${SOURCES} "src/visualize.cpp")
 
 add_executable(simulate ${SIMULATE_SOURCES})
 target_include_directories(simulate PUBLIC "inc")
@@ -42,12 +48,19 @@ target_link_libraries(generate ${Boost_LIBRARIES})
 add_executable(enumerate_grouping ${GROUPING_SOURCES})
 target_include_directories(enumerate_grouping PUBLIC "inc")
 
+add_executable(visualize ${VISUALIZE_SOURCES})
+target_include_directories(visualize PUBLIC "inc")
+target_include_directories(visualize PUBLIC ${Boost_INCLUDE_DIRS})
+target_link_libraries(visualize sfml-graphics sfml-window sfml-system)
+target_link_libraries(visualize ${Boost_LIBRARIES})
+
 add_custom_target(clean_all
     COMMAND ${CMAKE_BUILD_TOOL} clean
     COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/CMakeCache.txt
     COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/simulate
     COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/generate
     COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/enumerate_grouping
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/visualize
     COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/build
     COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/*.so
 )
