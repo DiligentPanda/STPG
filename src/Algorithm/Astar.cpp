@@ -10,7 +10,16 @@ Astar::Astar(int input_timeout) {
   timeout = input_timeout;
 }
 
-Astar::Astar(int input_timeout, bool input_fast_version, const string & _branch_order, bool use_grouping, const string & _heuristic, bool early_termination, uint random_seed): rng(random_seed) {
+Astar::Astar(
+    int input_timeout, 
+    bool input_fast_version, 
+    const string & _branch_order, 
+    bool use_grouping, 
+    const string & _heuristic, 
+    bool early_termination, 
+    float _weight_h,
+    uint random_seed
+  ): rng(random_seed), weight_h(_weight_h) {
   timeout = input_timeout;
   fast_version = input_fast_version;
   if (_branch_order=="default") {
@@ -61,7 +70,7 @@ int Astar::calcTime(Simulator simulator) {
 
 // compute the longest path length from any current vertices to an agent's goal vertex.
 // the heuristic is the sum of the longest path length.
-int Astar::heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values) {
+float Astar::heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values) {
   Graph &graph = get<0>(adg);
 
   for (int i: (*ts)) {
@@ -73,7 +82,7 @@ int Astar::heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values) {
       if (values->at(j) < prevVal + weight) values->at(j) = prevVal + weight;
     }
   }
-  int sum = 0;
+  float sum = 0;
   for (int agent = 0; agent < agentCnt; agent ++) {
     int goalVert = compute_vertex(get<2>(adg), agent, get_stateCnt(adg, agent) - 1);
     sum += values->at(goalVert);
@@ -85,7 +94,7 @@ int Astar::heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values) {
   int h= heuristic_manager->computeInformedHeuristics(adg, *ts, *values, 0);
   auto end = high_resolution_clock::now();
   extraHeuristicT += duration_cast<microseconds>(end - start);
-  sum+=h;
+  sum+=h*weight_h;
 
   // int partial_cost = compute_partial_cost(adg);
   // if (partial_cost != sum) {
@@ -823,7 +832,7 @@ ADG Astar::startExplore(ADG & adg, int input_sw_cnt, vector<int> & states) {
     vector<int>* node_values = new vector<int>(get<3>(graph), 0);
     auto start_heuristic = high_resolution_clock::now();
     // compute the longest path length from any current vertices to an agent's goal vertex.
-    int val = heuristic_graph(adg, ts_tv, node_values);
+    float val = heuristic_graph(adg, ts_tv, node_values);
     auto end_heuristic = high_resolution_clock::now();
     heuristicT += duration_cast<microseconds>(end_heuristic - start_heuristic);
     delete ts_tv;

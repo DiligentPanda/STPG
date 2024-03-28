@@ -179,6 +179,7 @@ void simulate(
   bool use_grouping,
   const string & heuristic,
   bool early_termination,
+  float weight_h,
   uint random_seed,
   const string & stat_ofp, 
   const string & new_path_ofp
@@ -221,9 +222,27 @@ void simulate(
   // replanning ADG
   Astar search;
   if (algo=="graph") {
-    search=Astar(time_limit, true, branch_order,  use_grouping, heuristic, early_termination, random_seed);
+    search=Astar(
+      time_limit, 
+      true, 
+      branch_order,  
+      use_grouping, 
+      heuristic, 
+      early_termination, 
+      weight_h, 
+      random_seed
+    );
   } else if (algo=="exec") {
-    search=Astar(time_limit, false, branch_order, use_grouping, heuristic, early_termination, random_seed);
+    search=Astar(
+      time_limit, 
+      true, 
+      branch_order,  
+      use_grouping, 
+      heuristic, 
+      early_termination, 
+      weight_h, 
+      random_seed
+    );  
   } else {
     std::cout<<"unknown algorithm: "<<algo<<std::endl;  
   }
@@ -236,6 +255,7 @@ void simulate(
   stats["use_grouping"]=use_grouping;
   stats["heuristic"]=heuristic;
   stats["early_termination"]=early_termination;
+  stats["weight_h"]=weight_h;
   stats["random_seed"]=random_seed;
   stats["time_limit"]=time_limit*1000000; // in micro-seconds
   stats["path_fp"]=path_fp;
@@ -329,6 +349,7 @@ int main(int argc, char** argv) {
     ("use_grouping,g",po::value<bool>()->required(),"whether to use grouping")
     ("heuristic,h",po::value<std::string>()->required(),"the heuristic to use, [zero, cg_greedy]")
     ("early_termination,e",po::value<bool>()->required(),"whether to use early termination")
+    ("weight_h",po::value<float>()->default_value(1.0),"heuristic weight for weighted A Star")
     ("random_seed,r",po::value<uint>()->default_value(0),"random seed")
   ;
 
@@ -352,6 +373,7 @@ int main(int argc, char** argv) {
   string new_path_ofp=vm.at("new_path_ofp").as<string>();
   bool use_grouping=vm.at("use_grouping").as<bool>();
   string heuristic=vm.at("heuristic").as<string>();
+  float weight_h=vm.at("weight_h").as<float>();
   bool early_termination=vm.at("early_termination").as<bool>();
 
   simulate(
@@ -363,6 +385,7 @@ int main(int argc, char** argv) {
     use_grouping,
     heuristic,
     early_termination,
+    weight_h,
     random_seed,
     stat_ofp,
     new_path_ofp

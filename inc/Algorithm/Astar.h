@@ -27,15 +27,16 @@ class Astar {
     Astar(int input_timeout);
     Astar(
       int input_timeout, 
-      bool input_fast_version, 
+      bool input_fast_version,
       const string & branch_order="default", 
       bool use_grouping=false, 
       const string & _heuristic="zero", 
       const bool early_termination=false,
+      float _weight_h=1.0,
       uint random_seed=0
     );
     ADG startExplore(ADG &adg, int input_sw_cnt, vector<int> & states);
-    int heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values);
+    float heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values);
     int slow_heuristic(ADG &adg, vector<int> &states);
 
     int compute_partial_cost(ADG &adg);
@@ -112,5 +113,7 @@ class Astar {
     std::shared_ptr<HeuristicManager> heuristic_manager;
 
     bool early_termination = false;
+
+    float weight_h = 1.0;
 };
 #endif
