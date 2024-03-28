@@ -443,7 +443,7 @@ int main(int argc, char** argv) {
   ADG adg_delayed = construct_delayed_ADG(adg, delay_steps, states, &input_sw_cnt);
 
   std::vector<int> vis_agents;
-  for (int i=0;agent_num;++i) {
+  for (int i=0;i<agent_num;++i) {
     vis_agents.push_back(i);
   }
 
