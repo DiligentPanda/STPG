@@ -35,7 +35,7 @@ class Astar {
       float _weight_h=1.0,
       uint random_seed=0
     );
-    ADG startExplore(ADG &adg, int input_sw_cnt, vector<int> & states);
+    ADG startExplore(ADG &adg, float cost, int input_sw_cnt, vector<int> & states);
     float heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values);
     int slow_heuristic(ADG &adg, vector<int> &states);
 
@@ -115,5 +115,8 @@ class Astar {
     bool early_termination = false;
 
     float weight_h = 1.0;
+
+    ADG init_adg;
+    float init_cost;
 };
 #endif

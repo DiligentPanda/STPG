@@ -106,7 +106,7 @@ int Simulator::simulate_wdelay(int p, int dlow, int dhigh, ofstream &outFile, of
       microseconds timer(0);
       start = high_resolution_clock::now();
       Astar search(timeout, true);
-      ADG replanned_adg = search.startExplore(adg_delayed, input_sw_cnt, states);
+      ADG replanned_adg = search.startExplore(adg_delayed, originalTime, input_sw_cnt, states);
       stop = high_resolution_clock::now();
       timer += duration_cast<microseconds>(stop - start);
 
@@ -136,7 +136,7 @@ int Simulator::simulate_wdelay(int p, int dlow, int dhigh, ofstream &outFile, of
       microseconds timer_slow(0);
       start = high_resolution_clock::now();
       Astar search_slow(timeout, false);
-      ADG replanned_slow = search_slow.startExplore(adg_delayed_slow, input_sw_cnt, states);
+      ADG replanned_slow = search_slow.startExplore(adg_delayed_slow, originalTime, input_sw_cnt, states);
       stop = high_resolution_clock::now();
       timer_slow += duration_cast<microseconds>(stop - start);
 
@@ -229,7 +229,7 @@ void simulate(
       use_grouping, 
       heuristic, 
       early_termination, 
-      weight_h, 
+      weight_h,
       random_seed
     );
   } else if (algo=="exec") {
@@ -296,7 +296,7 @@ void simulate(
 
   microseconds timer(0);
   start = high_resolution_clock::now();
-  ADG replanned_adg = search.startExplore(adg_delayed, input_sw_cnt, states);
+  ADG replanned_adg = search.startExplore(adg_delayed, originalTime, input_sw_cnt, states);
   stop = high_resolution_clock::now();
   timer += duration_cast<microseconds>(stop - start);
 
