@@ -547,7 +547,7 @@ ADG Astar::exploreNode() {
           auto start_sort = high_resolution_clock::now();
           tie(newts_tv, newts_vt) = topologicalSort(graph, newInitResult, &currents, -1, -1);
           auto end_sort = high_resolution_clock::now();
-          int val = heuristic_graph(copy, newts_tv, node_values);
+          float val = heuristic_graph(copy, newts_tv, node_values);
           auto end_heuristic = high_resolution_clock::now();
 
           sortT += duration_cast<microseconds>(end_sort - start_sort);
