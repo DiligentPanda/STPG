@@ -19,6 +19,8 @@ skip=False
 instance_idxs=list(range(1,25+1)) # this is the number provided by the benchmark
 num_sits=6
 
+subprocess.check_output("./compile.sh", shell=True) 
+
 # setting: [agent_num_start, agent_num_end, agent_num_step, max_process_num]
 maps = {
         "random-32-32-10":[25,50,5,128],
