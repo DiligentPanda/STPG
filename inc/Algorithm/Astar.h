@@ -25,9 +25,18 @@ class Astar {
   public:
     Astar();
     Astar(int input_timeout);
-    Astar(int input_timeout, bool input_fast_version, const string & branch_order="default", bool use_grouping=false, const string & _heuristic="zero", uint random_seed=0);
+    Astar(
+      int input_timeout, 
+      bool input_fast_version,
+      const string & branch_order="default", 
+      bool use_grouping=false, 
+      const string & _heuristic="zero", 
+      const bool early_termination=false,
+      float _weight_h=1.0,
+      uint random_seed=0
+    );
     ADG startExplore(ADG &adg, int input_sw_cnt, vector<int> & states);
-    int heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values);
+    float heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values);
     int slow_heuristic(ADG &adg, vector<int> &states);
 
     int compute_partial_cost(ADG &adg);
@@ -67,6 +76,7 @@ class Astar {
     tuple<int, int, int> enhanced_branch(Graph &graph, vector<int> *values);
     tuple<int, int, int> branch(Graph &graph, vector<int> *values);
     tuple<bool, int, int, int> slow_branch(ADG &adg, vector<int> *states);
+    bool terminated(Graph &graph, vector<int> *values);
 
     microseconds extraHeuristicT = std::chrono::microseconds::zero();
     microseconds groupingT = std::chrono::microseconds::zero();
@@ -101,5 +111,9 @@ class Astar {
     bool use_grouping=false;
     std::shared_ptr<GroupManager> group_manager;
     std::shared_ptr<HeuristicManager> heuristic_manager;
+
+    bool early_termination = false;
+
+    float weight_h = 1.0;
 };
 #endif

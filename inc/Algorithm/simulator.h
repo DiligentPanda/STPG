@@ -11,9 +11,9 @@ class Simulator {
     
     Simulator(ADG adg);
     Simulator(ADG adg, vector<int> visited_states);
-    int step(bool switchCheck);
-    int checkMovable(vector<int>& movable, vector<int>& haventStop);
-    int checkMovable(vector<int>& movable);
+    int step(bool switchCheck=true);
+    int checkMovable(vector<int>& movable, vector<int>& haventStop, bool switchCheck);
+    int checkMovable(vector<int>& movable, bool switchCheck);
     void print_location(ofstream &outFile, Location location);
     int print_soln(const char* outFileName);
     int print_soln();

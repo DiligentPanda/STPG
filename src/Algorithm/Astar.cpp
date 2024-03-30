@@ -10,7 +10,16 @@ Astar::Astar(int input_timeout) {
   timeout = input_timeout;
 }
 
-Astar::Astar(int input_timeout, bool input_fast_version, const string & _branch_order, bool use_grouping, const string & _heuristic, uint random_seed): rng(random_seed) {
+Astar::Astar(
+    int input_timeout, 
+    bool input_fast_version, 
+    const string & _branch_order, 
+    bool use_grouping, 
+    const string & _heuristic, 
+    bool early_termination, 
+    float _weight_h,
+    uint random_seed
+  ): rng(random_seed), weight_h(_weight_h) {
   timeout = input_timeout;
   fast_version = input_fast_version;
   if (_branch_order=="default") {
@@ -41,6 +50,7 @@ Astar::Astar(int input_timeout, bool input_fast_version, const string & _branch_
   }
 
   this->use_grouping=use_grouping;
+  this->early_termination=early_termination;
   this->heuristic_manager=std::make_shared<HeuristicManager>(heuristic);
 }
 
@@ -60,7 +70,7 @@ int Astar::calcTime(Simulator simulator) {
 
 // compute the longest path length from any current vertices to an agent's goal vertex.
 // the heuristic is the sum of the longest path length.
-int Astar::heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values) {
+float Astar::heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values) {
   Graph &graph = get<0>(adg);
 
   for (int i: (*ts)) {
@@ -72,7 +82,7 @@ int Astar::heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values) {
       if (values->at(j) < prevVal + weight) values->at(j) = prevVal + weight;
     }
   }
-  int sum = 0;
+  float sum = 0;
   for (int agent = 0; agent < agentCnt; agent ++) {
     int goalVert = compute_vertex(get<2>(adg), agent, get_stateCnt(adg, agent) - 1);
     sum += values->at(goalVert);
@@ -84,7 +94,7 @@ int Astar::heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values) {
   int h= heuristic_manager->computeInformedHeuristics(adg, *ts, *values, 0);
   auto end = high_resolution_clock::now();
   extraHeuristicT += duration_cast<microseconds>(end - start);
-  sum+=h;
+  sum+=h*weight_h;
 
   // int partial_cost = compute_partial_cost(adg);
   // if (partial_cost != sum) {
@@ -219,6 +229,44 @@ tuple<int, int, int> Astar::enhanced_branch(Graph &graph, vector<int> *values) {
   return make_tuple(maxDiff, maxI, maxJ);
 }
 
+bool Astar::terminated(Graph &graph, vector<int> *values) {
+  if (early_termination) {
+    for (int i = 0; i < get<3>(graph); i++) {
+      int iTime = values->at(i);
+      set<int> &outNeib = get_switchable_outNeib(graph, i);
+      for (auto it : outNeib) {
+        int j = it;
+        int backI = j+1;
+        int backJ = i-1;
+        int jTime = values->at(j);
+        int backITime = values->at(backI);
+        int backJTime = values->at(backJ);
+        int diff = iTime - jTime;
+        int backDiff = backITime - backJTime;
+
+        if (diff>=0 && backDiff>=0) {
+          return false;
+        }
+      }
+    }
+    return true;
+  } else {
+    for (int i = 0; i < get<3>(graph); i++) {
+      int iTime = values->at(i);
+      set<int> &outNeib = get_switchable_outNeib(graph, i);
+      for (auto it : outNeib) {
+        int j = it;
+        int jTime = values->at(j);
+        int diff = iTime - jTime;
+        if (diff >= 0) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+}
+
 void Astar::print_stats(nlohmann::json & stats) {
   stats["explored_node"]=explored_node_cnt;
   stats["pruned_node"]=pruned_node_cnt;
@@ -234,6 +282,33 @@ void Astar::print_stats(nlohmann::json & stats) {
   stats["termination_time"]=termT.count();
   stats["dfs_time"]=dfsT.count();
   stats["grouping_time"]=groupingT.count();
+  if (use_grouping) {
+    auto & groups=group_manager->groups;
+    stats["group"]=groups.size();
+    stats["group_merge_edge"]=group_manager->group_merge_edge_cnt;
+    float group_size_max=0;
+    float group_size_avg=0;
+    float group_size_min=sw_edge_cnt;
+    for (int i=0;i<(int)groups.size();++i) {
+      if((int)groups[i].size()>group_size_max) {
+        group_size_max=groups[i].size();
+      }
+      if ((int)groups[i].size()<group_size_min) {
+        group_size_min=groups[i].size();
+      }
+      group_size_avg+=groups[i].size();
+    }
+    group_size_avg/=groups.size();
+    stats["group_size_max"]=group_size_max;
+    stats["group_size_min"]=group_size_min;
+    stats["group_size_avg"]=group_size_avg;
+  } else {
+    stats["group"]=sw_edge_cnt;
+    stats["group_merge_edge"]=0;
+    stats["group_size_max"]=1;
+    stats["group_size_min"]=1;
+    stats["group_size_avg"]=1;
+  }
 }
 
 void Astar::print_stats(ofstream &outFile) {
@@ -298,7 +373,7 @@ ADG Astar::exploreNode() {
     bool terminate = true;
 
     if (true) {
-      terminate = (maxDiff < 0);
+      terminate = terminated(graph, values);
     } else {
       for (int v = 0; v < get<3>(graph); v ++) {
         set<int>& outNeib = get_switchable_outNeib(graph, v);
@@ -342,7 +417,7 @@ ADG Astar::exploreNode() {
       auto end_graph_free = high_resolution_clock::now();
       copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
 
-      if (terminate && branch_order==BranchOrder::CONFLICT) {
+      if (terminate && early_termination) {
         reverse_nonSwitchable_edges_basedOn_LongestPathValues(get<0>(res),values);
       }
 
@@ -757,7 +832,7 @@ ADG Astar::startExplore(ADG & adg, int input_sw_cnt, vector<int> & states) {
     vector<int>* node_values = new vector<int>(get<3>(graph), 0);
     auto start_heuristic = high_resolution_clock::now();
     // compute the longest path length from any current vertices to an agent's goal vertex.
-    int val = heuristic_graph(adg, ts_tv, node_values);
+    float val = heuristic_graph(adg, ts_tv, node_values);
     auto end_heuristic = high_resolution_clock::now();
     heuristicT += duration_cast<microseconds>(end_heuristic - start_heuristic);
     delete ts_tv;

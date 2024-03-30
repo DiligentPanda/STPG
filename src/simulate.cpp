@@ -29,7 +29,7 @@ int Simulator::step_wdelay(int p, bool *delay_mark, vector<int> &delayed_agents)
   vector<int> movable(agentCnt, 0);
   // if an agent arrives its goal, then it has stopped.
   vector<int> haventStop(agentCnt, 0);
-  int timeSpent = checkMovable(movable, haventStop);
+  int timeSpent = checkMovable(movable, haventStop, true);
   int moveCnt = 0;
 
   for (int agent = 0; agent < agentCnt; agent++) {
@@ -178,6 +178,8 @@ void simulate(
   const string & branch_order,
   bool use_grouping,
   const string & heuristic,
+  bool early_termination,
+  float weight_h,
   uint random_seed,
   const string & stat_ofp, 
   const string & new_path_ofp
@@ -192,7 +194,7 @@ void simulate(
   vector<int> delay_steps=data.at("delay_steps").get<vector<int> >();
 
   // TODO(rivers): maybe check path_fp with the path_fp saved in sit_fp as well.
-  if (states.size()!=agent_num || delay_steps.size()!=agent_num) {
+  if ((int)states.size()!=agent_num || (int)delay_steps.size()!=agent_num) {
     std::cout<<"size mismatch: "<<states.size()<<" "<<delay_steps.size()<<" "<<agent_num<<std::endl;
     exit(50);
   }
@@ -220,9 +222,27 @@ void simulate(
   // replanning ADG
   Astar search;
   if (algo=="graph") {
-    search=Astar(time_limit, true, branch_order,  use_grouping, heuristic, random_seed);
+    search=Astar(
+      time_limit, 
+      true, 
+      branch_order,  
+      use_grouping, 
+      heuristic, 
+      early_termination, 
+      weight_h, 
+      random_seed
+    );
   } else if (algo=="exec") {
-    search=Astar(time_limit, false, branch_order, use_grouping, heuristic, random_seed);
+    search=Astar(
+      time_limit, 
+      true, 
+      branch_order,  
+      use_grouping, 
+      heuristic, 
+      early_termination, 
+      weight_h, 
+      random_seed
+    );  
   } else {
     std::cout<<"unknown algorithm: "<<algo<<std::endl;  
   }
@@ -234,6 +254,8 @@ void simulate(
   stats["branch_order"]=branch_order;
   stats["use_grouping"]=use_grouping;
   stats["heuristic"]=heuristic;
+  stats["early_termination"]=early_termination;
+  stats["weight_h"]=weight_h;
   stats["random_seed"]=random_seed;
   stats["time_limit"]=time_limit*1000000; // in micro-seconds
   stats["path_fp"]=path_fp;
@@ -262,6 +284,11 @@ void simulate(
   stats["termination_time"]=nullptr;
   stats["dfs_time"]=nullptr;
   stats["grouping_time"]=nullptr;
+  stats["group"]=nullptr;
+  stats["group_merge_edge"]=nullptr;
+  stats["group_size_max"]=nullptr;
+  stats["group_size_min"]=nullptr;
+  stats["group_size_avg"]=nullptr;
   
   std::ofstream out(stat_ofp);
   out<<stats.dump(4)<<std::endl;
@@ -321,6 +348,8 @@ int main(int argc, char** argv) {
     ("branch_order,b",po::value<std::string>()->required(),"the branch order to use, [default, conflict, largest_diff, random, earliest]")
     ("use_grouping,g",po::value<bool>()->required(),"whether to use grouping")
     ("heuristic,h",po::value<std::string>()->required(),"the heuristic to use, [zero, cg_greedy]")
+    ("early_termination,e",po::value<bool>()->required(),"whether to use early termination")
+    ("weight_h",po::value<float>()->default_value(1.0),"heuristic weight for weighted A Star")
     ("random_seed,r",po::value<uint>()->default_value(0),"random seed")
   ;
 
@@ -344,6 +373,8 @@ int main(int argc, char** argv) {
   string new_path_ofp=vm.at("new_path_ofp").as<string>();
   bool use_grouping=vm.at("use_grouping").as<bool>();
   string heuristic=vm.at("heuristic").as<string>();
+  float weight_h=vm.at("weight_h").as<float>();
+  bool early_termination=vm.at("early_termination").as<bool>();
 
   simulate(
     path_fp,
@@ -353,6 +384,8 @@ int main(int argc, char** argv) {
     branch_order,
     use_grouping,
     heuristic,
+    early_termination,
+    weight_h,
     random_seed,
     stat_ofp,
     new_path_ofp
