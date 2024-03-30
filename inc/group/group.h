@@ -6,6 +6,17 @@
 #include "types.h"
 #include "ADG/ADG_utilities.h"
 #include <iostream>
+#include <boost/functional/hash.hpp>
+
+struct PairIntHash {
+  size_t operator() (const pair<int, int>& p) const {
+    size_t seed = 0;
+    boost::hash_combine(seed, p.first);
+    boost::hash_combine(seed, p.second);
+    return seed;
+  }
+};
+
 
 // TODO(rivers): currently we implement a simple version that only consider independent parallel and crossing patterns.
 // and only merge them if they share an edge. A case is clearly missing is concatenation of two such patterns.
@@ -30,7 +41,7 @@ public:
     int group_merge_edge_cnt=0;
 
     GroupManager(ADG & _adg, std::vector<int> & _states): states(_states), adg(copy_ADG(_adg)), graph(get<0>(adg)), num_states(get<3>(graph)) {
-        build();
+        build2();
     };
 
     // BUG(rivers): don't use int to encode, would overflow in the future.
@@ -44,6 +55,165 @@ public:
 
     int get_in_idx(int edge_id) {
         return edge_id%num_states;
+    }
+
+    void build2() {
+        int num_agents=get_agentCnt(adg);
+
+        // todo: this is not very efficient but fine.
+        for (int i=0;i<num_agents;++i) {
+            for (int j=0;j<num_agents;++j) {
+                if (i!=j) {
+                    build_each2(i,j);
+                }
+            }
+        }
+        // print_groups();
+    }
+
+    inline std::pair<int,int> reverse_edge(const std::pair<int,int> & edge) {
+        return {edge.second+1,edge.first-1};
+    }
+
+    void build_each2(int out_agent_idx, int in_agent_idx) {
+        if (out_agent_idx==in_agent_idx) {
+            std::cout<<"two agents cannot be the same"<<std::endl;
+            exit(2024);
+        }
+
+        auto & accum_cnts=get<2>(adg);
+        std::vector<int> prev_accum_cnts;
+        prev_accum_cnts.push_back(0);
+        prev_accum_cnts.insert(prev_accum_cnts.end(),accum_cnts.begin(),accum_cnts.end()-1);
+
+        int out_start_state_local_idx=states[out_agent_idx];
+        int out_end_state_local_idx=accum_cnts[out_agent_idx]-prev_accum_cnts[out_agent_idx];
+
+        int in_start_state_local_idx=states[in_agent_idx];
+        int in_end_state_local_idx=accum_cnts[in_agent_idx]-prev_accum_cnts[in_agent_idx];
+
+        std::unordered_set<std::pair<int,int>, PairIntHash> all_edges;
+        // TODO: we should consider non-switchable edges in the future.
+        for (int out_state_local_idx=out_start_state_local_idx;out_state_local_idx<out_end_state_local_idx;++out_state_local_idx) {
+            int out_state_idx=out_state_local_idx+prev_accum_cnts[out_agent_idx];
+            auto & switchable_out_neighbors=get_switchable_outNeib(graph, out_state_idx);
+            for (int in_state_idx:switchable_out_neighbors) {
+                int in_state_local_idx=in_state_idx-prev_accum_cnts[in_agent_idx];
+                if (in_state_local_idx>=in_start_state_local_idx && in_state_local_idx<in_end_state_local_idx) {
+                    all_edges.emplace(out_state_local_idx,in_state_local_idx);
+                }
+            }
+        }
+
+        std::unordered_set<std::pair<int,int>, PairIntHash > all_reversed_edges;
+        for (auto & edge: all_edges) {
+            auto reversed_edge=reverse_edge(edge);
+            all_reversed_edges.insert(reversed_edge);
+        }
+        
+
+        while (all_edges.size()>0) {
+            auto edge=*all_edges.begin();
+            // std::cout<<"edge: "<<edge.first<<"->"<<edge.second<<std::endl;
+
+            std::unordered_set<std::pair<int,int>, PairIntHash> forward_all_edges(all_edges);
+            std::unordered_set<std::pair<int,int>, PairIntHash > forward_groupable_edges;
+
+            std::unordered_set<std::pair<int,int>, PairIntHash> backward_all_edges(all_reversed_edges);
+            std::unordered_set<std::pair<int,int>, PairIntHash> backward_groupable_edges;
+            
+            {
+                forward_all_edges.erase(edge);
+                forward_groupable_edges.insert(edge);
+
+                // TODO(rivers): this implementation is not efficient?
+                std::vector<std::pair<int,int>> reversed_edges={reverse_edge(edge)};
+                while (true) {
+                    std::unordered_set<std::pair<int,int>, PairIntHash> edges_to_reverse;
+                    for (auto & forward_edge: forward_all_edges) {
+                        for (auto & reversed_edge:reversed_edges) {
+                            if (forward_edge.first>=reversed_edge.second && forward_edge.second<=reversed_edge.first){
+                                edges_to_reverse.insert(forward_edge);
+                                break;
+                            }
+                        }
+                    }
+                    if (edges_to_reverse.size()==0) {
+                        break;
+                    }
+                    reversed_edges.clear();
+                    for (auto & edge_to_reverse:edges_to_reverse) {
+                        forward_all_edges.erase(edge_to_reverse);
+                        forward_groupable_edges.insert(edge_to_reverse);
+                        reversed_edges.push_back(reverse_edge(edge_to_reverse));
+                    }
+                }
+
+                // std::cout<<"forward_group_edges"<<std::endl;
+                // for (auto edge:forward_groupable_edges) {
+                //     std::cout<<edge.first<<"->"<<edge.second<<std::endl;
+                // }
+            }
+
+            {
+                edge=reverse_edge(edge);
+                
+                backward_all_edges.erase(edge);
+                backward_groupable_edges.insert(edge);
+
+                std::vector<std::pair<int,int>> reversed_edges={reverse_edge(edge)};
+                while (true) {
+                    std::unordered_set<std::pair<int,int>, PairIntHash> edges_to_reverse;
+                    for (auto & backward_edge: backward_all_edges) {
+                        for (auto & reversed_edge:reversed_edges) {
+                            if (backward_edge.first>=reversed_edge.second && backward_edge.second<=reversed_edge.first){
+                                edges_to_reverse.insert(backward_edge);
+                                break;
+                            }
+                        }
+                    }
+                    if (edges_to_reverse.size()==0) {
+                        break;
+                    }
+                    reversed_edges.clear();
+                    for (auto & edge_to_reverse:edges_to_reverse) {
+                        backward_all_edges.erase(edge_to_reverse);
+                        backward_groupable_edges.insert(edge_to_reverse);
+                        reversed_edges.push_back(reverse_edge(edge_to_reverse));
+                    }
+                }
+
+                // std::cout<<"backward_group_edges"<<std::endl;
+                // for (auto edge:backward_groupable_edges) {
+                //     std::cout<<edge.first<<"->"<<edge.second<<std::endl;
+                // }
+            }
+
+            
+            // C++11 (needs <unordered_set>)
+            std::unordered_set<std::pair<int,int>, PairIntHash> groupable_edges;
+            // TODO: consider reserving a size (optimistically |a| + |b|)
+            for (auto & edge : forward_groupable_edges) {
+                auto reversed_edge=reverse_edge(edge);
+                if (backward_groupable_edges.count(reversed_edge)) { 
+                    groupable_edges.insert(edge);
+                    all_edges.erase(edge);
+                    all_reversed_edges.erase(reversed_edge); 
+                }
+            }
+
+            Group group;
+            for (auto edge:groupable_edges) {
+                int edge_id=get_edge_id(edge.first+prev_accum_cnts[out_agent_idx],edge.second+prev_accum_cnts[in_agent_idx]);
+                group.insert(edge_id);
+            }
+            int group_id=groups.size();
+            groups.push_back(group);
+            for (int edge_id:group) {
+                edge_id2group_id[edge_id]=group_id;
+            }
+        }
+
     }
 
     void build() {
