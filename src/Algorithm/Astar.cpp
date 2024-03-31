@@ -94,6 +94,10 @@ float Astar::heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values) {
   int h= heuristic_manager->computeInformedHeuristics(adg, *ts, *values, 0);
   auto end = high_resolution_clock::now();
   extraHeuristicT += duration_cast<microseconds>(end - start);
+  if (sum+h>=init_cost){
+    return -1;
+  }
+
   sum+=h*weight_h;
 
   // int partial_cost = compute_partial_cost(adg);
@@ -477,7 +481,7 @@ ADG Astar::exploreNode() {
           auto start_sort = high_resolution_clock::now();
           tie(newts_tv, newts_vt) = topologicalSort(graph, newInitResult, &currents, -1, -1);
           auto end_sort = high_resolution_clock::now();
-          int val = heuristic_graph(adg, newts_tv, node_values);
+          float val = heuristic_graph(adg, newts_tv, node_values);
           auto end_heuristic = high_resolution_clock::now();
 
           sortT += duration_cast<microseconds>(end_sort - start_sort);
@@ -486,15 +490,17 @@ ADG Astar::exploreNode() {
           delete newts_tv;
           delete newts_vt;
 
-          Node *forward_node = new Node;
-          *forward_node = make_tuple(adg, val, node_values);
+          if (val>=0) {
+            Node *forward_node = new Node;
+            *forward_node = make_tuple(adg, val, node_values);
 
-          auto start_pq_push = high_resolution_clock::now();
-          pq.push(forward_node);
-          auto end_pq_push = high_resolution_clock::now();
-          pqT += duration_cast<microseconds>(end_pq_push - start_pq_push);
+            auto start_pq_push = high_resolution_clock::now();
+            pq.push(forward_node);
+            auto end_pq_push = high_resolution_clock::now();
+            pqT += duration_cast<microseconds>(end_pq_push - start_pq_push);
 
-          added_node_cnt += 1;
+            added_node_cnt += 1;
+          }
         }
       }
 
@@ -541,7 +547,7 @@ ADG Astar::exploreNode() {
           auto start_sort = high_resolution_clock::now();
           tie(newts_tv, newts_vt) = topologicalSort(graph, newInitResult, &currents, -1, -1);
           auto end_sort = high_resolution_clock::now();
-          int val = heuristic_graph(copy, newts_tv, node_values);
+          float val = heuristic_graph(copy, newts_tv, node_values);
           auto end_heuristic = high_resolution_clock::now();
 
           sortT += duration_cast<microseconds>(end_sort - start_sort);
@@ -550,22 +556,27 @@ ADG Astar::exploreNode() {
           delete newts_tv;
           delete newts_vt;
 
-          Node *backward_node = new Node;
-          *backward_node = make_tuple(copy, val, node_values);
+          if (val>=0) {
+            Node *backward_node = new Node;
+            *backward_node = make_tuple(copy, val, node_values);
 
-          auto start_pq_push = high_resolution_clock::now();
-          pq.push(backward_node);
-          auto end_pq_push = high_resolution_clock::now();
-          pqT += duration_cast<microseconds>(end_pq_push - start_pq_push);
+            auto start_pq_push = high_resolution_clock::now();
+            pq.push(backward_node);
+            auto end_pq_push = high_resolution_clock::now();
+            pqT += duration_cast<microseconds>(end_pq_push - start_pq_push);
 
-          added_node_cnt += 1;
+            added_node_cnt += 1;
+          }
         }
       }
     }
     delete values;
     delete node;
   }
-  throw invalid_argument("no solution found");
+
+  // if nothing found, return the initial ADG
+  return init_adg;
+  // throw invalid_argument("no solution found");
 }
 
 /*
@@ -785,7 +796,9 @@ ADG Astar::slow_exploreNode() {
   throw invalid_argument("no solution found");
 }
 
-ADG Astar::startExplore(ADG & adg, int input_sw_cnt, vector<int> & states) {
+ADG Astar::startExplore(ADG & adg, float cost, int input_sw_cnt, vector<int> & states) {
+  init_adg=copy_ADG(adg);
+  init_cost=cost;
   
   // TODO(rivers): if use grouping
   if (use_grouping) {
@@ -836,14 +849,16 @@ ADG Astar::startExplore(ADG & adg, int input_sw_cnt, vector<int> & states) {
     auto end_heuristic = high_resolution_clock::now();
     heuristicT += duration_cast<microseconds>(end_heuristic - start_heuristic);
     delete ts_tv;
+  
+    if (val>=0) {
+      Node *root = new Node;
+      *root = make_tuple(adg, val, node_values);
 
-    Node *root = new Node;
-    *root = make_tuple(adg, val, node_values);
-
-    auto start_pq_push = high_resolution_clock::now();
-    pq.push(root);
-    auto end_pq_push = high_resolution_clock::now();
-    pqT += duration_cast<microseconds>(end_pq_push - start_pq_push);
+      auto start_pq_push = high_resolution_clock::now();
+      pq.push(root);
+      auto end_pq_push = high_resolution_clock::now();
+      pqT += duration_cast<microseconds>(end_pq_push - start_pq_push);
+    }
 
     // expand the node
     return exploreNode();

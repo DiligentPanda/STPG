@@ -52,7 +52,7 @@ int main(int argc, char** argv)
 		("printPath", "print path to stdout")
 		("writePath",po::value<std::string>()->default_value(""),"the path of a file to write paths")
 		("exitOnNoSolution",po::value<bool>()->default_value(false),"if there is no solution, return -1")
-
+		("f_w",po::value<float>()->default_value(1.0),"suboptimal factor>=1.0")
 
             ;
 
@@ -116,7 +116,12 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-    ICBSSearchWithPairedAnalysis<MapLoader> icbs(ml, al, 1.0, s, vm["cutoffTime"].as<float>() * CLOCKS_PER_SEC, vm["screen"].as<int>(), vm["kDelay"].as<int>(), options1);
+	float f_w=vm["f_w"].as<float>();
+	if (f_w<1.0) {
+		std::cout<<"suboptimal factor should be >=1.0"<<std::endl;
+		return -1;
+	}
+    ICBSSearchWithPairedAnalysis<MapLoader> icbs(ml, al, f_w, s, vm["cutoffTime"].as<float>() * CLOCKS_PER_SEC, vm["screen"].as<int>(), vm["kDelay"].as<int>(), options1);
 	if (vm["solver"].as<string>() == "CBSH-RM")
 	{
 		icbs.rectangleMDD = true;
