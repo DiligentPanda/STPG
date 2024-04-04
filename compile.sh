@@ -2,13 +2,6 @@ set -ex
 
 mkdir -p build
 cd build
-cmake ..
+cmake -DBOOST_ROOT=./boost_1_73_0 ..
 make -j
 cd ..
-
-cd CBS_K
-mkdir -p build
-cd build
-cmake ../CBSH-rect-cmake
-make -j
-cd ../..

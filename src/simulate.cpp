@@ -188,7 +188,7 @@ void simulate(
   ifstream in(sit_fp);
   json data=json::parse(in);
 
-  int agent_num=get_agentCnt(adg);
+  size_t agent_num=get_agentCnt(adg);
 
   vector<int> states=data.at("states").get<vector<int> >();
   vector<int> delay_steps=data.at("delay_steps").get<vector<int> >();
