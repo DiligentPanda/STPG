@@ -1,5 +1,0 @@
-stdout: 
-  CBSH-RM:TIMEOUT  ; -1 ; 5 ; 3349 ; 6699 ; 8046333 ; 19300585 ; 180.01 ; 10.5856; std 1733; std_m2    0; train_std 0; rectangle 1601, corridor 0, target_std 0, target_sym 15, parking_std 0, parking_sym0, self_conflict 0, num_llpp 6785, num_lltp 0, num_cardinal 5, num_semicardinal 2968, num_noncardinal 376, num_unkown 0
-Solution not found. Timeout: 180 seconds
-
-stderr: 
