@@ -88,7 +88,7 @@ void gen_random_situation(int idx, const string & path_fp, uint seed, int delay_
 }
 
 void gen_random_situations(const string & path_fp, int num, int delay_prob, int delay_steps_low, int delay_steps_high, const string & situation_fd) {
-  const uint default_seed=0;
+  const uint default_seed=std::random_device()()%1000000;
   const uint seed_step=97;
 
   boost::filesystem::path _situation_fd(situation_fd);
