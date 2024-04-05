@@ -45,7 +45,7 @@ int Simulator::checkMovable(vector<int>& movable, bool switchCheck) {
   return timeSpent;
 }
 
-bool Simulator::incident_to_switchable(int *v_from, int *v_to) {
+bool Simulator::incident_to_switchable(int & v_from, int & v_to) {
   int agentCnt = get_agentCnt(adg);
   Graph &graph = get<0>(adg);
   for (int agent = 0; agent < agentCnt; agent++) {
@@ -54,11 +54,11 @@ bool Simulator::incident_to_switchable(int *v_from, int *v_to) {
 
     state += 1;
     // get switchable type-2 edges from others pointing to this state
-    set<int>& inNeib = get_switchable_inNeib(graph, compute_vertex(get<2>(adg), agent, state));
+    set<int>& inNeib = get_switchable_inNeib(graph, compute_vertex((*get<2>(adg)), agent, state));
     for (auto it = inNeib.begin(); it != inNeib.end(); it++) {
       int from = *it;
-      *v_from = from;
-      *v_to = compute_vertex(get<2>(adg), agent, state);
+      v_from = from;
+      v_to = compute_vertex((*get<2>(adg)), agent, state);
       return true;
     }
 
@@ -67,11 +67,11 @@ bool Simulator::incident_to_switchable(int *v_from, int *v_to) {
     
     state += 1;
     // get switchable type-2 edges from this state pointing to others
-    set<int>& outNeib = get_switchable_outNeib(graph, compute_vertex(get<2>(adg), agent, state));
+    set<int>& outNeib = get_switchable_outNeib(graph, compute_vertex((*get<2>(adg)), agent, state));
     for (auto it = outNeib.begin(); it != outNeib.end(); it++) {
       int to = *it;
-      *v_to = to;
-      *v_from = compute_vertex(get<2>(adg), agent, state);
+      v_to = to;
+      v_from = compute_vertex((*get<2>(adg)), agent, state);
       return true;
     }
   }
@@ -128,7 +128,7 @@ int Simulator::step(bool switchCheck) {
   }
   if (moveCnt == 0 && timeSpent != 0) {
     std::cout << "err: "<<moveCnt<<" "<<timeSpent<<std::endl;
-    Paths &paths = get<1>(adg);
+    Paths &paths = (*get<1>(adg));
     int agentCnt=get_agentCnt(adg);
     for (auto agent=0;agent<agentCnt;++agent) {
       cout<<agent<<": "<<states[agent]<<" "<<get_stateCnt(adg, agent)-1<<std::endl;
@@ -155,7 +155,7 @@ int Simulator::print_soln(const char* outFileName) {
   if (outFile.is_open()) {
     vector<vector<Location>> expanded_paths;
     int agentCnt = get_agentCnt(adg);
-    Paths &paths = get<1>(adg);
+    Paths &paths = (*get<1>(adg));
 
     for (int agent = 0; agent < agentCnt; agent ++) {
       vector<Location> expanded_path;

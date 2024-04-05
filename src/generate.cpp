@@ -45,7 +45,7 @@ void gen_random_situation(int idx, const string & path_fp, uint seed, int delay_
 
   std::vector<int> delay_steps_vec(num_agents,0);
 
-  auto & accum_state_cnts=get<2>(adg);
+  auto & accum_state_cnts=*get<2>(adg);
   std::vector<int> state_cnts;
   state_cnts.push_back(accum_state_cnts[0]);
   for (int i=1;i<(int)accum_state_cnts.size();++i) {

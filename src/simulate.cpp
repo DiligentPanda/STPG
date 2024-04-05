@@ -18,7 +18,7 @@ void print_for_replanning(ADG &adg, vector<int> states, ofstream &outFile_path) 
   }
 }
 
-int Simulator::step_wdelay(int p, bool *delay_mark, vector<int> &delayed_agents) {
+int Simulator::step_wdelay(int p, bool &delay_mark, vector<int> &delayed_agents) {
   int agentCnt = get_agentCnt(adg);
 
   random_device rd;  
@@ -37,13 +37,13 @@ int Simulator::step_wdelay(int p, bool *delay_mark, vector<int> &delayed_agents)
       // each agent is delayed independently
       if (distrib(gen) <= p) {
         delayed_agents[agent] = 1;
-        *delay_mark = true;
+        delay_mark = true;
       }
     }
   }
 
   // if delayed
-  if (*delay_mark) {
+  if (delay_mark) {
     return 0;
   }
 
@@ -70,7 +70,7 @@ int Simulator::simulate_wdelay(int p, int dlow, int dhigh, ofstream &outFile, of
   vector<int> delayed_agents(agentCnt, 0);
 
   while (stepSpend != 0) {
-    stepSpend = step_wdelay(p, &delay_mark, delayed_agents);
+    stepSpend = step_wdelay(p, delay_mark, delayed_agents);
     // if a delay just happened
     // NOTE(rivers): multiple agents can be delayed independently at the same timestep.
     if (delay_mark)
@@ -85,7 +85,7 @@ int Simulator::simulate_wdelay(int p, int dlow, int dhigh, ofstream &outFile, of
       // construct the delayed ADG by inserting dummy nodes
       microseconds timer_constructADG(0);
       auto start = high_resolution_clock::now();
-      ADG adg_delayed = construct_delayed_ADG(adg, dlow, dhigh, delayed_agents, states, &input_sw_cnt, outFile_setup);
+      ADG adg_delayed = construct_delayed_ADG(adg, dlow, dhigh, delayed_agents, states, input_sw_cnt, outFile_setup);
       outFile_setup.close();
       auto stop = high_resolution_clock::now();
       timer_constructADG += duration_cast<microseconds>(stop - start);
@@ -194,7 +194,7 @@ void simulate(
   vector<int> delay_steps=data.at("delay_steps").get<vector<int> >();
 
   // TODO(rivers): maybe check path_fp with the path_fp saved in sit_fp as well.
-  if ((int)states.size()!=agent_num || (int)delay_steps.size()!=agent_num) {
+  if (states.size()!=agent_num || delay_steps.size()!=agent_num) {
     std::cout<<"size mismatch: "<<states.size()<<" "<<delay_steps.size()<<" "<<agent_num<<std::endl;
     exit(50);
   }
@@ -205,7 +205,7 @@ void simulate(
   // construct the delayed ADG by inserting dummy nodes
   microseconds timer_constructADG(0);
   auto start = high_resolution_clock::now();
-  ADG adg_delayed = construct_delayed_ADG(adg, delay_steps, states, &input_sw_cnt);
+  ADG adg_delayed = construct_delayed_ADG(adg, delay_steps, states, input_sw_cnt);
   auto stop = high_resolution_clock::now();
   timer_constructADG += duration_cast<microseconds>(stop - start);
 
@@ -232,17 +232,6 @@ void simulate(
       weight_h,
       random_seed
     );
-  } else if (algo=="exec") {
-    search=Astar(
-      time_limit, 
-      true, 
-      branch_order,  
-      use_grouping, 
-      heuristic, 
-      early_termination, 
-      weight_h, 
-      random_seed
-    );  
   } else {
     std::cout<<"unknown algorithm: "<<algo<<std::endl;  
   }
@@ -342,7 +331,7 @@ int main(int argc, char** argv) {
     ("path_fp,p",po::value<std::string>()->required(),"path file to construct ADG")
     ("sit_fp,s",po::value<std::string>()->required(),"situation file to construct delayed ADG")
     ("time_limit,t",po::value<int>()->required(),"time limit in seconds. need to be an integer")
-    ("algo,a",po::value<std::string>()->required(),"replaning algorithm to use, [exec, graph]")
+    ("algo,a",po::value<std::string>()->required(),"replaning algorithm to use, [graph]")
     ("stat_ofp,o",po::value<std::string>()->required(),"the output file path of statistics")
     ("new_path_ofp,n",po::value<std::string>()->required(),"the output file path of new paths")
     ("branch_order,b",po::value<std::string>()->required(),"the branch order to use, [default, conflict, largest_diff, random, earliest]")

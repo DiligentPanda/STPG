@@ -81,7 +81,7 @@ public:
             exit(2024);
         }
 
-        auto & accum_cnts=get<2>(adg);
+        auto & accum_cnts=(*get<2>(adg));
         std::vector<int> prev_accum_cnts;
         prev_accum_cnts.push_back(0);
         prev_accum_cnts.insert(prev_accum_cnts.end(),accum_cnts.begin(),accum_cnts.end()-1);
@@ -235,7 +235,7 @@ public:
             exit(2024);
         }
 
-        auto & accum_cnts=get<2>(adg);
+        auto & accum_cnts=(*get<2>(adg));
 
         int out_start_state_idx=compute_vertex(accum_cnts,out_agent_idx,states[out_agent_idx]);
         int out_end_state_idx=accum_cnts[out_agent_idx];
@@ -415,9 +415,9 @@ public:
         if (!found) {
             std::cout<<"edge_id"<<edge_id<<" not found"<<std::endl;
             int agent_idx,state_idx;
-            std::tie(agent_idx,state_idx)=compute_agent_state(get<2>(adg),out_idx);
+            std::tie(agent_idx,state_idx)=compute_agent_state((*get<2>(adg)),out_idx);
             std::cout<<"out_idx: agent_idx="<<agent_idx<<",state_idx="<<state_idx<<",current states: "<<states[agent_idx]<<std::endl;
-            std::tie(agent_idx,state_idx)=compute_agent_state(get<2>(adg),in_idx);
+            std::tie(agent_idx,state_idx)=compute_agent_state((*get<2>(adg)),in_idx);
             std::cout<<"in_idx: agent_idx="<<agent_idx<<",state_idx="<<state_idx<<",current states: "<<states[agent_idx]<<std::endl;
             exit(1234);
         }

@@ -36,7 +36,7 @@ class Astar {
       uint random_seed=0
     );
     ADG startExplore(ADG &adg, float cost, int input_sw_cnt, vector<int> & states);
-    float heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values);
+    float heuristic_graph(ADG &adg, shared_ptr<vector<int> > ts, shared_ptr<vector<int> > values);
     int slow_heuristic(ADG &adg, vector<int> &states);
 
     int compute_partial_cost(ADG &adg);
@@ -44,11 +44,10 @@ class Astar {
     void print_stats();
     void print_stats(ofstream &outFile);
     void print_stats(nlohmann::json & stats);
-    
-  private:
-    class Compare {
+
+    struct Compare {
       public:
-        bool operator() (Node* s1, Node* s2)
+        bool operator() (const shared_ptr<Node> & s1, const shared_ptr<Node> & s2)
         {
           int val1 = get<1>(*s1);
           int val2 = get<1>(*s2);
@@ -57,26 +56,12 @@ class Astar {
         }
     };
 
-    class slow_Compare {
-      public:
-        bool operator() (slow_Node* s1, slow_Node* s2)
-        {
-          int g1 = get<1>(*s1);
-          int h1 = get<2>(*s1);
-          int g2 = get<1>(*s2);
-          int h2 = get<2>(*s2);
-
-          return g1+h1 > g2+h2;
-        }
-    };
-
+  private:
     int calcTime(Simulator simulator);
     ADG exploreNode();
-    ADG slow_exploreNode();
-    tuple<int, int, int> enhanced_branch(Graph &graph, vector<int> *values);
-    tuple<int, int, int> branch(Graph &graph, vector<int> *values);
-    tuple<bool, int, int, int> slow_branch(ADG &adg, vector<int> *states);
-    bool terminated(Graph &graph, vector<int> *values);
+    tuple<int, int, int> enhanced_branch(Graph &graph, shared_ptr<vector<int> > values);
+    tuple<int, int, int> branch(Graph &graph, shared_ptr<vector<int> > values);
+    bool terminated(Graph &graph, shared_ptr<vector<int> > values);
 
     microseconds extraHeuristicT = std::chrono::microseconds::zero();
     microseconds groupingT = std::chrono::microseconds::zero();
@@ -100,8 +85,7 @@ class Astar {
     int timeout = 300;
 
     vector<int> currents;
-    priority_queue<Node*, vector<Node*>, Compare> pq;
-    priority_queue<slow_Node*, vector<slow_Node*>, slow_Compare> slow_pq;
+    priority_queue<shared_ptr<Node>, vector<shared_ptr<Node> >, Compare> pq;
     int agentCnt = 0;
 
     bool fast_version = false;

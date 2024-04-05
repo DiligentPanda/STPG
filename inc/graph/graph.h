@@ -54,11 +54,9 @@ set<int> get_inNeighbors(Graph& graph, int n);
 
 void set_switchable_nonSwitchable(Graph& graph);
 
+subGraph copy_subgraph(subGraph& subgraph);
+
 Graph copy_graph(Graph& graph);
-
-void free_graph(Graph& graph);
-
-void free_nonSwitchable(Graph& graph);
 
 void print_graph(Graph& graph);
 void print_graph_n2(Graph& graph);
@@ -76,9 +74,9 @@ bool check_cycle_nonSwitchable_old(Graph& graph, int start);
 
 // vector<int>* topologicalSort(Graph& graph, vector<int> starts);
 
-sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_starts, int u, int v);
+sortResult topologicalSort(Graph& graph, sortResult state, const vector<int> & starts, int u, int v);
 
-void reverse_nonSwitchable_edges_basedOn_LongestPathValues(Graph& graph, vector<int> *values);
+void reverse_nonSwitchable_edges_basedOn_LongestPathValues(Graph& graph, shared_ptr<vector<int> > values);
 
 std::pair<int,int> fix_switchable_edge(Graph & graph, int out_state_idx, int in_state_idx, bool reverse);
 

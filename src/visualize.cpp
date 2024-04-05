@@ -24,9 +24,9 @@ int NODE_SIZE = 15;
 void sketch_Type1_Simplified_TPG(ADG &adg, std::vector<sf::CircleShape>*& agents_nodes, std::vector<sf::Text>*& labels, sf::Font& font, std::vector<int>& vis_agents){
     sf::Color colors[] = {sf::Color::Red, sf::Color::Blue, sf::Color::Green, sf::Color::Magenta, sf::Color::Cyan};
 
-    Paths paths = get<1>(adg);
+    Paths & paths = *get<1>(adg);
     //int agent_num = get_agentCnt(adg);
-    std::vector<int> accum_stateCnts = get<2>(adg);
+    std::vector<int> & accum_stateCnts = *get<2>(adg);
 
     for (int i = 0; i < int(vis_agents.size()); ++i){
         int path_len;
@@ -252,10 +252,8 @@ void draw(sf::RenderWindow & window, ADG &adg, std::vector<int> &vis_agents, std
 }
 
 int visualize_ADG(ADG &adg, std::vector<int> &vis_agents) {
-    Paths paths = get<1>(adg);
     int agent_num = get_agentCnt(adg);
     std::cout << "Num of agents: " << agent_num << std::endl;
-    std::vector<int> accum_stateCnts = get<2>(adg);
     std::vector<int> agent_states_cnt;
     for (int a: vis_agents){
         agent_states_cnt.push_back(get_stateCnt(adg, a));
@@ -440,7 +438,7 @@ int main(int argc, char** argv) {
 
   int input_sw_cnt;
   // construct the delayed ADG by inserting dummy nodes
-  ADG adg_delayed = construct_delayed_ADG(adg, delay_steps, states, &input_sw_cnt);
+  ADG adg_delayed = construct_delayed_ADG(adg, delay_steps, states, input_sw_cnt);
 
   std::vector<int> vis_agents;
   for (int i=0;i<agent_num;++i) {

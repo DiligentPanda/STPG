@@ -70,7 +70,7 @@ int Astar::calcTime(Simulator simulator) {
 
 // compute the longest path length from any current vertices to an agent's goal vertex.
 // the heuristic is the sum of the longest path length.
-float Astar::heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values) {
+float Astar::heuristic_graph(ADG &adg, shared_ptr<vector<int> > ts, shared_ptr<vector<int> > values) {
   Graph &graph = get<0>(adg);
 
   for (int i: (*ts)) {
@@ -84,7 +84,7 @@ float Astar::heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values) {
   }
   float sum = 0;
   for (int agent = 0; agent < agentCnt; agent ++) {
-    int goalVert = compute_vertex(get<2>(adg), agent, get_stateCnt(adg, agent) - 1);
+    int goalVert = compute_vertex((*get<2>(adg)), agent, get_stateCnt(adg, agent) - 1);
     sum += values->at(goalVert);
   }
 
@@ -107,7 +107,7 @@ float Astar::heuristic_graph(ADG &adg, vector<int> *ts, vector<int> *values) {
   return sum;
 }
 
-tuple<int, int, int> Astar::branch(Graph &graph, vector<int> *values) {
+tuple<int, int, int> Astar::branch(Graph &graph, shared_ptr<vector<int> > values) {
   int maxDiff = -1;
   int maxI = -1;
   int maxJ = -1;
@@ -195,7 +195,7 @@ tuple<int, int, int> Astar::branch(Graph &graph, vector<int> *values) {
   return make_tuple(maxDiff, maxI, maxJ);
 }
 
-tuple<int, int, int> Astar::enhanced_branch(Graph &graph, vector<int> *values) {
+tuple<int, int, int> Astar::enhanced_branch(Graph &graph, shared_ptr<vector<int> > values) {
   int maxDiff = -1;
   int maxI = -1;
   int maxJ = -1;
@@ -233,7 +233,7 @@ tuple<int, int, int> Astar::enhanced_branch(Graph &graph, vector<int> *values) {
   return make_tuple(maxDiff, maxI, maxJ);
 }
 
-bool Astar::terminated(Graph &graph, vector<int> *values) {
+bool Astar::terminated(Graph &graph, shared_ptr<vector<int> > values) {
   if (early_termination) {
     for (int i = 0; i < get<3>(graph); i++) {
       int iTime = values->at(i);
@@ -354,13 +354,13 @@ ADG Astar::exploreNode() {
     }
 
     auto start_pq_pop = high_resolution_clock::now();
-    Node* node = pq.top();
+    auto node = pq.top();
     pq.pop();
     auto end_pq_pop = high_resolution_clock::now();
     pqT += duration_cast<microseconds>(end_pq_pop - start_pq_pop);
     
     ADG &adg = get<0>(*node);
-    vector<int> *values = get<2>(*node);
+    shared_ptr<vector<int> > values = get<2>(*node);
     Graph &graph = get<0>(adg);
 
     int maxDiff, maxI, maxJ;
@@ -395,38 +395,18 @@ ADG Astar::exploreNode() {
     if (terminate || ((duration_cast<seconds>(end_branch - start)).count() >= timeout)) {
       // free all the search node in the priority queue.
       while (pq.size() > 0) {
-        start_pq_pop = high_resolution_clock::now();
-        Node* delete_node = pq.top();
-        end_pq_pop = high_resolution_clock::now();
-        free_underlying_graph(get<0>(*delete_node));
-        auto end_graph_free = high_resolution_clock::now();
-
-        pqT += duration_cast<microseconds>(end_pq_pop - start_pq_pop);
-        copy_free_graphsT += duration_cast<microseconds>(end_graph_free - end_pq_pop);
-
-        vector<int> *delete_vec = get<2>(*delete_node);
-        delete delete_vec;
-        delete delete_node;
-
-        start_pq_pop = high_resolution_clock::now();
         pq.pop();
-        end_pq_pop = high_resolution_clock::now();
-        pqT += duration_cast<microseconds>(end_pq_pop - start_pq_pop);
       }
 
       // return the current ADG by fix switchable edges to non-switchable.
       auto start_graph_free = high_resolution_clock::now();
       ADG res = copy_ADG(adg);
-      free_underlying_graph(adg);
       auto end_graph_free = high_resolution_clock::now();
       copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
 
       if (terminate && early_termination) {
-        reverse_nonSwitchable_edges_basedOn_LongestPathValues(get<0>(res),values);
+        reverse_nonSwitchable_edges_basedOn_LongestPathValues(get<0>(res), values);
       }
-
-      delete values;
-      delete node;
 
       set_switchable_nonSwitchable(get<0>(res));
       return res;
@@ -464,22 +444,18 @@ ADG Astar::exploreNode() {
         }
 
         if (pruned) { // Prune node
-          auto start_graph_free = high_resolution_clock::now();
-          free_graph(graph);
-          auto end_graph_free = high_resolution_clock::now();
-          copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
           pruned_node_cnt += 1;
         } else {
-          vector<int>* newts_tv_init = nullptr;
-          vector<int>* newts_vt_init = nullptr;
+          shared_ptr<vector<int> > newts_tv_init;
+          shared_ptr<vector<int> > newts_vt_init;
           sortResult newInitResult = make_pair(newts_tv_init, newts_vt_init);
 
-          vector<int>* newts_tv;
-          vector<int>* newts_vt;
-          vector<int>* node_values = new vector<int>(get<3>(graph), 0);
+          shared_ptr<vector<int> > newts_tv;
+          shared_ptr<vector<int> > newts_vt;
+          shared_ptr<vector<int> > node_values = make_shared<vector<int> >(get<3>(graph), 0);
 
           auto start_sort = high_resolution_clock::now();
-          tie(newts_tv, newts_vt) = topologicalSort(graph, newInitResult, &currents, -1, -1);
+          tie(newts_tv, newts_vt) = topologicalSort(graph, newInitResult, currents, -1, -1);
           auto end_sort = high_resolution_clock::now();
           float val = heuristic_graph(adg, newts_tv, node_values);
           auto end_heuristic = high_resolution_clock::now();
@@ -487,13 +463,8 @@ ADG Astar::exploreNode() {
           sortT += duration_cast<microseconds>(end_sort - start_sort);
           heuristicT += duration_cast<microseconds>(end_heuristic - end_sort);
 
-          delete newts_tv;
-          delete newts_vt;
-
           if (val>=0) {
-            Node *forward_node = new Node;
-            *forward_node = make_tuple(adg, val, node_values);
-
+            auto forward_node = std::make_shared<Node>(adg, val, node_values);
             auto start_pq_push = high_resolution_clock::now();
             pq.push(forward_node);
             auto end_pq_push = high_resolution_clock::now();
@@ -530,22 +501,18 @@ ADG Astar::exploreNode() {
         }
 
         if (pruned) { // Prune node
-          auto start_graph_free = high_resolution_clock::now();
-          free_graph(graph);
-          auto end_graph_free = high_resolution_clock::now();
-          copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
           pruned_node_cnt += 1;
         } else {
-          vector<int>* newts_tv_init = nullptr;
-          vector<int>* newts_vt_init = nullptr;
+          shared_ptr<vector<int> > newts_tv_init;
+          shared_ptr<vector<int> > newts_vt_init;
           sortResult newInitResult = make_pair(newts_tv_init, newts_vt_init);
 
-          vector<int>* newts_tv;
-          vector<int>* newts_vt;
-          vector<int>* node_values = new vector<int>(get<3>(graph), 0);
+          shared_ptr<vector<int> > newts_tv;
+          shared_ptr<vector<int> > newts_vt;
+          shared_ptr<vector<int> > node_values = make_shared<vector<int> >(get<3>(graph), 0);
 
           auto start_sort = high_resolution_clock::now();
-          tie(newts_tv, newts_vt) = topologicalSort(graph, newInitResult, &currents, -1, -1);
+          tie(newts_tv, newts_vt) = topologicalSort(graph, newInitResult, currents, -1, -1);
           auto end_sort = high_resolution_clock::now();
           float val = heuristic_graph(copy, newts_tv, node_values);
           auto end_heuristic = high_resolution_clock::now();
@@ -553,12 +520,8 @@ ADG Astar::exploreNode() {
           sortT += duration_cast<microseconds>(end_sort - start_sort);
           heuristicT += duration_cast<microseconds>(end_heuristic - end_sort);
 
-          delete newts_tv;
-          delete newts_vt;
-
           if (val>=0) {
-            Node *backward_node = new Node;
-            *backward_node = make_tuple(copy, val, node_values);
+            auto backward_node = std::make_shared<Node>(copy, val, node_values);
 
             auto start_pq_push = high_resolution_clock::now();
             pq.push(backward_node);
@@ -570,230 +533,11 @@ ADG Astar::exploreNode() {
         }
       }
     }
-    delete values;
-    delete node;
   }
 
   // if nothing found, return the initial ADG
   return init_adg;
   // throw invalid_argument("no solution found");
-}
-
-/*
-input:
-  states: current vertex idxs for all agents
-return:
-  terminate: true or false
-  v_from: the start of branching edge
-  v_to: the end of branching edge
-  g_delta: the increament in g value
-*/
-tuple<bool, int, int, int> Astar::slow_branch(ADG &adg, vector<int> *states) {
-  // std::cout << "old states";
-  // for (auto i: *states) {
-  //   std::cout << i << ' ';
-  // }
-  // std::cout << "\n";
-
-  int stepSpend = 0;
-  int totalSpend = 0;
-  Simulator simulator(adg, *states);
-
-  int v_from = -1;
-  int v_to = -1;
-
-  if (simulator.incident_to_switchable(&v_from, &v_to)) {
-    // std::cout << "initial incident\n";
-    return make_tuple(false, v_from, v_to, totalSpend); // terminate
-  }
-
-  stepSpend = simulator.step(false);
-  while (stepSpend != 0) {
-    if (stepSpend < 0) {
-      std::cout<<"fail in slow_branch()"<<std::endl;
-      exit(2);
-    } // stuck
-    totalSpend += stepSpend;
-    if (simulator.incident_to_switchable(&v_from, &v_to)) {
-      *states = simulator.states;
-      // std::cout << "new states";
-      // for (auto i: simulator.states) {
-      //   std::cout << i << ' ';
-      // }
-      // std::cout << ", totalSpend = " << totalSpend << "\n";
-      return make_tuple(false, v_from, v_to, totalSpend); // terminate
-    }
-    stepSpend = simulator.step(false);
-  }
-  return make_tuple(true, -1, -1, totalSpend); // terminate
-}
-
-int Astar::slow_heuristic(ADG &adg, vector<int> &states) {
-  Simulator simulator(adg, states);
-  int cost = simulator.print_soln();
-  return cost;
-}
-
-int Astar::compute_partial_cost(ADG &adg) {
-  // Graph &graph = get<0>(copy);
-  // remove_all_switchable_edges(graph);
-
-  Simulator simulator(adg);
-  int cost = simulator.print_soln();
-  return cost;
-}
-
-ADG Astar::slow_exploreNode() {
-  auto start = high_resolution_clock::now();
-  while (slow_pq.size() > 0) {
-    explored_node_cnt += 1;
-    if (explored_node_cnt % 100000 == 0) {
-      std::cout << explored_node_cnt << "\n";
-    }
-
-    auto start_pq_pop = high_resolution_clock::now();
-    slow_Node* node = slow_pq.top();
-    // std::cout << "g =" << get<1>(*node) << ", h=" << get<2>(*node) << "\n";
-    slow_pq.pop();
-    auto end_pq_pop = high_resolution_clock::now();
-    pqT += duration_cast<microseconds>(end_pq_pop - start_pq_pop);
-    
-    ADG &adg = get<0>(*node);
-    vector<int> states = get<3>(*node);
-
-    int v_from, v_to, g_delta;
-    bool terminate;
-    auto start_branch = high_resolution_clock::now();
-    tie(terminate, v_from, v_to, g_delta) = slow_branch(adg, &states);
-    auto end_branch = high_resolution_clock::now();
-    branchT += duration_cast<microseconds>(end_branch - start_branch);
-
-    auto end_term = high_resolution_clock::now();
-    termT += duration_cast<microseconds>(end_term - end_branch);
-
-    if (terminate || ((duration_cast<seconds>(end_branch - start)).count() >= timeout)) {
-      while (slow_pq.size() > 0) {
-        start_pq_pop = high_resolution_clock::now();
-        slow_Node* delete_node = slow_pq.top();
-        end_pq_pop = high_resolution_clock::now();
-        free_underlying_graph(get<0>(*delete_node));
-        auto end_graph_free = high_resolution_clock::now();
-
-        pqT += duration_cast<microseconds>(end_pq_pop - start_pq_pop);
-        copy_free_graphsT += duration_cast<microseconds>(end_graph_free - end_pq_pop);
-
-        delete delete_node;
-
-        start_pq_pop = high_resolution_clock::now();
-        slow_pq.pop();
-        end_pq_pop = high_resolution_clock::now();
-        pqT += duration_cast<microseconds>(end_pq_pop - start_pq_pop);
-      }
-      auto start_graph_free = high_resolution_clock::now();
-      ADG res = copy_ADG(adg);
-      free_underlying_graph(adg);
-      auto end_graph_free = high_resolution_clock::now();
-      copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
-
-      delete node;
-      set_switchable_nonSwitchable(get<0>(res));
-      return res;
-    } else {
-      int g = get<1>(*node);
-      auto start_graph_copy = high_resolution_clock::now();
-      ADG copy = copy_ADG(adg);
-      auto end_graph_copy = high_resolution_clock::now();
-      copy_free_graphsT += duration_cast<microseconds>(end_graph_copy - start_graph_copy);
-
-      Graph &graph = get<0>(adg);
-
-      // Forward
-      // Fix the edge
-      rem_type2_switchable_edge(graph, v_from, v_to);
-      set_type2_nonSwitchable_edge(graph, v_from, v_to);
-
-      auto start_dfs = high_resolution_clock::now();
-      bool pruned_forward = check_cycle_dfs(graph, v_from);
-      auto end_dfs = high_resolution_clock::now();
-      dfsT += duration_cast<microseconds>(end_dfs - start_dfs);
-
-      if (pruned_forward) { // Prune node
-        auto start_graph_free = high_resolution_clock::now();
-        free_graph(graph);
-        auto end_graph_free = high_resolution_clock::now();
-        copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
-        pruned_node_cnt += 1;
-      } else {
-        auto start_heuristic = high_resolution_clock::now();
-        int h = slow_heuristic(adg, states);
-        auto end_heuristic = high_resolution_clock::now();
-        heuristicT += duration_cast<microseconds>(end_heuristic - start_heuristic);
-
-        slow_Node *forward_node = new slow_Node;
-
-        // int partial_cost = compute_partial_cost(adg);
-
-        // if (g+g_delta+h!= partial_cost) {
-        //   std::cout << "mismatched cost!!!";
-        // }
-        // std::cout << "g = " << g << ", g_delta = " << g_delta << ", h=" << h << ", partial cost = " << partial_cost << "\n";
-        *forward_node = make_tuple(adg, g+g_delta, h, states);
-
-        auto start_pq_push = high_resolution_clock::now();
-        slow_pq.push(forward_node);
-        auto end_pq_push = high_resolution_clock::now();
-        pqT += duration_cast<microseconds>(end_pq_push - start_pq_push);
-
-        added_node_cnt += 1;
-      }
-
-      // Backward 
-      Graph &copyGraph = get<0>(copy);
-
-      // Fix the edge
-      int backI = v_to+1;
-      int backJ = v_from-1;
-
-      rem_type2_switchable_edge(copyGraph, v_from, v_to);
-      set_type2_nonSwitchable_edge(copyGraph, backI, backJ);
-
-      start_dfs = high_resolution_clock::now();
-      bool pruned_backward = check_cycle_dfs(copyGraph, backI);
-      end_dfs = high_resolution_clock::now();
-      dfsT += duration_cast<microseconds>(end_dfs - start_dfs);
-
-      if (pruned_backward) { // Prune node
-        auto start_graph_free = high_resolution_clock::now();
-        free_graph(copyGraph);
-        auto end_graph_free = high_resolution_clock::now();
-        copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
-        pruned_node_cnt += 1;
-      } else {
-        auto start_heuristic = high_resolution_clock::now();
-        int h = slow_heuristic(copy, states);
-        auto end_heuristic = high_resolution_clock::now();
-        heuristicT += duration_cast<microseconds>(end_heuristic - start_heuristic);
-
-        slow_Node *backward_node = new slow_Node;
-        // int partial_cost = compute_partial_cost(copy);
-        // if (g+g_delta+h!= partial_cost) {
-        //   std::cout << "mismatched cost!!!";
-        // }
-        // std::cout << "g = " << g << ", g_delta = " << g_delta << ", h=" << h << ", partial cost = " << partial_cost << "\n";
-        
-        *backward_node = make_tuple(copy, g+g_delta, h, states);
-
-        auto start_pq_push = high_resolution_clock::now();
-        slow_pq.push(backward_node);
-        auto end_pq_push = high_resolution_clock::now();
-        pqT += duration_cast<microseconds>(end_pq_push - start_pq_push);
-
-        added_node_cnt += 1;
-      }
-    }
-    delete node;
-  }
-  throw invalid_argument("no solution found");
 }
 
 ADG Astar::startExplore(ADG & adg, float cost, int input_sw_cnt, vector<int> & states) {
@@ -816,67 +560,44 @@ ADG Astar::startExplore(ADG & adg, float cost, int input_sw_cnt, vector<int> & s
   // std::cout << "vertex_cnt = " << vertex_cnt << ", sw_edge_cnt = " << sw_edge_cnt << "\n";
 
   /* Graph-Based Search */
-  if (fast_version) {
-    agentCnt = get_agentCnt(adg);
-    Graph &graph = get<0>(adg);
+  agentCnt = get_agentCnt(adg);
+  Graph &graph = get<0>(adg);
 
-    for (int agent = 0; agent < agentCnt; agent ++) {
-      // get current global vertex idx
-      int current = compute_vertex(get<2>(adg), agent, 0);
-      currents.push_back(current);
-    }
-    
-    // ts: topological sort, tv: topological order (time) -> vertex global idx
-    vector<int>* ts_tv_init = nullptr;
-    // ts: topological sort, vt: vertex global idx -> topological order (time)
-    vector<int>* ts_vt_init = nullptr;
-    sortResult initResult = make_pair(ts_tv_init, ts_vt_init);
-
-    auto start_sort = high_resolution_clock::now();
-    sortResult result = topologicalSort(graph, initResult, &currents, -1, -1);
-    auto end_sort = high_resolution_clock::now();
-    sortT += duration_cast<microseconds>(end_sort - start_sort);
-
-    // only keep the array from topological order (time) -> vertex global idx
-    delete result.second;
-    vector<int>* ts_tv = result.first;
-
-    // initialize the array for longest path length from any current vertices to an agent's goal vertex.
-    vector<int>* node_values = new vector<int>(get<3>(graph), 0);
-    auto start_heuristic = high_resolution_clock::now();
-    // compute the longest path length from any current vertices to an agent's goal vertex.
-    float val = heuristic_graph(adg, ts_tv, node_values);
-    auto end_heuristic = high_resolution_clock::now();
-    heuristicT += duration_cast<microseconds>(end_heuristic - start_heuristic);
-    delete ts_tv;
+  for (int agent = 0; agent < agentCnt; agent ++) {
+    // get current global vertex idx
+    int current = compute_vertex((*get<2>(adg)), agent, 0);
+    currents.push_back(current);
+  }
   
-    if (val>=0) {
-      Node *root = new Node;
-      *root = make_tuple(adg, val, node_values);
+  // ts: topological sort, tv: topological order (time) -> vertex global idx
+  shared_ptr<vector<int> > ts_tv_init;
+  // ts: topological sort, vt: vertex global idx -> topological order (time)
+  shared_ptr<vector<int> > ts_vt_init;
+  sortResult initResult = make_pair(ts_tv_init, ts_vt_init);
 
-      auto start_pq_push = high_resolution_clock::now();
-      pq.push(root);
-      auto end_pq_push = high_resolution_clock::now();
-      pqT += duration_cast<microseconds>(end_pq_push - start_pq_push);
-    }
+  auto start_sort = high_resolution_clock::now();
+  sortResult result = topologicalSort(graph, initResult, currents, -1, -1);
+  auto end_sort = high_resolution_clock::now();
+  sortT += duration_cast<microseconds>(end_sort - start_sort);
 
-    // expand the node
-    return exploreNode();
-  } 
-  /* Simulation-Based Search */
-  else {
-    agentCnt = get_agentCnt(adg);
+  // initialize the array for longest path length from any current vertices to an agent's goal vertex.
+  auto node_values = make_shared<vector<int> >(get<3>(graph), 0);
+  auto start_heuristic = high_resolution_clock::now();
+  // compute the longest path length from any current vertices to an agent's goal vertex.
+  float val = heuristic_graph(adg, result.first, node_values);
+  auto end_heuristic = high_resolution_clock::now();
+  heuristicT += duration_cast<microseconds>(end_heuristic - start_heuristic);
 
-    slow_Node *root = new slow_Node;
-    vector<int> states(agentCnt, 0);
-    *root = make_tuple(adg, 0, 0, states);
+  if (val>=0) {
+    auto root = make_shared<Node>(adg, val, node_values);
 
     auto start_pq_push = high_resolution_clock::now();
-    slow_pq.push(root);
+    pq.push(root);
     auto end_pq_push = high_resolution_clock::now();
     pqT += duration_cast<microseconds>(end_pq_push - start_pq_push);
-
-    return slow_exploreNode();
   }
+
+  // expand the node
+  return exploreNode();
 }
 

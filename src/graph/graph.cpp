@@ -22,16 +22,16 @@ bool error_check_node_range(Graph& graph, int n1, int n2){
 }
 
 Graph new_graph(int n){
-    set<int>* type1GInNeighbors = new set<int>[n];
-    set<int>* type1OutNeighbors = new set<int>[n];
+    auto type1GInNeighbors = make_shared<vector<set<int> > >(n);
+    auto type1OutNeighbors = make_shared<vector<set<int> > >(n);
     subGraph type1G = make_pair(type1OutNeighbors,type1GInNeighbors);
 
-    set<int>* type2NonSwitchableGInNeighbors = new set<int>[n];
-    set<int>* type2NonSwitchableGOutNeighbors = new set<int>[n];
+    auto type2NonSwitchableGInNeighbors = make_shared<vector<set<int> > >(n);
+    auto type2NonSwitchableGOutNeighbors = make_shared<vector<set<int> > >(n);
     subGraph type2NonSwitchableG = make_pair(type2NonSwitchableGOutNeighbors, type2NonSwitchableGInNeighbors);
 
-    set<int>* type2SwitchableGInNeighbors = new set<int>[n];
-    set<int>* type2SwitchableGOutNeighbors = new set<int>[n];
+    auto type2SwitchableGInNeighbors = make_shared<vector<set<int> > >(n);
+    auto type2SwitchableGOutNeighbors = make_shared<vector<set<int> > >(n);
     subGraph type2SwitchableG = make_pair(type2SwitchableGOutNeighbors, type2SwitchableGInNeighbors);
 
     Graph graph = make_tuple(type1G, type2NonSwitchableG, type2SwitchableG, n);
@@ -52,8 +52,8 @@ void set_type1_edge(Graph& graph, int n1, int n2){
     }
 
     subGraph& type1G = get<0>(graph);
-    type1G.first[n1].insert(n2);
-    type1G.second[n2].insert(n1);
+    (*type1G.first)[n1].insert(n2);
+    (*type1G.second)[n2].insert(n1);
 
     return;
 }
@@ -72,8 +72,8 @@ void set_type2_nonSwitchable_edge(Graph& graph, int n1, int n2){
     }
 
     subGraph& type2NSG = get<1>(graph);
-    type2NSG.first[n1].insert(n2);
-    type2NSG.second[n2].insert(n1);
+    (*type2NSG.first)[n1].insert(n2);
+    (*type2NSG.second)[n2].insert(n1);
 
     return;
 }
@@ -92,8 +92,8 @@ void set_type2_switchable_edge(Graph& graph, int n1, int n2){
     }
 
     subGraph& type2SG = get<2>(graph);
-    type2SG.first[n1].insert(n2);
-    type2SG.second[n2].insert(n1);
+    (*type2SG.first)[n1].insert(n2);
+    (*type2SG.second)[n2].insert(n1);
 
     return;
 }
@@ -112,14 +112,14 @@ void rem_type1_edge(Graph& graph, int n1, int n2){
     }
 
     subGraph& type1G = get<0>(graph);
-    auto itr = type1G.first[n1].find(n2);
-    if(itr != type1G.first[n1].end()){
-        type1G.first[n1].erase(itr);
+    auto itr = (*type1G.first)[n1].find(n2);
+    if(itr != (*type1G.first)[n1].end()){
+        (*type1G.first)[n1].erase(itr);
     }
 
-    itr = type1G.second[n2].find(n1);
-    if(itr != type1G.second[n2].end()){
-        type1G.second[n2].erase(itr);
+    itr = (*type1G.second)[n2].find(n1);
+    if(itr != (*type1G.second)[n2].end()){
+        (*type1G.second)[n2].erase(itr);
     }
 
     return;
@@ -139,14 +139,14 @@ void rem_type2_nonSwitchable_edge(Graph& graph, int n1, int n2){
     }
 
     subGraph& type2NSG = get<1>(graph);
-    auto itr = type2NSG.first[n1].find(n2);
-    if(itr != type2NSG.first[n1].end()){
-        type2NSG.first[n1].erase(itr);
+    auto itr = (*type2NSG.first)[n1].find(n2);
+    if(itr != (*type2NSG.first)[n1].end()){
+        (*type2NSG.first)[n1].erase(itr);
     }
 
-    itr = type2NSG.second[n2].find(n1);
-    if(itr != type2NSG.second[n2].end()){
-        type2NSG.second[n2].erase(itr);
+    itr = (*type2NSG.second)[n2].find(n1);
+    if(itr != (*type2NSG.second)[n2].end()){
+        (*type2NSG.second)[n2].erase(itr);
     }
 
     return;
@@ -161,7 +161,7 @@ void rem_type2_nonSwitchable_neighborhood(Graph& graph, int n){
     }
 
     subGraph& type2NSG = get<1>(graph);
-    type2NSG.first[n].clear();  
+    (*type2NSG.first)[n].clear();  
 
     return;
 }
@@ -180,14 +180,14 @@ void rem_type2_switchable_edge(Graph& graph, int n1, int n2){
     }
 
     subGraph& type2SG = get<2>(graph);
-    auto itr = type2SG.first[n1].find(n2);
-    if(itr != type2SG.first[n1].end()){
-        type2SG.first[n1].erase(itr);
+    auto itr = (*type2SG.first)[n1].find(n2);
+    if(itr != (*type2SG.first)[n1].end()){
+        (*type2SG.first)[n1].erase(itr);
     }
 
-    itr = type2SG.second[n2].find(n1);
-    if(itr != type2SG.second[n2].end()){
-        type2SG.second[n2].erase(itr);
+    itr = (*type2SG.second)[n2].find(n1);
+    if(itr != (*type2SG.second)[n2].end()){
+        (*type2SG.second)[n2].erase(itr);
     }
 
     return;
@@ -200,8 +200,8 @@ bool get_type1_edge(Graph& graph, int n1, int n2){
     }
 
     subGraph& type1G = get<0>(graph);
-    auto itr = type1G.first[n1].find(n2);
-    bool result = itr == type1G.first[n1].end() ? false : true;
+    auto itr = (*type1G.first)[n1].find(n2);
+    bool result = itr == (*type1G.first)[n1].end() ? false : true;
 
     return result;
 }
@@ -212,8 +212,8 @@ bool get_type2_nonSwitchable_edge(Graph& graph, int n1, int n2){
     }
 
     subGraph& type2NSG = get<1>(graph);
-    auto itr = type2NSG.first[n1].find(n2);
-    bool result = itr == type2NSG.first[n1].end() ? false : true;
+    auto itr = (*type2NSG.first)[n1].find(n2);
+    bool result = itr == (*type2NSG.first)[n1].end() ? false : true;
 
     return result;
 }
@@ -224,8 +224,8 @@ bool get_type2_switchable_edge(Graph& graph, int n1, int n2){
     }
 
     subGraph& type2SG = get<2>(graph);
-    auto itr = type2SG.first[n1].find(n2);
-    bool result = itr == type2SG.first[n1].end() ? false : true;
+    auto itr = (*type2SG.first)[n1].find(n2);
+    bool result = itr == (*type2SG.first)[n1].end() ? false : true;
 
     return result;
 }
@@ -248,8 +248,8 @@ set<int> get_nonSwitchable_outNeib(Graph& graph, int n){
     subGraph& type1G = get<0>(graph);
     subGraph& type2NSG = get<1>(graph);
     set<int> result;
-    result.insert(type1G.first[n].begin(), type1G.first[n].end());
-    result.insert(type2NSG.first[n].begin(), type2NSG.first[n].end());
+    result.insert((*type1G.first)[n].begin(), (*type1G.first)[n].end());
+    result.insert((*type2NSG.first)[n].begin(), (*type2NSG.first)[n].end());
 
     return result;
 
@@ -259,24 +259,24 @@ set<int> get_nonSwitchable_inNeib(Graph& graph, int n){
     subGraph& type1G = get<0>(graph);
     subGraph& type2NSG = get<1>(graph);
     set<int> result;
-    result.insert(type1G.second[n].begin(), type1G.second[n].end());
-    result.insert(type2NSG.second[n].begin(), type2NSG.second[n].end());
+    result.insert((*type1G.second)[n].begin(), (*type1G.second)[n].end());
+    result.insert((*type2NSG.second)[n].begin(), (*type2NSG.second)[n].end());
 
     return result;
 }
 
 set<int>& get_switchable_outNeib(Graph& graph, int n){
     subGraph& type2SG = get<2>(graph);
-    return type2SG.first[n];
+    return (*type2SG.first)[n];
 }
 
 set<int>& get_switchable_inNeib(Graph& graph, int n){
     subGraph& type2SG = get<2>(graph);
-    return type2SG.second[n];
+    return (*type2SG.second)[n];
 }
 
 set<int>& get_type2_nonSwitchable_inNeib(Graph& graph, int n) {
-    return get<1>(graph).second[n];
+    return (*get<1>(graph).second)[n];
 }
 
 set<int> get_outNeighbors(Graph& graph, int n){
@@ -308,20 +308,20 @@ void set_switchable_nonSwitchable(Graph& graph){
     subGraph& graph2NS = get<1>(graph);
     subGraph& graph2S = get<2>(graph);
     for(int i = 0; i < graph_size; i++){
-        for(auto itr = graph2S.first[i].begin(); itr != graph2S.first[i].end(); itr++){
-            graph2NS.first[i].insert(*itr);
+        for(auto itr = (*graph2S.first)[i].begin(); itr != (*graph2S.first)[i].end(); itr++){
+            (*graph2NS.first)[i].insert(*itr);
         }
-        graph2S.first[i].clear();
-        for(auto itr = graph2S.second[i].begin(); itr != graph2S.second[i].end(); itr++){
-            graph2NS.second[i].insert(*itr);
+        (*graph2S.first)[i].clear();
+        for(auto itr = (*graph2S.second)[i].begin(); itr != (*graph2S.second)[i].end(); itr++){
+            (*graph2NS.second)[i].insert(*itr);
         }
-        graph2S.second[i].clear();
+        (*graph2S.second)[i].clear();
     }
 
     return;
 }
 
-void reverse_nonSwitchable_edges_basedOn_LongestPathValues(Graph& graph, vector<int> *values) {
+void reverse_nonSwitchable_edges_basedOn_LongestPathValues(Graph& graph, shared_ptr<vector<int> > values) {
     int graph_size = get<3>(graph);
     subGraph& graph2S = get<2>(graph);
     auto & times=*values;
@@ -329,7 +329,7 @@ void reverse_nonSwitchable_edges_basedOn_LongestPathValues(Graph& graph, vector<
     std::vector<std::pair<int,int> > need_to_reverse;
     for (int i=0;i<graph_size;++i) {
         // find all out neighbors
-        for (auto itr=graph2S.first[i].begin(); itr!=graph2S.first[i].end();++itr) {
+        for (auto itr=(*graph2S.first)[i].begin(); itr!=(*graph2S.first)[i].end();++itr) {
             int j=*itr;
 
             int time_i=times[i];
@@ -358,6 +358,21 @@ void reverse_nonSwitchable_edges_basedOn_LongestPathValues(Graph& graph, vector<
     return;
 }
 
+
+subGraph copy_subgraph(subGraph & subgraph) {
+    int n=(*subgraph.first).size();
+    auto type2SwitchableGInNeighbors = make_shared<vector<set<int> > >(n);
+    for(int i = 0; i < n; i++){
+        copy((*subgraph.second)[i].begin(), (*subgraph.second)[i].end(), inserter((*type2SwitchableGInNeighbors)[i], (*type2SwitchableGInNeighbors)[i].begin()));
+    }
+    auto type2SwitchableGOutNeighbors = make_shared<vector<set<int> > >(n);
+    for(int i = 0; i < n; i++){
+        copy((*subgraph.first)[i].begin(), (*subgraph.first)[i].end(), inserter((*type2SwitchableGOutNeighbors)[i], (*type2SwitchableGOutNeighbors)[i].begin()));
+    }
+
+    return {type2SwitchableGOutNeighbors, type2SwitchableGInNeighbors};
+}
+
 Graph copy_graph(Graph& graph){
     int n = get<3>(graph);
 
@@ -373,58 +388,12 @@ Graph copy_graph(Graph& graph){
     //subGraph type1G = make_pair(type1OutNeighbors,type1GInNeighbors);
     subGraph type1G = make_pair(get<0>(graph).first, get<0>(graph).second);
 
-    set<int>* type2NonSwitchableGInNeighbors = new set<int>[n];
-    for(int i = 0; i < n; i++){
-        copy(get<1>(graph).second[i].begin(), get<1>(graph).second[i].end(), inserter(type2NonSwitchableGInNeighbors[i], type2NonSwitchableGInNeighbors[i].begin()));
-    }
-    set<int>* type2NonSwitchableGOutNeighbors = new set<int>[n];
-    for(int i = 0; i < n; i++){
-        copy(get<1>(graph).first[i].begin(), get<1>(graph).first[i].end(), inserter(type2NonSwitchableGOutNeighbors[i], type2NonSwitchableGOutNeighbors[i].begin()));
-    }
-    subGraph type2NonSwitchableG = make_pair(type2NonSwitchableGOutNeighbors, type2NonSwitchableGInNeighbors);
-
-    set<int>* type2SwitchableGInNeighbors = new set<int>[n];
-    for(int i = 0; i < n; i++){
-        copy(get<2>(graph).second[i].begin(), get<2>(graph).second[i].end(), inserter(type2SwitchableGInNeighbors[i], type2SwitchableGInNeighbors[i].begin()));
-    }
-    set<int>* type2SwitchableGOutNeighbors = new set<int>[n];
-    for(int i = 0; i < n; i++){
-        copy(get<2>(graph).first[i].begin(), get<2>(graph).first[i].end(), inserter(type2SwitchableGOutNeighbors[i], type2SwitchableGOutNeighbors[i].begin()));
-    }
-    subGraph type2SwitchableG = make_pair(type2SwitchableGOutNeighbors, type2SwitchableGInNeighbors);
-
+    subGraph type2NonSwitchableG = copy_subgraph(get<1>(graph));
+    subGraph type2SwitchableG = copy_subgraph(get<2>(graph));
+   
     Graph graphC = make_tuple(type1G, type2NonSwitchableG, type2SwitchableG, n);
     return graphC;
 
-}
-
-void free_graph(Graph& graph){
-    //delete[] get<0>(graph).first;
-    //delete[] get<0>(graph).second;
-
-    delete[] get<1>(graph).first;
-    delete[] get<1>(graph).second;
-
-    delete[] get<2>(graph).first;
-    delete[] get<2>(graph).second;
-
-    return;
-}
-
-void remove_all_switchable_edges(Graph& graph){
-    delete[] get<2>(graph).first;
-    delete[] get<2>(graph).second;
-
-    int n = get<3>(graph);
-    get<0>(get<2>(graph)) = new set<int>[n];
-    get<1>(get<2>(graph)) = new set<int>[n];
-}
-
-void free_nonSwitchable(Graph& graph){
-    delete[] get<0>(graph).first;
-    delete[] get<0>(graph).second;
-
-    return;
 }
 
 void print_graph(Graph& graph){
@@ -439,7 +408,7 @@ void print_graph(Graph& graph){
     
     cout<<"Out Neighbors"<<endl;
     for(int i = 0; i < size; i++){
-        auto g = type1G.first[i];
+        auto g = (*type1G.first)[i];
         cout<<i<<": ";
         for(auto itr = g.begin(); itr != g.end(); itr++){
             cout<<*itr<<" ";
@@ -449,7 +418,7 @@ void print_graph(Graph& graph){
 
     cout<<"In Neighbors"<<endl;
     for(int i = 0; i < size; i++){
-        auto g = type1G.second[i];
+        auto g = (*type1G.second)[i];
         cout<<i<<": ";
         for(auto itr = g.begin(); itr != g.end(); itr++){
             cout<<*itr<<" ";
@@ -462,7 +431,7 @@ void print_graph(Graph& graph){
 
     cout<<"Out Neighbors"<<endl;
     for(int i = 0; i < size; i++){
-        auto g = type2NSG.first[i];
+        auto g = (*type2NSG.first)[i];
         cout<<i<<": ";
         for(auto itr = g.begin(); itr != g.end(); itr++){
             cout<<*itr<<" ";
@@ -472,7 +441,7 @@ void print_graph(Graph& graph){
 
     cout<<"In Neighbors"<<endl;
     for(int i = 0; i < size; i++){
-        auto g = type2NSG.second[i];
+        auto g = (*type2NSG.second)[i];
         cout<<i<<": ";
         for(auto itr = g.begin(); itr != g.end(); itr++){
             cout<<*itr<<" ";
@@ -485,7 +454,7 @@ void print_graph(Graph& graph){
 
     cout<<"Out Neighbors"<<endl;
     for(int i = 0; i < size; i++){
-        auto g = type2SG.first[i];
+        auto g = (*type2SG.first)[i];
         cout<<i<<": ";
         for(auto itr = g.begin(); itr != g.end(); itr++){
             cout<<*itr<<" ";
@@ -495,7 +464,7 @@ void print_graph(Graph& graph){
 
     cout<<"In Neighbors"<<endl;
     for(int i = 0; i < size; i++){
-        auto g = type2SG.second[i];
+        auto g = (*type2SG.second)[i];
         cout<<i<<": ";
         for(auto itr = g.begin(); itr != g.end(); itr++){
             cout<<*itr<<" ";
@@ -519,7 +488,7 @@ void print_graph_concise(Graph& graph){
     
     cout<<"Out Neighbors"<<endl;
     for(int i = 0; i < size; i++){
-        auto g = type1G.first[i];
+        auto g = (*type1G.first)[i];
         if(g.size() == 0){
             continue;
         }
@@ -532,7 +501,7 @@ void print_graph_concise(Graph& graph){
 
     cout<<"In Neighbors"<<endl;
     for(int i = 0; i < size; i++){
-        auto g = type1G.second[i];
+        auto g = (*type1G.second)[i];
         if(g.size() == 0){
             continue;
         }
@@ -548,7 +517,7 @@ void print_graph_concise(Graph& graph){
 
     cout<<"Out Neighbors"<<endl;
     for(int i = 0; i < size; i++){
-        auto g = type2NSG.first[i];
+        auto g = (*type2NSG.first)[i];
         if(g.size() == 0){
             continue;
         }
@@ -561,7 +530,7 @@ void print_graph_concise(Graph& graph){
 
     cout<<"In Neighbors"<<endl;
     for(int i = 0; i < size; i++){
-        auto g = type2NSG.second[i];
+        auto g = (*type2NSG.second)[i];
         if(g.size() == 0){
             continue;
         }
@@ -577,7 +546,7 @@ void print_graph_concise(Graph& graph){
 
     cout<<"Out Neighbors"<<endl;
     for(int i = 0; i < size; i++){
-        auto g = type2SG.first[i];
+        auto g = (*type2SG.first)[i];
         if(g.size() == 0){
             continue;
         }
@@ -590,7 +559,7 @@ void print_graph_concise(Graph& graph){
 
     cout<<"In Neighbors"<<endl;
     for(int i = 0; i < size; i++){
-        auto g = type2SG.second[i];
+        auto g = (*type2SG.second)[i];
         if(g.size() == 0){
             continue;
         }
@@ -616,7 +585,7 @@ void print_graph_s2(Graph& graph){
 
     cout<<"Out Neighbors"<<endl;
     for(int i = 0; i < size; i++){
-        auto g = type2SG.first[i];
+        auto g = (*type2SG.first)[i];
         cout<<i<<": ";
         for(auto itr = g.begin(); itr != g.end(); itr++){
             cout<<*itr<<" ";
@@ -626,7 +595,7 @@ void print_graph_s2(Graph& graph){
 
     cout<<"In Neighbors"<<endl;
     for(int i = 0; i < size; i++){
-        auto g = type2SG.second[i];
+        auto g = (*type2SG.second)[i];
         cout<<i<<": ";
         for(auto itr = g.begin(); itr != g.end(); itr++){
             cout<<*itr<<" ";
@@ -649,7 +618,7 @@ void print_graph_n2(Graph& graph){
 
     cout<<"Out Neighbors"<<endl;
     for(int i = 0; i < size; i++){
-        auto g = type2NSG.first[i];
+        auto g = (*type2NSG.first)[i];
         cout<<i<<": ";
         for(auto itr = g.begin(); itr != g.end(); itr++){
             cout<<*itr<<" ";
@@ -659,7 +628,7 @@ void print_graph_n2(Graph& graph){
 
     cout<<"In Neighbors"<<endl;
     for(int i = 0; i < size; i++){
-        auto g = type2NSG.second[i];
+        auto g = (*type2NSG.second)[i];
         cout<<i<<": ";
         for(auto itr = g.begin(); itr != g.end(); itr++){
             cout<<*itr<<" ";
@@ -676,11 +645,11 @@ bool check_cycle_NS_helper(Graph& graph, int current, vector<bool>& visited, vec
     parents[current] = true;
 
 
-    set<int> neighborhood1 = get<0>(graph).first[current];
-    set<int> neighborhood2NS = get<1>(graph).first[current];
+    set<int> neighborhood1 = (*get<0>(graph).first)[current];
+    set<int> neighborhood2NS = (*get<1>(graph).first)[current];
     
     if (type2_flag){
-        set<int> reversible_edge = get<0>(graph).second[current];
+        set<int> reversible_edge = (*get<0>(graph).second)[current];
         auto itr = reversible_edge.begin();
         if(*itr != flag_parent && parents[*itr] == true){
             return true;
@@ -801,7 +770,7 @@ bool check_cycle_dfs(Graph& graph, std::vector<int>& starts) {
   return false;
 }
 
-void build_time_arr(Graph& graph, vector<bool>& visited, vector<int>* sorted_vertecies, vector<int>* sorted_times, int current, int& time) {
+void build_time_arr(Graph& graph, vector<bool>& visited, shared_ptr<vector<int> > sorted_vertecies, shared_ptr<vector<int> > sorted_times, int current, int& time) {
     if(visited[current] == true){
         // revisit
         return;
@@ -838,19 +807,15 @@ input:
 return:
     sortResult: see input sortResult
 */ 
-sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_starts, int u, int v) {
+sortResult topologicalSort(Graph& graph, sortResult state, const vector<int> & starts, int u, int v) {
     int graph_size = get<3>(graph);
   
-    vector<int>* time_arr = state.first;
-    vector<int>* vertex_arr = state.second;
+    shared_ptr<vector<int> > time_arr = state.first;
+    shared_ptr<vector<int> > vertex_arr = state.second;
 
-    if(time_arr == nullptr && vertex_arr == nullptr && agent_starts != nullptr) {
-        vector<int> starts = *agent_starts;
-
-        vector<int>* sorted_vertecies = new vector<int>;
-        (*sorted_vertecies) = vector<int>(graph_size, -1);
-        vector<int>* sorted_times = new vector<int>;
-        (*sorted_times) = vector<int>(graph_size, -1);
+    if(time_arr == nullptr && vertex_arr == nullptr) {
+        auto sorted_vertecies = make_shared<vector<int> > (graph_size, -1);
+        auto sorted_times = make_shared<vector<int> > (graph_size, -1);
         vector<bool> visited(graph_size, false);
         int time = graph_size - 1;
 
@@ -860,11 +825,6 @@ sortResult topologicalSort(Graph& graph, sortResult state, vector<int>* agent_st
         }
 
         sortResult ret_val = make_pair(sorted_vertecies, sorted_times);
-        return ret_val;
-    }
-    else if(agent_starts == nullptr) {
-        // Error scenario
-        sortResult ret_val = make_pair(nullptr, nullptr);
         return ret_val;
     }
     else{

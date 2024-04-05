@@ -91,7 +91,9 @@ bool check_grouping(std::vector<int> &a1,std::vector<int>& a2) {
     // for n=3, (4) and (5) are extra state/vertices
     // -1 1 2 3 (4)
     //  0        2 1 3 (5)
-    std::vector<Path> paths(2);
+
+    auto paths_ptr=make_shared<Paths>(2);
+    auto & paths=*paths_ptr;
 
     Location l(-1,0);
     paths[0].emplace_back(l,0);
@@ -113,7 +115,7 @@ bool check_grouping(std::vector<int> &a1,std::vector<int>& a2) {
     l=Location(num1+num2+1,0);
     paths[1].emplace_back(l,num1+num2+1);
 
-    ADG adg = construct_ADG(paths, false);
+    ADG adg = construct_ADG(paths_ptr, false);
 
     // for each edge
     bool grouped=true;

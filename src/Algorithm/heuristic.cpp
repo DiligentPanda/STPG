@@ -39,7 +39,7 @@ void HeuristicManager::buildCardinalConflictGraph(ADG & adg, vector<int> & tp_or
     // a map from a state to a set of agent indexs.
     std::vector<std::unordered_set<int> > on_whose_critical_paths(num_of_states);
 
-    auto & accum_state_cnts=get<2>(adg);
+    auto & accum_state_cnts=(*get<2>(adg));
 
     // initialize the last state for each agent
     for (auto i=0;i<num_of_agents;++i) {
