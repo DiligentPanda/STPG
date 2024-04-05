@@ -7,8 +7,8 @@ import subprocess
 exe_path="./build/generate"
 path_folder="data/benchmark/example/path"
 file_names_fp="data/benchmark/example/path_file_names.csv"
+output_folder="data/benchmark/example/"
 
-output_folder="example/"
 delay_prob=10
 delay_steps_low=10
 delay_steps_high=20

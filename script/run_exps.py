@@ -5,9 +5,9 @@ import pandas as pd
 import subprocess
 
 exe_path="./build/simulate"
-path_folder="example/path"
-sit_folder="example/sit"
-file_names_fp="example/path_file_names.csv"
+path_folder="data/benchmark/example/path"
+sit_folder="data/benchmark/example/sit"
+file_names_fp="data/benchmark/example/path_file_names.csv"
 exp_desc="exp" # describe the experiments
 
 timestamp=time.strftime("%Y_%m_%d_%H_%M_%S")
@@ -19,10 +19,10 @@ delay_prob=10
 delay_steps_low=10
 delay_steps_high=20
 time_limit=90
-algos=["graph"] # ["graph","exec"]
-branch_orders=["largest_diff","conflict","default"] #,"random","earliest"]
-use_groupings=["false","true"]
-heuristics=["zero","wcg_greedy"]
+algos=["graph"] # ["graph"]
+branch_orders=["largest_diff"] #,"random","earliest"]
+use_groupings=["true"]
+heuristics=["wcg_greedy"]
 early_terminations=["true"]
 MAX_VIRTUAL_MEMORY = 8 * 1024 * 1024 # 8 GB
 skip=False
@@ -141,7 +141,7 @@ for map_name,setting in maps.items():
                                 cmd = f"ulimit -Sv {MAX_VIRTUAL_MEMORY} &&" \
                                     f" {exe_path} -p {path_file_path} -s {sit_file_path}" \
                                     f" -t {time_limit} -a {algo} -b {branch_order} -g {use_grouping} -h {heuristic} -e {early_termination}" \
-                                    f" -o {stat_ofp} -n {new_path_ofp} --weight_h 2.0"
+                                    f" -o {stat_ofp} -n {new_path_ofp}"
                                 
                                 cmds.append(cmd)
             
