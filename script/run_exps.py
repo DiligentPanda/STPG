@@ -141,7 +141,7 @@ for map_name,setting in maps.items():
                                 cmd = f"ulimit -Sv {MAX_VIRTUAL_MEMORY} &&" \
                                     f" {exe_path} -p {path_file_path} -s {sit_file_path}" \
                                     f" -t {time_limit} -a {algo} -b {branch_order} -g {use_grouping} -h {heuristic} -e {early_termination}" \
-                                    f" -o {stat_ofp} -n {new_path_ofp}"
+                                    f" -o {stat_ofp} -n {new_path_ofp} --weight_h 2.0"
                                 
                                 cmds.append(cmd)
             

@@ -4,8 +4,8 @@ import numpy as np
 import json
 
 check_missing=False
-only_all_solved=True
-group_agent_num=True
+only_all_solved=False
+group_agent_num=False
 
 result_folder="output/2024_03_25_03_11_53_exp"
 if not os.path.isdir(result_folder):

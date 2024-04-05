@@ -3,8 +3,8 @@ import resource
 import multiprocessing
     
 exe_path="CBS_K/build/CBS-K"
-map_folder="example/map"
-scen_folder="example/scen/scen-even"
+map_folder="data/map"
+scen_folder="data/scen/scen-even"
 
 # timestamp=time.strftime("%Y_%m_%d_%H_%M_%S")
 stat_output_folder="example/stat"

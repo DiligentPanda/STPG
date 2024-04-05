@@ -1,6 +1,6 @@
-fail_output_folder="example/fail"
-stat_output_folder="example/stat"
-path_output_folder="example/path"
+fail_output_folder="data/benchmark/example/path_fail"
+stat_output_folder="data/benchmark/example/stat"
+path_output_folder="data/benchmark/example/path"
 time_limit=180
 
 import os

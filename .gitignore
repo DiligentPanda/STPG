@@ -4,9 +4,8 @@ output/
 out*.txt
 path*.txt
 /test*
-example/path
-example/fail
-example/stat
+data/benchmark
+example/
 
 # Prerequisites
 *.d
