@@ -393,16 +393,28 @@ ADG Astar::exploreNode() {
     termT += duration_cast<microseconds>(end_term - end_branch);
 
     if (terminate || ((duration_cast<seconds>(end_branch - start)).count() >= timeout)) {
-      // free all the search node in the priority queue.
-      while (pq.size() > 0) {
-        pq.pop();
-      }
+
 
       // return the current ADG by fix switchable edges to non-switchable.
+      auto res = adg;
+
       auto start_graph_free = high_resolution_clock::now();
-      ADG res = copy_ADG(adg);
+      // we explicitly reset to count the time
+      node.reset();
       auto end_graph_free = high_resolution_clock::now();
       copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
+
+      // free all the search node in the priority queue.
+      while (pq.size() > 0) {
+        auto node=pq.top();
+        pq.pop();
+        
+        auto start_graph_free = high_resolution_clock::now();
+        // we explicitly reset to count the time
+        node.reset();
+        auto end_graph_free = high_resolution_clock::now();
+        copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
+      }
 
       if (terminate && early_termination) {
         reverse_nonSwitchable_edges_basedOn_LongestPathValues(get<0>(res), values);
@@ -532,6 +544,13 @@ ADG Astar::exploreNode() {
           }
         }
       }
+
+      auto start_graph_free = high_resolution_clock::now();
+      // we explicitly reset to count the time
+      node.reset();
+      auto end_graph_free = high_resolution_clock::now();
+      copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
+
     }
   }
 
@@ -541,7 +560,11 @@ ADG Astar::exploreNode() {
 }
 
 ADG Astar::startExplore(ADG & adg, float cost, int input_sw_cnt, vector<int> & states) {
+  auto start_graph_free = high_resolution_clock::now();
   init_adg=copy_ADG(adg);
+  auto end_graph_free = high_resolution_clock::now();
+  copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
+  
   init_cost=cost;
   
   // TODO(rivers): if use grouping
