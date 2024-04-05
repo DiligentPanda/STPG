@@ -40,8 +40,5 @@ typedef vector<Path> Paths;
 // accumulated state counts are used for computing the global index for a state.
 typedef tuple<Graph, shared_ptr<Paths>, shared_ptr<vector<int> > > ADG;
 
-// used in graph-based search
-typedef tuple<ADG, int, shared_ptr<vector<int> > > Node;
-
 #endif
 

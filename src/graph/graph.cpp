@@ -321,7 +321,7 @@ void set_switchable_nonSwitchable(Graph& graph){
     return;
 }
 
-void reverse_nonSwitchable_edges_basedOn_LongestPathValues(Graph& graph, shared_ptr<vector<int> > values) {
+void reverse_nonSwitchable_edges_basedOn_LongestPathValues(Graph& graph, shared_ptr<vector<int> > & values) {
     int graph_size = get<3>(graph);
     subGraph& graph2S = get<2>(graph);
     auto & times=*values;

@@ -68,9 +68,18 @@ int Astar::calcTime(Simulator simulator) {
   return totalSpend;
 }
 
+int Astar::compute_partial_cost(ADG &adg) {
+  // Graph &graph = get<0>(copy);
+  // remove_all_switchable_edges(graph);
+
+  Simulator simulator(adg);
+  int cost = simulator.print_soln();
+  return cost;
+}
+
 // compute the longest path length from any current vertices to an agent's goal vertex.
 // the heuristic is the sum of the longest path length.
-float Astar::heuristic_graph(ADG &adg, shared_ptr<vector<int> > ts, shared_ptr<vector<int> > values) {
+float Astar::heuristic_graph(ADG &adg, shared_ptr<vector<int> > & ts, shared_ptr<vector<int> > & values) {
   Graph &graph = get<0>(adg);
 
   for (int i: (*ts)) {
@@ -87,18 +96,6 @@ float Astar::heuristic_graph(ADG &adg, shared_ptr<vector<int> > ts, shared_ptr<v
     int goalVert = compute_vertex((*get<2>(adg)), agent, get_stateCnt(adg, agent) - 1);
     sum += values->at(goalVert);
   }
-
-  // TODO(rivers): set time limit;
-  // add an extra admissible heuristic
-  auto start = high_resolution_clock::now();
-  int h= heuristic_manager->computeInformedHeuristics(adg, *ts, *values, 0);
-  auto end = high_resolution_clock::now();
-  extraHeuristicT += duration_cast<microseconds>(end - start);
-  if (sum+h>=init_cost){
-    return -1;
-  }
-
-  sum+=h*weight_h;
 
   // int partial_cost = compute_partial_cost(adg);
   // if (partial_cost != sum) {
@@ -359,8 +356,8 @@ ADG Astar::exploreNode() {
     auto end_pq_pop = high_resolution_clock::now();
     pqT += duration_cast<microseconds>(end_pq_pop - start_pq_pop);
     
-    ADG &adg = get<0>(*node);
-    shared_ptr<vector<int> > values = get<2>(*node);
+    auto & adg = node->adg;
+    auto & values = node->longest_path_lengths;
     Graph &graph = get<0>(adg);
 
     int maxDiff, maxI, maxJ;
@@ -394,16 +391,6 @@ ADG Astar::exploreNode() {
 
     if (terminate || ((duration_cast<seconds>(end_branch - start)).count() >= timeout)) {
 
-
-      // return the current ADG by fix switchable edges to non-switchable.
-      auto res = adg;
-
-      auto start_graph_free = high_resolution_clock::now();
-      // we explicitly reset to count the time
-      node.reset();
-      auto end_graph_free = high_resolution_clock::now();
-      copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
-
       // free all the search node in the priority queue.
       while (pq.size() > 0) {
         auto node=pq.top();
@@ -416,11 +403,20 @@ ADG Astar::exploreNode() {
         copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
       }
 
+      auto res=node->adg;
+
+     // return the current ADG by fix switchable edges to non-switchable.
       if (terminate && early_termination) {
         reverse_nonSwitchable_edges_basedOn_LongestPathValues(get<0>(res), values);
       }
-
       set_switchable_nonSwitchable(get<0>(res));
+
+      auto start_graph_free = high_resolution_clock::now();
+      // we explicitly reset to count the time
+      node.reset();
+      auto end_graph_free = high_resolution_clock::now();
+      copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
+
       return res;
     } else {
       auto start_graph_copy = high_resolution_clock::now();
@@ -469,14 +465,19 @@ ADG Astar::exploreNode() {
           auto start_sort = high_resolution_clock::now();
           tie(newts_tv, newts_vt) = topologicalSort(graph, newInitResult, currents, -1, -1);
           auto end_sort = high_resolution_clock::now();
-          float val = heuristic_graph(adg, newts_tv, node_values);
+          float g = heuristic_graph(adg, newts_tv, node_values);
           auto end_heuristic = high_resolution_clock::now();
 
           sortT += duration_cast<microseconds>(end_sort - start_sort);
           heuristicT += duration_cast<microseconds>(end_heuristic - end_sort);
 
-          if (val>=0) {
-            auto forward_node = std::make_shared<Node>(adg, val, node_values);
+          auto start = high_resolution_clock::now();
+          int h= heuristic_manager->computeInformedHeuristics(adg, *newts_tv, *node_values, 0);
+          auto end = high_resolution_clock::now();
+          extraHeuristicT += duration_cast<microseconds>(end - start);
+
+          if (g+h<init_cost) {
+            auto forward_node = std::make_shared<SearchNode>(adg, g, h*weight_h, node_values);
             auto start_pq_push = high_resolution_clock::now();
             pq.push(forward_node);
             auto end_pq_push = high_resolution_clock::now();
@@ -526,14 +527,19 @@ ADG Astar::exploreNode() {
           auto start_sort = high_resolution_clock::now();
           tie(newts_tv, newts_vt) = topologicalSort(graph, newInitResult, currents, -1, -1);
           auto end_sort = high_resolution_clock::now();
-          float val = heuristic_graph(copy, newts_tv, node_values);
+          float g = heuristic_graph(copy, newts_tv, node_values);
           auto end_heuristic = high_resolution_clock::now();
 
           sortT += duration_cast<microseconds>(end_sort - start_sort);
           heuristicT += duration_cast<microseconds>(end_heuristic - end_sort);
 
-          if (val>=0) {
-            auto backward_node = std::make_shared<Node>(copy, val, node_values);
+          auto start = high_resolution_clock::now();
+          int h= heuristic_manager->computeInformedHeuristics(adg, *newts_tv, *node_values, 0);
+          auto end = high_resolution_clock::now();
+          extraHeuristicT += duration_cast<microseconds>(end - start);
+          
+          if (g+h<init_cost) {
+            auto backward_node = std::make_shared<SearchNode>(copy, g, h*weight_h, node_values);
 
             auto start_pq_push = high_resolution_clock::now();
             pq.push(backward_node);
@@ -607,12 +613,18 @@ ADG Astar::startExplore(ADG & adg, float cost, int input_sw_cnt, vector<int> & s
   auto node_values = make_shared<vector<int> >(get<3>(graph), 0);
   auto start_heuristic = high_resolution_clock::now();
   // compute the longest path length from any current vertices to an agent's goal vertex.
-  float val = heuristic_graph(adg, result.first, node_values);
+  float g = heuristic_graph(adg, result.first, node_values);
   auto end_heuristic = high_resolution_clock::now();
   heuristicT += duration_cast<microseconds>(end_heuristic - start_heuristic);
 
-  if (val>=0) {
-    auto root = make_shared<Node>(adg, val, node_values);
+  auto start = high_resolution_clock::now();
+  int h= heuristic_manager->computeInformedHeuristics(adg, *result.first, *node_values, 0);
+  auto end = high_resolution_clock::now();
+  extraHeuristicT += duration_cast<microseconds>(end - start);
+
+  if (g+h<init_cost) {
+    // weight_h is for weighted a star.
+    auto root = make_shared<SearchNode>(adg, g, h*weight_h, node_values);
 
     auto start_pq_push = high_resolution_clock::now();
     pq.push(root);

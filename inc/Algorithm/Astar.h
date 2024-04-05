@@ -12,6 +12,7 @@ using namespace std::chrono;
 #include <memory>
 #include <vector>
 #include "Algorithm/heuristic.h"
+#include "Algorithm/SearchNode.h"
 
 enum BranchOrder {
   DEFAULT,
@@ -36,25 +37,13 @@ class Astar {
       uint random_seed=0
     );
     ADG startExplore(ADG &adg, float cost, int input_sw_cnt, vector<int> & states);
-    float heuristic_graph(ADG &adg, shared_ptr<vector<int> > ts, shared_ptr<vector<int> > values);
-    int slow_heuristic(ADG &adg, vector<int> &states);
+    float heuristic_graph(ADG &adg, shared_ptr<vector<int> > & topological_sort_order, shared_ptr<vector<int> > & longest_path_lengths);
 
     int compute_partial_cost(ADG &adg);
 
     void print_stats();
     void print_stats(ofstream &outFile);
     void print_stats(nlohmann::json & stats);
-
-    struct Compare {
-      public:
-        bool operator() (const shared_ptr<Node> & s1, const shared_ptr<Node> & s2)
-        {
-          int val1 = get<1>(*s1);
-          int val2 = get<1>(*s2);
-
-          return val1 > val2;
-        }
-    };
 
   private:
     int calcTime(Simulator simulator);
@@ -85,7 +74,7 @@ class Astar {
     int timeout = 300;
 
     vector<int> currents;
-    priority_queue<shared_ptr<Node>, vector<shared_ptr<Node> >, Compare> pq;
+    priority_queue<shared_ptr<SearchNode>, vector<shared_ptr<SearchNode> >, SearchNode::Compare> pq;
     int agentCnt = 0;
 
     bool fast_version = false;

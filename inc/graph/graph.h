@@ -76,7 +76,7 @@ bool check_cycle_nonSwitchable_old(Graph& graph, int start);
 
 sortResult topologicalSort(Graph& graph, sortResult state, const vector<int> & starts, int u, int v);
 
-void reverse_nonSwitchable_edges_basedOn_LongestPathValues(Graph& graph, shared_ptr<vector<int> > values);
+void reverse_nonSwitchable_edges_basedOn_LongestPathValues(Graph& graph, shared_ptr<vector<int> > & values);
 
 std::pair<int,int> fix_switchable_edge(Graph & graph, int out_state_idx, int in_state_idx, bool reverse);
 
