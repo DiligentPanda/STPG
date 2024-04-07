@@ -52,6 +52,8 @@ class Astar {
     tuple<int, int, int> branch(Graph &graph, shared_ptr<vector<int> > values);
     bool terminated(Graph &graph, shared_ptr<vector<int> > values);
 
+    void add_node(ADG & adg);
+
     microseconds extraHeuristicT = std::chrono::microseconds::zero();
     microseconds groupingT = std::chrono::microseconds::zero();
     microseconds heuristicT = std::chrono::microseconds::zero();
