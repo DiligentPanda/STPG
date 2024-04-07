@@ -179,7 +179,8 @@ void simulate(
   bool use_grouping,
   const string & heuristic,
   bool early_termination,
-  float weight_h,
+  double w_astar,
+  double w_focal,
   uint random_seed,
   const string & stat_ofp, 
   const string & new_path_ofp
@@ -220,21 +221,17 @@ void simulate(
   int oriTime_trunc = simulator_ori_trunc.print_soln();
 
   // replanning ADG
-  Astar search;
-  if (algo=="graph") {
-    search=Astar(
-      time_limit, 
-      true, 
-      branch_order,  
-      use_grouping, 
-      heuristic, 
-      early_termination, 
-      weight_h,
-      random_seed
-    );
-  } else {
-    std::cout<<"unknown algorithm: "<<algo<<std::endl;  
-  }
+  shared_ptr<Astar> search=make_shared<Astar>(
+    time_limit, 
+    true, 
+    branch_order,  
+    use_grouping, 
+    heuristic, 
+    early_termination, 
+    w_astar,
+    w_focal,
+    random_seed
+  );
 
   json stats;
 
@@ -244,7 +241,8 @@ void simulate(
   stats["use_grouping"]=use_grouping;
   stats["heuristic"]=heuristic;
   stats["early_termination"]=early_termination;
-  stats["weight_h"]=weight_h;
+  stats["w_astar"]=w_astar;
+  stats["w_focal"]=w_focal;
   stats["random_seed"]=random_seed;
   stats["time_limit"]=time_limit*1000000; // in micro-seconds
   stats["path_fp"]=path_fp;
@@ -285,7 +283,7 @@ void simulate(
 
   microseconds timer(0);
   start = high_resolution_clock::now();
-  ADG replanned_adg = search.startExplore(adg_delayed, originalTime, input_sw_cnt, states);
+  ADG replanned_adg = search->startExplore(adg_delayed, originalTime, input_sw_cnt, states);
   stop = high_resolution_clock::now();
   timer += duration_cast<microseconds>(stop - start);
 
@@ -315,7 +313,7 @@ void simulate(
     stats["trunc_cost"]=oriTime_trunc;
   }
 
-  search.print_stats(stats);
+  search->print_stats(stats);
 
   out.open(stat_ofp);
   out<<stats.dump(4)<<std::endl;
@@ -338,7 +336,8 @@ int main(int argc, char** argv) {
     ("use_grouping,g",po::value<bool>()->required(),"whether to use grouping")
     ("heuristic,h",po::value<std::string>()->required(),"the heuristic to use, [zero, cg_greedy]")
     ("early_termination,e",po::value<bool>()->required(),"whether to use early termination")
-    ("weight_h",po::value<float>()->default_value(1.0),"heuristic weight for weighted A Star")
+    ("w_astar",po::value<double>()->default_value(1.0),"heuristic weight for weighted A Star")
+    ("w_focal",po::value<double>()->default_value(1.0),"heuristic weight for focal search")
     ("random_seed,r",po::value<uint>()->default_value(0),"random seed")
   ;
 
@@ -362,7 +361,14 @@ int main(int argc, char** argv) {
   string new_path_ofp=vm.at("new_path_ofp").as<string>();
   bool use_grouping=vm.at("use_grouping").as<bool>();
   string heuristic=vm.at("heuristic").as<string>();
-  float weight_h=vm.at("weight_h").as<float>();
+  double w_astar=vm.at("w_astar").as<double>();
+  double w_focal=vm.at("w_focal").as<double>();
+
+  if (w_astar>1.0 && w_focal>1.0) {
+    std::cout<<"Using both weighted astar and focal search is not supported."<<std::endl;
+    exit(-1);
+  }
+
   bool early_termination=vm.at("early_termination").as<bool>();
 
   simulate(
@@ -374,7 +380,8 @@ int main(int argc, char** argv) {
     use_grouping,
     heuristic,
     early_termination,
-    weight_h,
+    w_astar,
+    w_focal,
     random_seed,
     stat_ofp,
     new_path_ofp

@@ -17,9 +17,10 @@ Astar::Astar(
     bool use_grouping, 
     const string & _heuristic, 
     bool early_termination, 
-    float _weight_h,
+    double _w_astar,
+    double _w_focal,
     uint random_seed
-  ): rng(random_seed), weight_h(_weight_h) {
+  ): rng(random_seed), w_astar(_w_astar), w_focal(_w_focal) {
   timeout = input_timeout;
   fast_version = input_fast_version;
   if (_branch_order=="default") {
@@ -79,7 +80,7 @@ int Astar::compute_partial_cost(ADG &adg) {
 
 // compute the longest path length from any current vertices to an agent's goal vertex.
 // the heuristic is the sum of the longest path length.
-float Astar::heuristic_graph(ADG &adg, shared_ptr<vector<int> > & ts, shared_ptr<vector<int> > & values) {
+double Astar::heuristic_graph(ADG &adg, shared_ptr<vector<int> > & ts, shared_ptr<vector<int> > & values) {
   Graph &graph = get<0>(adg);
 
   for (int i: (*ts)) {
@@ -91,7 +92,7 @@ float Astar::heuristic_graph(ADG &adg, shared_ptr<vector<int> > & ts, shared_ptr
       if (values->at(j) < prevVal + weight) values->at(j) = prevVal + weight;
     }
   }
-  float sum = 0;
+  double sum = 0;
   for (int agent = 0; agent < agentCnt; agent ++) {
     int goalVert = compute_vertex((*get<2>(adg)), agent, get_stateCnt(adg, agent) - 1);
     sum += values->at(goalVert);
@@ -287,9 +288,9 @@ void Astar::print_stats(nlohmann::json & stats) {
     auto & groups=group_manager->groups;
     stats["group"]=groups.size();
     stats["group_merge_edge"]=group_manager->group_merge_edge_cnt;
-    float group_size_max=0;
-    float group_size_avg=0;
-    float group_size_min=sw_edge_cnt;
+    double group_size_max=0;
+    double group_size_avg=0;
+    double group_size_min=sw_edge_cnt;
     for (int i=0;i<(int)groups.size();++i) {
       if((int)groups[i].size()>group_size_max) {
         group_size_max=groups[i].size();
@@ -341,8 +342,8 @@ void Astar::print_stats() {
     std::cout << "dfs time: " << dfsT.count() << "\n";
 }
 
-
-void Astar::add_node(ADG & adg) {
+// adg in parent_node might be changed by forward node, so don't use it.
+void Astar::add_node(ADG & adg, shared_ptr<SearchNode> & parent_node) {
   Graph &graph = get<0>(adg);
 
   auto start_sort = high_resolution_clock::now();
@@ -359,19 +360,19 @@ void Astar::add_node(ADG & adg) {
   // initialize the array for longest path length from any current vertices to an agent's goal vertex.
   auto node_values = make_shared<vector<int> >(get<3>(graph), 0);
   // compute the longest path length from any current vertices to an agent's goal vertex.
-  float g = heuristic_graph(adg, newts_tv, node_values);
+  auto g = heuristic_graph(adg, newts_tv, node_values);
   auto end_heuristic = high_resolution_clock::now();
   heuristicT += duration_cast<microseconds>(end_heuristic - start_heuristic);
 
   auto start = high_resolution_clock::now();
-  int h= heuristic_manager->computeInformedHeuristics(adg, *newts_tv, *node_values, 0);
+  auto h= heuristic_manager->computeInformedHeuristics(adg, *newts_tv, *node_values, 0);
   auto end = high_resolution_clock::now();
   extraHeuristicT += duration_cast<microseconds>(end - start);
 
   if (g+h<init_cost) {
-    auto forward_node = std::make_shared<SearchNode>(adg, g, h*weight_h, node_values);
+    auto child_node = std::make_shared<SearchNode>(adg, g, h*w_astar, node_values, parent_node->num_sw-1);
     auto start_pq_push = high_resolution_clock::now();
-    pq.push(forward_node);
+    open_list->push(child_node);
     auto end_pq_push = high_resolution_clock::now();
     pqT += duration_cast<microseconds>(end_pq_push - start_pq_push);
 
@@ -383,7 +384,7 @@ void Astar::add_node(ADG & adg) {
 
 ADG Astar::exploreNode() {
   auto start = high_resolution_clock::now();
-  while (pq.size() > 0) {
+  while (open_list->size() > 0) {
     explored_node_cnt += 1;
 
     if (explored_node_cnt % 1000000 == 0) {
@@ -391,8 +392,7 @@ ADG Astar::exploreNode() {
     }
 
     auto start_pq_pop = high_resolution_clock::now();
-    auto node = pq.top();
-    pq.pop();
+    auto node = open_list->pop();
     auto end_pq_pop = high_resolution_clock::now();
     pqT += duration_cast<microseconds>(end_pq_pop - start_pq_pop);
     
@@ -432,9 +432,8 @@ ADG Astar::exploreNode() {
     if (terminate || ((duration_cast<seconds>(end_branch - start)).count() >= timeout)) {
 
       // free all the search node in the priority queue.
-      while (pq.size() > 0) {
-        auto node=pq.top();
-        pq.pop();
+      while (open_list->size() > 0) {
+        auto node=open_list->pop();
         
         auto start_graph_free = high_resolution_clock::now();
         // we explicitly reset to count the time
@@ -469,28 +468,28 @@ ADG Astar::exploreNode() {
 
       /* Following is the two branches. */
       for (int i=0;i<2;++i) {
-        auto & adg=branch_adgs[i].get();
+        auto & child_adg=branch_adgs[i].get();
         auto branch_reversing_flag=branch_reversing_flags[i];
-        auto & graph=std::get<0>(adg);
+        auto & child_graph=std::get<0>(child_adg);
 
         // Fix the edge
         bool pruned;
         if (!use_grouping) {
-          auto fixed_edge=fix_switchable_edge(graph, maxI, maxJ, branch_reversing_flag);
+          auto fixed_edge=fix_switchable_edge(child_graph, maxI, maxJ, branch_reversing_flag);
           auto start_dfs = high_resolution_clock::now();
-          pruned = check_cycle_dfs(graph, fixed_edge.first);
+          pruned = check_cycle_dfs(child_graph, fixed_edge.first);
           auto end_dfs = high_resolution_clock::now();
           dfsT += duration_cast<microseconds>(end_dfs - start_dfs);
         } else {
           // get the group of edges
           std::vector<std::pair<int,int> > edges= group_manager->get_groupable_edges(maxI, maxJ);
-          auto fixed_edges=fix_switchable_edges(graph, edges, branch_reversing_flag);
+          auto fixed_edges=fix_switchable_edges(child_graph, edges, branch_reversing_flag);
           auto start_dfs = high_resolution_clock::now();
           std::vector<int> out_states;
           std::for_each(std::begin(fixed_edges), std::end(fixed_edges), [&out_states](std::pair<int,int> & edge) {
               out_states.emplace_back(edge.first);
           });
-          pruned = check_cycle_dfs(graph,out_states);
+          pruned = check_cycle_dfs(child_graph,out_states);
           auto end_dfs = high_resolution_clock::now();
           dfsT += duration_cast<microseconds>(end_dfs - start_dfs);
         }
@@ -498,7 +497,7 @@ ADG Astar::exploreNode() {
         if (pruned) { // Prune node
           pruned_node_cnt += 1;
         } else {
-          add_node(adg);
+          add_node(child_adg, node);
         }
       }
 
@@ -516,13 +515,15 @@ ADG Astar::exploreNode() {
   // throw invalid_argument("no solution found");
 }
 
-ADG Astar::startExplore(ADG & adg, float cost, int input_sw_cnt, vector<int> & states) {
+ADG Astar::startExplore(ADG & adg, double cost, int input_sw_cnt, vector<int> & states) {
   auto start_graph_free = high_resolution_clock::now();
   init_adg=copy_ADG(adg);
   auto end_graph_free = high_resolution_clock::now();
   copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
   
   init_cost=cost;
+
+  open_list=std::make_shared<OpenList>(w_focal);
   
   // TODO(rivers): if use grouping
   if (use_grouping) {
@@ -541,50 +542,20 @@ ADG Astar::startExplore(ADG & adg, float cost, int input_sw_cnt, vector<int> & s
 
   /* Graph-Based Search */
   agentCnt = get_agentCnt(adg);
-  Graph &graph = get<0>(adg);
-
   for (int agent = 0; agent < agentCnt; agent ++) {
     // get current global vertex idx
     int current = compute_vertex((*get<2>(adg)), agent, 0);
     currents.push_back(current);
   }
 
-  auto start_sort = high_resolution_clock::now();
-  // ts: topological sort, tv: topological order (time) -> vertex global idx
-  shared_ptr<vector<int> > ts_tv_init;
-  // ts: topological sort, vt: vertex global idx -> topological order (time)
-  shared_ptr<vector<int> > ts_vt_init;
-  sortResult initResult = make_pair(ts_tv_init, ts_vt_init);
-  shared_ptr<vector<int> > newts_tv;
-  shared_ptr<vector<int> > newts_vt;
-  std::tie(newts_tv, newts_vt)  = topologicalSort(graph, initResult, currents, -1, -1);
-  auto end_sort = high_resolution_clock::now();
-  sortT += duration_cast<microseconds>(end_sort - start_sort);
-
-  auto start_heuristic = high_resolution_clock::now();
-  // initialize the array for longest path length from any current vertices to an agent's goal vertex.
-  auto node_values = make_shared<vector<int> >(get<3>(graph), 0);
-  // compute the longest path length from any current vertices to an agent's goal vertex.
-  float g = heuristic_graph(adg, newts_tv, node_values);
-  auto end_heuristic = high_resolution_clock::now();
-  heuristicT += duration_cast<microseconds>(end_heuristic - start_heuristic);
-
-  auto start = high_resolution_clock::now();
-  int h= heuristic_manager->computeInformedHeuristics(adg, *newts_tv, *node_values, 0);
-  auto end = high_resolution_clock::now();
-  extraHeuristicT += duration_cast<microseconds>(end - start);
-
-  if (g+h<init_cost) {
-    // weight_h is for weighted a star.
-    auto root = make_shared<SearchNode>(adg, g, h*weight_h, node_values);
-
-    auto start_pq_push = high_resolution_clock::now();
-    pq.push(root);
-    auto end_pq_push = high_resolution_clock::now();
-    pqT += duration_cast<microseconds>(end_pq_push - start_pq_push);
-
-    added_node_cnt += 1;
+  auto fake_parent=std::make_shared<SearchNode>(0);
+  if (use_grouping) {
+    fake_parent->num_sw=group_manager->groups.size();
+  } else {
+    fake_parent->num_sw=sw_edge_cnt;
   }
+  fake_parent->num_sw=sw_edge_cnt;
+  add_node(adg, fake_parent);
 
   // expand the node
   return exploreNode();

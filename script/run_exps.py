@@ -24,6 +24,7 @@ branch_orders=["largest_diff"] #,"random","earliest"]
 use_groupings=["true"]
 heuristics=["wcg_greedy"]
 early_terminations=["true"]
+w_focals=[1.0,1.25,1.5,1.75,2.0,2.25,2.5,2.75,3.0]
 MAX_VIRTUAL_MEMORY = 8 * 1024 * 1024 # 8 GB
 skip=False
 
@@ -103,7 +104,20 @@ def run(cmd,output_name):
         import traceback
         print("[EXCEPTION]", traceback.format_exc())
         log_fail(output_name,exception=traceback.format_exc())
-    
+        
+        
+# old_setting=["graph","default","false","zero","false",1.0]
+# new_setting=["graph","largest_diff","true","wcg_greedy","true",1.0]
+        
+# settings=[old_setting,new_setting]
+settings=[]
+for algo in algos:
+    for branch_order in branch_orders:
+        for use_grouping in use_groupings:
+            for heuristic in heuristics:
+                for early_termination in early_terminations:
+                    for w_focal in w_focals:
+                        settings.append([algo,branch_order,use_grouping,heuristic,early_termination,w_focal])   
 
 for map_name,setting in maps.items():
     print("processing map {}".format(map_name))
@@ -121,33 +135,33 @@ for map_name,setting in maps.items():
         for sit_idx in range(num_sits):
             sit_name="map_{}_ins_{}_an_{}_sit_{}".format(map_name,instance_idx,agent_num,sit_idx)
             sit_file_path=os.path.join(sit_folder,sit_name+".json")
-            for algo in algos:
-                for branch_order in branch_orders: 
-                    for use_grouping in use_groupings:
-                        for heuristic in heuristics:
-                            for early_termination in early_terminations:
-                                trial_name="{}_algo_{}_br_{}_gp_{}_heu_{}_et_{}".format(sit_name,algo,branch_order,use_grouping,heuristic,early_termination)
-                                output_names.append(trial_name)
-                                stat_ofp=os.path.join(stat_output_folder,trial_name+".json")
-                                new_path_ofp=os.path.join(new_path_output_folder,trial_name+".path")
-                                
-                                if skip and os.path.exists(stat_ofp) and os.path.exists(new_path_ofp):
-                                    print("{} exist. skip...".format(trial_name))
-                                    continue                
-                        
-                                print("run {}".format(trial_name))    
+            for setting in settings:
+                algo,branch_order,use_grouping,heuristic,early_termination,w_focal=setting
+                trial_name="{}_algo_{}_br_{}_gp_{}_heu_{}_et_{}_wf_{}".format(sit_name,algo,branch_order,use_grouping,heuristic,early_termination,w_focal)
+                output_names.append(trial_name)
+                stat_ofp=os.path.join(stat_output_folder,trial_name+".json")
+                new_path_ofp=os.path.join(new_path_output_folder,trial_name+".path")
+                
+                if skip and os.path.exists(stat_ofp) and os.path.exists(new_path_ofp):
+                    print("{} exist. skip...".format(trial_name))
+                    continue                
+        
+                print("run {}".format(trial_name))    
 
-                                # we only require 1-robust, so --kDelay 1
-                                cmd = f"ulimit -Sv {MAX_VIRTUAL_MEMORY} &&" \
-                                    f" {exe_path} -p {path_file_path} -s {sit_file_path}" \
-                                    f" -t {time_limit} -a {algo} -b {branch_order} -g {use_grouping} -h {heuristic} -e {early_termination}" \
-                                    f" -o {stat_ofp} -n {new_path_ofp}"
-                                
-                                cmds.append(cmd)
+                # we only require 1-robust, so --kDelay 1
+                cmd = f"ulimit -Sv {MAX_VIRTUAL_MEMORY} &&" \
+                    f" {exe_path} -p {path_file_path} -s {sit_file_path}" \
+                    f" -t {time_limit} -a {algo} -b {branch_order} -g {use_grouping} -h {heuristic} -e {early_termination}" \
+                    f" -o {stat_ofp} -n {new_path_ofp} --w_focal {w_focal}"
+                
+                cmds.append(cmd)
             
     # for cmd,output_name in zip(cmds,output_names):
     #     print(output_name,cmd)
             
     pool.starmap(run,zip(cmds,output_names))
     
-
+subprocess.check_output(f"python script/get_stats.py -f {output_folder}", shell=True) 
+subprocess.check_output(f"python script/get_stats.py -f {output_folder} -a", shell=True) 
+subprocess.check_output(f"python script/get_stats.py -f {output_folder} -g", shell=True) 
+subprocess.check_output(f"python script/get_stats.py -f {output_folder} -a -g", shell=True) 

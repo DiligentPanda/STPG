@@ -2,12 +2,21 @@ import pandas as pd
 import os
 import numpy as np
 import json
+import argparse
 
-check_missing=False
-only_all_solved=False
-group_agent_num=False
+arg_parser=argparse.ArgumentParser()
+arg_parser.add_argument("-f","--folder",type=str,default="")
+arg_parser.add_argument("-c","--check_missing",action="store_true")
+arg_parser.add_argument("-a","--only_all_solved",action="store_true")
+arg_parser.add_argument("-g","--group_agent_num",action="store_true")
 
-result_folder="output/2024_03_25_03_11_53_exp"
+args=arg_parser.parse_args()
+
+check_missing=args.check_missing
+only_all_solved=args.only_all_solved
+group_agent_num=args.group_agent_num
+
+result_folder=args.folder
 if not os.path.isdir(result_folder):
     print(result_folder, "doesn't exist!")
 
@@ -32,16 +41,7 @@ branch_orders=["default","conflict","largest_diff","random","earliest"]
 use_groupings=["false","true"]
 heuristics=["zero","cg_greedy","wcg_greedy"]
 early_terminations=["false","true"]
-
-exp_headers=["map_name","agent_num","instance_idx","sit_idx"]
-result_headers=["algo","branch_order","use_grouping","heuristic","early_termination","random_seed","status","search_time","total_time","ori_total_cost","total_cost","ori_trunc_cost","trunc_cost",
-         "explored_node","pruned_node","added_node","vertex","sw_edge","heuristic_time","extra_heuristic_time","branch_time",
-         "sort_time","priority_queue_time","copy_free_graphs_time","termination_time","dfs_time","grouping_time","group","group_merge_edge","group_size_max","group_size_min","group_size_avg"]
-headers=exp_headers+result_headers
-
-path_list=pd.read_csv(path_list_fp,index_col="index")
-# print(path_list)
-
+w_focals=[1.0,1.25,1.5,1.75,2.0,2.25,2.5,2.75,3.0]
 
 settings=[]
 for algo in algos:
@@ -49,7 +49,17 @@ for algo in algos:
         for use_grouping in use_groupings:
             for heuristic in heuristics:
                 for early_termination in early_terminations:
-                    settings.append([algo,branch_order,use_grouping,heuristic,early_termination])   
+                    for w_focal in w_focals:
+                        settings.append([algo,branch_order,use_grouping,heuristic,early_termination,w_focal])   
+
+exp_headers=["map_name","agent_num","instance_idx","sit_idx"]
+result_headers=["algo","branch_order","use_grouping","heuristic","w_focal","w_astar","early_termination","random_seed","status","search_time","total_time","ori_total_cost","total_cost","ori_trunc_cost","trunc_cost",
+         "explored_node","pruned_node","added_node","vertex","sw_edge","heuristic_time","extra_heuristic_time","branch_time",
+         "sort_time","priority_queue_time","copy_free_graphs_time","termination_time","dfs_time","grouping_time","group","group_merge_edge","group_size_max","group_size_min","group_size_avg"]
+headers=exp_headers+result_headers
+
+path_list=pd.read_csv(path_list_fp,index_col="index")
+# print(path_list)
 
 # settings=[
 #     ["graph","default","false","zero","true"],
@@ -64,8 +74,8 @@ for idx in range(len(path_list)):
     for sit_idx in range(num_sits):
         sit_name="map_{}_ins_{}_an_{}_sit_{}".format(map_name,instance_idx,agent_num,sit_idx)
         for setting in settings:
-            algo,branch_order,use_grouping,heuristic,early_termination=setting
-            trial_name="{}_algo_{}_br_{}_gp_{}_heu_{}_et_{}".format(sit_name,algo,branch_order,use_grouping,heuristic,early_termination)
+            algo,branch_order,use_grouping,heuristic,early_termination,w_focal=setting
+            trial_name="{}_algo_{}_br_{}_gp_{}_heu_{}_et_{}_wf_{}".format(sit_name,algo,branch_order,use_grouping,heuristic,early_termination,w_focal)
             trial_stat_fp=os.path.join(stat_folder,trial_name+".json")
             datum=[map_name,agent_num,instance_idx,sit_idx]
             if not os.path.isfile(trial_stat_fp):
@@ -103,7 +113,7 @@ if only_all_solved:
 
 df.to_csv(stats_ofp,index_label="index")
 
-grouping_keys=["map_name","agent_num","algo","branch_order","use_grouping","heuristic","early_termination"]
+grouping_keys=["map_name","agent_num","algo","branch_order","use_grouping","heuristic","w_focal","w_astar","early_termination"]
 if group_agent_num:
     grouping_keys.remove("agent_num")
 

@@ -7,7 +7,7 @@ HeuristicManager::HeuristicManager(HeuristicType _type):type(_type) {
 
 }
 
-int HeuristicManager::computeInformedHeuristics(ADG & adg, vector<int> & tp_ordered_states, vector<int> & tp_times, double time_limit) {
+double HeuristicManager::computeInformedHeuristics(ADG & adg, vector<int> & tp_ordered_states, vector<int> & tp_times, double time_limit) {
     // TODO: add timer
     int num_of_agents=get_agentCnt(adg);
 
@@ -98,8 +98,8 @@ void HeuristicManager::buildCardinalConflictGraph(ADG & adg, vector<int> & tp_or
 
 }
 
-int HeuristicManager::greedyMatching(const std::vector<int> & CG, int num_vertices) {
-	int rst = 0;
+double HeuristicManager::greedyMatching(const std::vector<int> & CG, int num_vertices) {
+	double rst = 0;
 	std::vector<bool> used(num_vertices, false);
 	while(true)
 	{
@@ -127,6 +127,8 @@ int HeuristicManager::greedyMatching(const std::vector<int> & CG, int num_vertic
 		used[ep1] = true;
 		used[ep2] = true;
 	}
+    // impossible to reach here
+    return rst;
 }
 
 
