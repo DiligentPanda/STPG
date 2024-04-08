@@ -53,6 +53,7 @@ class Astar {
     tuple<int, int, int> enhanced_branch(Graph &graph, shared_ptr<vector<int> > values);
     tuple<int, int, int> branch(Graph &graph, shared_ptr<vector<int> > values);
     bool terminated(Graph &graph, shared_ptr<vector<int> > values);
+    int count_double_conflicting_edge_groups(Graph &graph, shared_ptr<vector<int> > values);
 
     void add_node(ADG & adg, shared_ptr<SearchNode> & parent_node);
 

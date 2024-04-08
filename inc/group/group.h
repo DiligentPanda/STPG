@@ -398,22 +398,25 @@ public:
         }
     }
 
-    bool get_equivalent_group(int edge_id, std::unordered_set<int> & group) {
-        if (edge_id2group_id.count(edge_id)==0) {
-            return false;
+    int get_group_id(int out_idx, int in_idx) {
+        int edge_id=get_edge_id(out_idx, in_idx);
+        auto itr=edge_id2group_id.find(edge_id);
+        if (itr==edge_id2group_id.end()) {
+            return -1;
         }
+        return itr->second;
+    }
 
-        auto & group_id=edge_id2group_id[edge_id];
+    bool get_equivalent_group(int out_idx, int in_idx, std::unordered_set<int> & group) {
+        int group_id=get_group_id(out_idx, in_idx);
         group=groups[group_id];
         return true;
     }
 
     std::vector<std::pair<int,int> > get_groupable_edges(int out_idx, int in_idx) {
-        int edge_id=get_edge_id(out_idx, in_idx);
         std::unordered_set<int> group;
-        bool found=get_equivalent_group(edge_id,group);
+        bool found=get_equivalent_group(out_idx,in_idx,group);
         if (!found) {
-            std::cout<<"edge_id"<<edge_id<<" not found"<<std::endl;
             int agent_idx,state_idx;
             std::tie(agent_idx,state_idx)=compute_agent_state((*get<2>(adg)),out_idx);
             std::cout<<"out_idx: agent_idx="<<agent_idx<<",state_idx="<<state_idx<<",current states: "<<states[agent_idx]<<std::endl;

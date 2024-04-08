@@ -342,6 +342,44 @@ void Astar::print_stats() {
     std::cout << "dfs time: " << dfsT.count() << "\n";
 }
 
+int Astar::count_double_conflicting_edge_groups(Graph &graph, shared_ptr<vector<int> > values) {
+  set<int> double_conflicting_edge_groups;
+  int cnt=0;
+  for (int i = 0; i < get<3>(graph); i++) {
+    int iTime = values->at(i);
+    set<int> &outNeib = get_switchable_outNeib(graph, i);
+    for (auto it : outNeib) {
+      int j = it;
+      int backI = j+1;
+      int backJ = i-1;
+      int jTime = values->at(j);
+      int backITime = values->at(backI);
+      int backJTime = values->at(backJ);
+      int diff = iTime - jTime;
+      int backDiff = backITime - backJTime;
+
+      if (diff>=0 && backDiff>=0) {
+        if (use_grouping) {
+          int group_id=group_manager->get_group_id(i,j);
+          if (group_id<0) {
+            std::cout<<"edge doesn't have a group"<<std::endl;
+            exit(19);
+          } else {
+            double_conflicting_edge_groups.insert(group_id);
+          }
+        } else {
+          cnt+=1;
+        }
+      }
+    }
+  }
+  if (use_grouping) {
+    cnt=double_conflicting_edge_groups.size();
+  }
+  return cnt;
+}
+
+
 // adg in parent_node might be changed by forward node, so don't use it.
 void Astar::add_node(ADG & adg, shared_ptr<SearchNode> & parent_node) {
   Graph &graph = get<0>(adg);
@@ -370,7 +408,9 @@ void Astar::add_node(ADG & adg, shared_ptr<SearchNode> & parent_node) {
   extraHeuristicT += duration_cast<microseconds>(end - start);
 
   if (g+h<init_cost) {
-    auto child_node = std::make_shared<SearchNode>(adg, g, h*w_astar, node_values, parent_node->num_sw-1);
+    int num_sw=parent_node->num_sw-1;
+    // int num_sw=count_double_conflicting_edge_groups(graph, node_values);
+    auto child_node = std::make_shared<SearchNode>(adg, g, h*w_astar, node_values, num_sw);
     auto start_pq_push = high_resolution_clock::now();
     open_list->push(child_node);
     auto end_pq_push = high_resolution_clock::now();
