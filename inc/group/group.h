@@ -4,7 +4,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "types.h"
-#include "ADG/ADG_utilities.h"
 #include <iostream>
 #include <boost/functional/hash.hpp>
 
@@ -25,22 +24,21 @@ struct PairIntHash {
 class GroupManager {
 public:
     // a set of edge_ids
-    using Group=std::unordered_set<int>;
-    using Groups=std::vector<Group>;
+    using Group=unordered_set<int>;
+    using Groups=vector<Group>;
 
     Groups groups;
-    std::unordered_map<int,int> edge_id2group_id;
+    unordered_map<int,int> edge_id2group_id;
 
     // for simplicity, let's make a copy of adg here
-    std::vector<int> states;
-    ADG adg;
-    Graph & graph;
+    vector<int> states;
+    shared_ptr<Graph> adg;
     int num_states; // used for encoding edge_id=out_state_idx*num_states+in_state_idx
 
     // we don't count any merge with size 1 group, which is just a single edge.
     int group_merge_edge_cnt=0;
 
-    GroupManager(ADG & _adg, std::vector<int> & _states): states(_states), adg(copy_ADG(_adg)), graph(get<0>(adg)), num_states(get<3>(graph)) {
+    GroupManager(const shared_ptr<Graph> & _adg, vector<int> & _states): states(_states), adg(_adg), num_states(_adg->get_num_states()) {
         build2();
     };
 
@@ -58,7 +56,7 @@ public:
     }
 
     void build2() {
-        int num_agents=get_agentCnt(adg);
+        int num_agents=adg->get_num_agents();
 
         // todo: this is not very efficient but fine.
         for (int i=0;i<num_agents;++i) {
@@ -71,32 +69,32 @@ public:
         // print_groups();
     }
 
-    inline std::pair<int,int> reverse_edge(const std::pair<int,int> & edge) {
+    inline pair<int,int> reverse_edge(const pair<int,int> & edge) {
         return {edge.second+1,edge.first-1};
     }
 
     void build_each2(int out_agent_idx, int in_agent_idx) {
         if (out_agent_idx==in_agent_idx) {
-            std::cout<<"two agents cannot be the same"<<std::endl;
+            cout<<"two agents cannot be the same"<<endl;
             exit(2024);
         }
 
-        auto & accum_cnts=(*get<2>(adg));
-        std::vector<int> prev_accum_cnts;
-        prev_accum_cnts.push_back(0);
-        prev_accum_cnts.insert(prev_accum_cnts.end(),accum_cnts.begin(),accum_cnts.end()-1);
+        auto & prev_accum_cnts=*(adg->accum_state_cnts_begin);
+        auto & state_cnts=*(adg->state_cnts);
 
         int out_start_state_local_idx=states[out_agent_idx];
-        int out_end_state_local_idx=accum_cnts[out_agent_idx]-prev_accum_cnts[out_agent_idx];
+        // excluded
+        int out_end_state_local_idx=state_cnts[out_agent_idx];
 
         int in_start_state_local_idx=states[in_agent_idx];
-        int in_end_state_local_idx=accum_cnts[in_agent_idx]-prev_accum_cnts[in_agent_idx];
+        // excluded
+        int in_end_state_local_idx=state_cnts[in_agent_idx];
 
-        std::unordered_set<std::pair<int,int>, PairIntHash> all_edges;
+        unordered_set<pair<int,int>, PairIntHash> all_edges;
         // TODO: we should consider non-switchable edges in the future.
         for (int out_state_local_idx=out_start_state_local_idx;out_state_local_idx<out_end_state_local_idx;++out_state_local_idx) {
             int out_state_idx=out_state_local_idx+prev_accum_cnts[out_agent_idx];
-            auto & switchable_out_neighbors=get_switchable_outNeib(graph, out_state_idx);
+            auto & switchable_out_neighbors=adg->switchable_type2_edges->get_out_neighbor_global_ids(out_state_idx);
             for (int in_state_idx:switchable_out_neighbors) {
                 int in_state_local_idx=in_state_idx-prev_accum_cnts[in_agent_idx];
                 if (in_state_local_idx>=in_start_state_local_idx && in_state_local_idx<in_end_state_local_idx) {
@@ -105,7 +103,7 @@ public:
             }
         }
 
-        std::unordered_set<std::pair<int,int>, PairIntHash > all_reversed_edges;
+        unordered_set<pair<int,int>, PairIntHash > all_reversed_edges;
         for (auto & edge: all_edges) {
             auto reversed_edge=reverse_edge(edge);
             all_reversed_edges.insert(reversed_edge);
@@ -114,22 +112,22 @@ public:
 
         while (all_edges.size()>0) {
             auto edge=*all_edges.begin();
-            // std::cout<<"edge: "<<edge.first<<"->"<<edge.second<<std::endl;
+            // cout<<"edge: "<<edge.first<<"->"<<edge.second<<endl;
 
-            std::unordered_set<std::pair<int,int>, PairIntHash> forward_all_edges(all_edges);
-            std::unordered_set<std::pair<int,int>, PairIntHash > forward_groupable_edges;
+            unordered_set<pair<int,int>, PairIntHash> forward_all_edges(all_edges);
+            unordered_set<pair<int,int>, PairIntHash > forward_groupable_edges;
 
-            std::unordered_set<std::pair<int,int>, PairIntHash> backward_all_edges(all_reversed_edges);
-            std::unordered_set<std::pair<int,int>, PairIntHash> backward_groupable_edges;
+            unordered_set<pair<int,int>, PairIntHash> backward_all_edges(all_reversed_edges);
+            unordered_set<pair<int,int>, PairIntHash> backward_groupable_edges;
             
             {
                 forward_all_edges.erase(edge);
                 forward_groupable_edges.insert(edge);
 
                 // TODO(rivers): this implementation is not efficient?
-                std::vector<std::pair<int,int>> reversed_edges={reverse_edge(edge)};
+                vector<pair<int,int>> reversed_edges={reverse_edge(edge)};
                 while (true) {
-                    std::unordered_set<std::pair<int,int>, PairIntHash> edges_to_reverse;
+                    unordered_set<pair<int,int>, PairIntHash> edges_to_reverse;
                     for (auto & forward_edge: forward_all_edges) {
                         for (auto & reversed_edge:reversed_edges) {
                             if (forward_edge.first>=reversed_edge.second && forward_edge.second<=reversed_edge.first){
@@ -149,9 +147,9 @@ public:
                     }
                 }
 
-                // std::cout<<"forward_group_edges"<<std::endl;
+                // cout<<"forward_group_edges"<<endl;
                 // for (auto edge:forward_groupable_edges) {
-                //     std::cout<<edge.first<<"->"<<edge.second<<std::endl;
+                //     cout<<edge.first<<"->"<<edge.second<<endl;
                 // }
             }
 
@@ -161,9 +159,9 @@ public:
                 backward_all_edges.erase(edge);
                 backward_groupable_edges.insert(edge);
 
-                std::vector<std::pair<int,int>> reversed_edges={reverse_edge(edge)};
+                vector<pair<int,int>> reversed_edges={reverse_edge(edge)};
                 while (true) {
-                    std::unordered_set<std::pair<int,int>, PairIntHash> edges_to_reverse;
+                    unordered_set<pair<int,int>, PairIntHash> edges_to_reverse;
                     for (auto & backward_edge: backward_all_edges) {
                         for (auto & reversed_edge:reversed_edges) {
                             if (backward_edge.first>=reversed_edge.second && backward_edge.second<=reversed_edge.first){
@@ -183,15 +181,15 @@ public:
                     }
                 }
 
-                // std::cout<<"backward_group_edges"<<std::endl;
+                // cout<<"backward_group_edges"<<endl;
                 // for (auto edge:backward_groupable_edges) {
-                //     std::cout<<edge.first<<"->"<<edge.second<<std::endl;
+                //     cout<<edge.first<<"->"<<edge.second<<endl;
                 // }
             }
 
             
             // C++11 (needs <unordered_set>)
-            std::unordered_set<std::pair<int,int>, PairIntHash> groupable_edges;
+            unordered_set<pair<int,int>, PairIntHash> groupable_edges;
             // TODO: consider reserving a size (optimistically |a| + |b|)
             for (auto & edge : forward_groupable_edges) {
                 auto reversed_edge=reverse_edge(edge);
@@ -217,7 +215,7 @@ public:
     }
 
     void build() {
-        int num_agents=get_agentCnt(adg);
+        int num_agents=adg->get_num_agents();
         // todo: this is not very efficient but fine.
         for (int i=0;i<num_agents;++i) {
             for (int j=0;j<num_agents;++j) {
@@ -231,23 +229,23 @@ public:
 
     void build_each(int out_agent_idx, int in_agent_idx) {
         if (out_agent_idx==in_agent_idx) {
-            std::cout<<"two agents cannot be the same"<<std::endl;
+            cout<<"two agents cannot be the same"<<endl;
             exit(2024);
         }
 
-        auto & accum_cnts=(*get<2>(adg));
+        auto & accum_cnts=*(adg->accum_state_cnts_end);
 
-        int out_start_state_idx=compute_vertex(accum_cnts,out_agent_idx,states[out_agent_idx]);
+        int out_start_state_idx=adg->get_global_state_id(out_agent_idx,states[out_agent_idx]);
         int out_end_state_idx=accum_cnts[out_agent_idx];
 
-        int in_start_state_idx=compute_vertex(accum_cnts,in_agent_idx,states[in_agent_idx]);
+        int in_start_state_idx=adg->get_global_state_id(in_agent_idx,states[in_agent_idx]);
         int in_end_state_idx=accum_cnts[in_agent_idx];
 
         Groups unmerged_groups;
-        std::unordered_set<int> crossing_searched;
-        std::unordered_set<int> parallel_searched;
+        unordered_set<int> crossing_searched;
+        unordered_set<int> parallel_searched;
         for (int out_state_idx=out_start_state_idx;out_state_idx<out_end_state_idx;++out_state_idx) {
-            auto & switchable_out_neighbors=get_switchable_outNeib(graph, out_state_idx);
+            auto & switchable_out_neighbors=adg->switchable_type2_edges->get_out_neighbor_global_ids(out_state_idx);
             for (int in_state_idx:switchable_out_neighbors) {
                 if (in_state_idx>=in_start_state_idx && in_state_idx<in_end_state_idx) {
                     // parallel and crossing patterns
@@ -266,7 +264,7 @@ public:
     void find_simple_patterns_starting_with(
         int _out_state_idx, int _in_state_idx, 
         int out_end_state_idx, int in_start_state_idx, int in_end_state_idx,
-        Groups & groups, std::unordered_set<int> & crossing_searched, std::unordered_set<int> & parallel_searched
+        Groups & groups, unordered_set<int> & crossing_searched, unordered_set<int> & parallel_searched
     ) {
         if (crossing_searched.count(get_edge_id(_out_state_idx,_in_state_idx))==0) {
             int out_state_idx=_out_state_idx;
@@ -279,7 +277,7 @@ public:
                     break;
                 }
 
-                if (!get_type2_switchable_edge(graph,out_state_idx,in_state_idx)) {
+                if (!adg->switchable_type2_edges->has_edge(out_state_idx,in_state_idx)) {
                     // no more crossing edge
                     break;
                 }
@@ -305,7 +303,7 @@ public:
                     break;
                 }
 
-                if (!get_type2_switchable_edge(graph,out_state_idx,in_state_idx)) {
+                if (!adg->switchable_type2_edges->has_edge(out_state_idx,in_state_idx)) {
                     // no more parallel edge
                     break;
                 }
@@ -324,26 +322,26 @@ public:
     // We model each group as an vertex. Two groups are adjecent if they share an edge.
     // We use disjoint sets to merge groups. We can ensure that finally each edge is in only one "locally maximal" group.
     void merge_groups(Groups & groups) {
-        std::vector<std::pair<int,int> > graph_edges;
+        vector<pair<int,int> > graph_edges;
 
         // build graphs
         for (size_t i=0;i<groups.size();++i) {
             auto & group_i=groups[i];
-            std::unordered_set<int> edge_set(group_i.begin(),group_i.end());
+            unordered_set<int> edge_set(group_i.begin(),group_i.end());
             for (size_t j=i+1;j<groups.size();++j) {
                 auto & group_j=groups[j];
                 for (int edge_id: group_j) {
                     if (edge_set.count(edge_id)>0) {
                         graph_edges.emplace_back(i,j);
                         if (group_i.size()>1 && group_j.size()>1) {
-                            // std::cout<<"group i: "<<group_i.size()<<" group j: "<<group_j.size()<<" "<<group_merge_edge_cnt<<std::endl;
-                            // std::cout<<"group i: "<<std::endl;
+                            // cout<<"group i: "<<group_i.size()<<" group j: "<<group_j.size()<<" "<<group_merge_edge_cnt<<endl;
+                            // cout<<"group i: "<<endl;
                             // for (auto edge_id: group_i) {
-                            //     std::cout<<get_out_idx(edge_id)<<"->"<<get_in_idx(edge_id)<<",";
+                            //     cout<<get_out_idx(edge_id)<<"->"<<get_in_idx(edge_id)<<",";
                             // }
-                            // std::cout<<"group j: "<<std::endl;
+                            // cout<<"group j: "<<endl;
                             // for (auto edge_id: group_j) {
-                            //     std::cout<<get_out_idx(edge_id)<<"->"<<get_in_idx(edge_id)<<",";
+                            //     cout<<get_out_idx(edge_id)<<"->"<<get_in_idx(edge_id)<<",";
                             // }
                             ++group_merge_edge_cnt;
                         }
@@ -356,17 +354,17 @@ public:
         // use disjoint sets to merge     
         // see https://stackoverflow.com/a/4136546
         // maybe should typedef or using...
-        std::unordered_map<int,size_t> rank_map;
-        std::unordered_map<int,int> parent_map;
+        unordered_map<int,size_t> rank_map;
+        unordered_map<int,int> parent_map;
 
-        boost::associative_property_map<std::unordered_map<int,size_t> > rank_pmap(rank_map);
-        boost::associative_property_map<std::unordered_map<int,int> > parent_pmap(parent_map);
+        boost::associative_property_map<unordered_map<int,size_t> > rank_pmap(rank_map);
+        boost::associative_property_map<unordered_map<int,int> > parent_pmap(parent_map);
 
-        std::vector<int> rank(groups.size());
-        std::vector<int> parent(groups.size());
+        vector<int> rank(groups.size());
+        vector<int> parent(groups.size());
         boost::disjoint_sets<
-            boost::associative_property_map<std::unordered_map<int,size_t> >,
-            boost::associative_property_map<std::unordered_map<int,int> >
+            boost::associative_property_map<unordered_map<int,size_t> >,
+            boost::associative_property_map<unordered_map<int,int> >
         > dsets(rank_pmap,parent_pmap);
 
         for (int i=0;i<(int)groups.size();++i) {
@@ -377,7 +375,7 @@ public:
             dsets.union_set(graph_edge.first,graph_edge.second);
         }
 
-        std::unordered_map<int,std::vector<int> > collections;
+        unordered_map<int,vector<int> > collections;
         for (int i=0;i<(int)groups.size();++i) {
             int collection_id=dsets.find_set(i);
             collections[collection_id].push_back(i);
@@ -407,25 +405,25 @@ public:
         return itr->second;
     }
 
-    bool get_equivalent_group(int out_idx, int in_idx, std::unordered_set<int> & group) {
+    bool get_equivalent_group(int out_idx, int in_idx, unordered_set<int> & group) {
         int group_id=get_group_id(out_idx, in_idx);
         group=groups[group_id];
         return true;
     }
 
-    std::vector<std::pair<int,int> > get_groupable_edges(int out_idx, int in_idx) {
-        std::unordered_set<int> group;
+    vector<pair<int,int> > get_groupable_edges(int out_idx, int in_idx) {
+        unordered_set<int> group;
         bool found=get_equivalent_group(out_idx,in_idx,group);
         if (!found) {
             int agent_idx,state_idx;
-            std::tie(agent_idx,state_idx)=compute_agent_state((*get<2>(adg)),out_idx);
-            std::cout<<"out_idx: agent_idx="<<agent_idx<<",state_idx="<<state_idx<<",current states: "<<states[agent_idx]<<std::endl;
-            std::tie(agent_idx,state_idx)=compute_agent_state((*get<2>(adg)),in_idx);
-            std::cout<<"in_idx: agent_idx="<<agent_idx<<",state_idx="<<state_idx<<",current states: "<<states[agent_idx]<<std::endl;
+            tie(agent_idx,state_idx)=adg->get_agent_state_id(out_idx);
+            cout<<"out_idx: agent_idx="<<agent_idx<<",state_idx="<<state_idx<<",current states: "<<states[agent_idx]<<endl;
+            tie(agent_idx,state_idx)=adg->get_agent_state_id(in_idx);
+            cout<<"in_idx: agent_idx="<<agent_idx<<",state_idx="<<state_idx<<",current states: "<<states[agent_idx]<<endl;
             exit(1234);
         }
 
-        std::vector<std::pair<int,int> > edges;
+        vector<pair<int,int> > edges;
         for (auto & edge_id: group) {
             edges.emplace_back(get_out_idx(edge_id),get_in_idx(edge_id));
         }
@@ -435,16 +433,16 @@ public:
 
     void print_group(Group & group) {
         for (auto & edge_id: group) {
-            std::cout<<get_out_idx(edge_id)<<"->"<<get_in_idx(edge_id)<<",";
+            cout<<get_out_idx(edge_id)<<"->"<<get_in_idx(edge_id)<<",";
         }
     }
 
     void print_groups() {
         for (size_t i=0;i<groups.size();++i) {
             auto & group=groups[i];
-            std::cout<<"group "<<i<<": ";
+            cout<<"group "<<i<<": ";
             print_group(group);
-            std::cout<<std::endl;
+            cout<<endl;
         }
     }
 

@@ -45,14 +45,14 @@ target_include_directories(generate PUBLIC "inc")
 target_include_directories(generate PUBLIC ${Boost_INCLUDE_DIRS})
 target_link_libraries(generate ${Boost_LIBRARIES})
 
-add_executable(enumerate_grouping ${GROUPING_SOURCES})
-target_include_directories(enumerate_grouping PUBLIC "inc")
+# add_executable(enumerate_grouping ${GROUPING_SOURCES})
+# target_include_directories(enumerate_grouping PUBLIC "inc")
 
-add_executable(visualize ${VISUALIZE_SOURCES})
-target_include_directories(visualize PUBLIC "inc")
-target_include_directories(visualize PUBLIC ${Boost_INCLUDE_DIRS})
-target_link_libraries(visualize sfml-graphics sfml-window sfml-system)
-target_link_libraries(visualize ${Boost_LIBRARIES})
+# add_executable(visualize ${VISUALIZE_SOURCES})
+# target_include_directories(visualize PUBLIC "inc")
+# target_include_directories(visualize PUBLIC ${Boost_INCLUDE_DIRS})
+# target_link_libraries(visualize sfml-graphics sfml-window sfml-system)
+# target_link_libraries(visualize ${Boost_LIBRARIES})
 
 add_custom_target(clean_all
     COMMAND ${CMAKE_BUILD_TOOL} clean

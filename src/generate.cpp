@@ -35,9 +35,9 @@ bool save_situation_file(const string & situation_fp, const string & path_fp, co
 }
 
 void gen_random_situation(int idx, const string & path_fp, uint seed, int delay_prob, int delay_steps_low, int delay_steps_high, const string & situation_fp) {
-  ADG adg=construct_ADG(path_fp.c_str());
+  auto adg=construct_ADG(path_fp.c_str());
   Simulator simulator(adg);
-  int num_agents=get_agentCnt(adg);
+  int num_agents=adg->get_num_agents();
 
   std::mt19937 rng(seed);
   std::uniform_int_distribution<int> delay_distrib(1,1000);
@@ -45,12 +45,7 @@ void gen_random_situation(int idx, const string & path_fp, uint seed, int delay_
 
   std::vector<int> delay_steps_vec(num_agents,0);
 
-  auto & accum_state_cnts=*get<2>(adg);
-  std::vector<int> state_cnts;
-  state_cnts.push_back(accum_state_cnts[0]);
-  for (int i=1;i<(int)accum_state_cnts.size();++i) {
-    state_cnts.push_back(accum_state_cnts[i]-accum_state_cnts[i-1]);
-  }
+  auto & state_cnts=*(adg->state_cnts);
 
   int stepSpend = 1;
   bool delayed = false;

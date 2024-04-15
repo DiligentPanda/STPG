@@ -38,13 +38,9 @@ tuple<Path, int> parse_path(string line) {
 }
 
 // Return all paths, accumulated counts of states, and States
-tuple<shared_ptr<Paths>, shared_ptr<vector<int> > > parse_soln(const char* fileName) {
+shared_ptr<Paths> parse_soln(const char* fileName) {
   auto paths_ptr=make_shared<Paths>();
-  auto accum_stateCnts_ptr=make_shared<vector<int> >();
   auto & paths = * paths_ptr;
-  auto & accum_stateCnts = * accum_stateCnts_ptr;
-
-  int sumStates = 0;
 
   string fileName_string = fileName;
   ifstream file(fileName_string);
@@ -55,12 +51,8 @@ tuple<shared_ptr<Paths>, shared_ptr<vector<int> > > parse_soln(const char* fileN
       if (line[0] == 'A') {
         tuple<Path, int> parse_result = parse_path(line);
         Path path = get<0>(parse_result);
-        int stateCnt = get<1>(parse_result);
-
         // Done with the agent
         paths.push_back(path);
-        sumStates += stateCnt;
-        accum_stateCnts.push_back(sumStates);
       }
     }
     file.close();
@@ -68,262 +60,35 @@ tuple<shared_ptr<Paths>, shared_ptr<vector<int> > > parse_soln(const char* fileN
     std::cout << "exit\n";
     exit(0);
   }
-  return make_tuple(paths_ptr, accum_stateCnts_ptr);
-}
-
-void add_type1_edges(Graph &graph, Paths &paths, vector<int> &accum_stateCnts) {
-  int agentCnt = paths.size();
-  for (int agent = 0; agent < agentCnt; agent++) {
-    Path path = paths[agent];
-    int stateCnt = path.size();
-    int prev_vertex = -1;
-    
-    for (int state = 0; state < stateCnt; state++) {
-      int curr_vertex = compute_vertex(accum_stateCnts, agent, state);
-      if (prev_vertex >= 0) {
-        set_type1_edge(graph, prev_vertex, curr_vertex);
-      }
-      prev_vertex = curr_vertex;
-    }
-  }
-}
-
-void add_type2_edges(Graph &graph, Paths &paths, vector<int> &accum_stateCnts) {
-  int agentCnt = paths.size();
-  // Looping through agents
-  for (int agent1 = 0; agent1 < agentCnt; agent1++) {
-    Path path1 = paths[agent1];
-    int stateCnt1 = path1.size();
-    for (int agent2 = agent1 + 1; agent2 < agentCnt; agent2 ++) {
-      Path path2 = paths[agent2];
-      int stateCnt2 = path2.size();
-
-      // Looping through states
-      for (int state1 = 0; state1 < stateCnt1; state1++) {
-        pair<Location, int> pair1 = path1[state1];
-        Location location1 = get<0>(pair1);
-        for (int state2 = 0; state2 < stateCnt2; state2++) {
-          pair<Location, int> pair2 = path2[state2];
-          Location location2 = get<0>(pair2);
-
-          int time1 = get<1>(pair1);
-          int time2 = get<1>(pair2);
-
-          if (same_locations(location1, location2) && (time1 >= 0) && (time2 >= 0)) {
-            // Add a type2 edge
-            int vertex1 = compute_vertex(accum_stateCnts, agent1, state1);
-            int vertex2 = compute_vertex(accum_stateCnts, agent2, state2);
-
-            // Set edges -- fix the starting out-edges and ending in-edges
-            if (time1 < time2) {
-              if ((state1 == 0) || (state2 == stateCnt2 - 1)) {
-                set_type2_nonSwitchable_edge(graph, vertex1+1, vertex2);
-              } else {
-                set_type2_switchable_edge(graph, vertex1+1, vertex2);
-              }
-            }
-            else {
-              if ((state2 == 0) || (state1 == stateCnt1 - 1)) {
-                set_type2_nonSwitchable_edge(graph, vertex2+1, vertex1);
-              } else {
-                set_type2_switchable_edge(graph, vertex2+1, vertex1);
-              }
-            }
-
-          }
-        }
-      }
-    }
-  }
-}
-
-int add_type2_edges_cnt(Graph &graph, Paths &paths, vector<int> &accum_stateCnts) {
-  int cnt = 0;
-  int agentCnt = paths.size();
-  // Looping through agents
-  for (int agent1 = 0; agent1 < agentCnt; agent1++) {
-    Path path1 = paths[agent1];
-    int stateCnt1 = path1.size();
-    for (int agent2 = agent1 + 1; agent2 < agentCnt; agent2 ++) {
-      Path path2 = paths[agent2];
-      int stateCnt2 = path2.size();
-
-      // Looping through states
-      for (int state1 = 0; state1 < stateCnt1; state1++) {
-        pair<Location, int> pair1 = path1[state1];
-        Location location1 = get<0>(pair1);
-        for (int state2 = 0; state2 < stateCnt2; state2++) {
-          pair<Location, int> pair2 = path2[state2];
-          Location location2 = get<0>(pair2);
-
-          int time1 = get<1>(pair1);
-          int time2 = get<1>(pair2);
-
-          if (same_locations(location1, location2) && (time1 >= 0) && (time2 >= 0)) {
-            // Add a type2 edge
-            int vertex1 = compute_vertex(accum_stateCnts, agent1, state1);
-            int vertex2 = compute_vertex(accum_stateCnts, agent2, state2);
-
-
-
-            //std::cout<<"agent1:"<<agent1<<",  state1:"<<state1<<", time1:"<<time1<<", location1:"<<get<0>(location1)<<","<<get<1>(location1)<<std::endl;
-            //std::cout<<"agent2:"<<agent2<<",  state2:"<<state2<<", time2:"<<time2<<", location2:"<<get<0>(location2)<<","<<get<1>(location2)<<std::endl;
-
-            // Set edges -- fix the starting out-edges and ending in-edges
-            if (time1 < time2) {
-              if ((state1 == 0) || (state2 == stateCnt2 - 1)) {
-                if (state1<stateCnt1-1) {
-                  set_type2_nonSwitchable_edge(graph, vertex1+1, vertex2);
-                  //std::cout<<"nsw: "<<vertex1+1<<","<<vertex2<<","<<stateCnt1<<std::endl;
-                }
-              } else {
-                if (state1<stateCnt1-1) {
-                  set_type2_switchable_edge(graph, vertex1+1, vertex2);
-                  cnt += 1;
-                  //std::cout<<"sw: "<<vertex1+1<<","<<vertex2<<std::endl;
-                }
-              }
-            }
-            else {
-              if ((state2 == 0) || (state1 == stateCnt1 - 1)) {
-                if (state2<stateCnt2-1) {
-                  set_type2_nonSwitchable_edge(graph, vertex2+1, vertex1);
-                }
-              } else {
-                if (state2<stateCnt2-1) {
-                  set_type2_switchable_edge(graph, vertex2+1, vertex1);
-                  cnt += 1;
-                }
-              }
-            }
-
-          }
-        }
-      }
-    }
-  }
-  return cnt;
-}
-
-ADG construct_ADG(const char* fileName) {
-  shared_ptr<Paths> paths;
-  shared_ptr<vector<int> > accum_stateCnts;
-  tie(paths, accum_stateCnts) = parse_soln(fileName);
-  int sumStates = accum_stateCnts->back();
-
-  Graph graph = new_graph(sumStates);
-  add_type1_edges(graph, *paths, *accum_stateCnts);
-  add_type2_edges(graph, *paths, *accum_stateCnts);
-
-  return make_tuple(graph, paths, accum_stateCnts);
+  return paths_ptr;
 }
 
 // duplication=true means allowing consecutive vertices in a path to be duplicate.
-ADG construct_ADG(shared_ptr<Paths> paths_ptr, bool duplication) {
+shared_ptr<Graph> construct_ADG(const shared_ptr<Paths> &paths, bool duplication) {
   if (duplication) {
     std::cout<<"not supported duplication now"<<std::endl;
-  }
-  
-  auto & paths = *paths_ptr;
-  shared_ptr<vector<int> > accum_stateCnts_ptr;
-  auto & accum_state_cnts=*accum_stateCnts_ptr;
-  int sum_states_cnt=0;
-  for (const auto & path: paths) {
-      sum_states_cnt+=path.size();
-      accum_state_cnts.push_back(sum_states_cnt);
+    exit(-1);
   }
 
-  Graph graph = new_graph(sum_states_cnt);
-  add_type1_edges(graph, paths, accum_state_cnts);
-  add_type2_edges(graph, paths, accum_state_cnts);
-
-  return make_tuple(graph, paths_ptr, accum_stateCnts_ptr);
+  auto graph = make_shared<Graph>(paths);
+  return graph;
 }
 
-ADG construct_delayed_ADG(ADG &adg, int dlow, int dhigh, vector<int> &delayed_agents, vector<int> &states, int & input_sw_cnt, ofstream &outFile_setup) {
-  int agentCnt = get_agentCnt(adg);
-  auto paths_ptr=make_shared<Paths>();
-  auto accum_stateCnts_ptr=make_shared<vector<int> >();
-  auto & paths = * paths_ptr;
-  auto & accum_stateCnts = * accum_stateCnts_ptr;
-  
-  // TODO(rivers): it is a bad idea to generate random delay step here, should be put at the same place where whether to delay is decided.
-  random_device rd;  
-  mt19937 gen(rd());
-  uniform_int_distribution<> distrib(dlow, dhigh);
+shared_ptr<Graph> construct_ADG(const char* fileName) {
+  auto paths = parse_soln(fileName);
+  return construct_ADG(paths, false);
+}
+
+shared_ptr<Graph> construct_delayed_ADG(const shared_ptr<Graph> & graph, const vector<int> & delay_steps, const vector<int> & states) {
+  auto new_paths=make_shared<Paths>();
 
   int delay_sum = 0;
 
-  for (int agent = 0; agent < agentCnt; agent ++) {
-    if (delayed_agents[agent] == 0) {
-      outFile_setup << "0\n";
-      paths.push_back((*get<1>(adg))[agent]);
-    } else { // this is a delayed agent
-      Path &ori_path = (*get<1>(adg))[agent];
-      Path new_path;
-      int delayed_state = states[agent];
-
-      for (int state = 0; state <= delayed_state; state ++) {
-        new_path.push_back(ori_path[state]);
-      }
-      // insert repeated current states for a multi-step delay.
-      // <Location, timestep>
-      // NOTE(rivers): it is not a bug if we don't specify the timestep here and change the timestep later.
-      // because now we still want to stick to the original plan.
-      pair<Location, int> repeat = make_pair(get<0>(new_path.back()), -1);
-      int delay = distrib(gen);
-      outFile_setup << delay << "\n";
-      delay_sum += delay;
-      for (int state = 0; state < delay; state ++) {
-        new_path.push_back(repeat);
-      }
-      int ori_size = ori_path.size();
-      for (int state = delayed_state + 1; state < ori_size; state ++) {
-        new_path.push_back(ori_path[state]);
-      }
-      paths.push_back(new_path);
-    }
-
-    accum_stateCnts.push_back((*get<2>(adg))[agent] + delay_sum);
-  }
-
-  Graph graph = new_graph(accum_stateCnts.back());
-
-  // add dependencies from the old plan. We cannot directly copy because the idxs of some nodes are changed.
-  add_type1_edges(graph, paths, accum_stateCnts);
-  input_sw_cnt = add_type2_edges_cnt(graph, paths, accum_stateCnts);
-
-  // set some switchable edges to non-swtichable because the reversed edge cannot point to a past state.
-  for (int v = 0; v < get<3>(graph); v ++) {
-    int agent, state;
-    tie(agent, state) = compute_agent_state(accum_stateCnts, v);
-    if (state-1 <= states[agent]) {
-      set<int> outNeib = get_switchable_outNeib(graph, v);
-      for (auto it: outNeib) {
-        rem_type2_switchable_edge(graph, v, it);
-        set_type2_nonSwitchable_edge(graph, v, it);
-        input_sw_cnt = input_sw_cnt - 1;
-      }
-    }
-  }
-
-  return make_tuple(graph, paths_ptr, accum_stateCnts_ptr);
-}
-
-ADG construct_delayed_ADG(ADG &adg, vector<int> & delay_steps, vector<int> &states, int & input_sw_cnt) {
-  int agentCnt = get_agentCnt(adg);
-  auto paths_ptr=make_shared<Paths>();
-  auto accum_stateCnts_ptr=make_shared<vector<int> >();
-  auto & paths = * paths_ptr;
-  auto & accum_stateCnts = * accum_stateCnts_ptr;
-
-  int delay_sum = 0;
-
-  for (int agent = 0; agent < agentCnt; agent ++) {
+  for (int agent = 0; agent < graph->get_num_agents(); ++agent) {
     if (delay_steps[agent] == 0) {
-      paths.push_back((*get<1>(adg))[agent]);
+      new_paths->push_back((*graph->paths)[agent]);
     } else { // this is a delayed agent
-      Path &ori_path = (*get<1>(adg))[agent];
+      Path &ori_path = (*graph->paths)[agent];
       Path new_path;
       int delayed_state = states[agent];
 
@@ -344,33 +109,11 @@ ADG construct_delayed_ADG(ADG &adg, vector<int> & delay_steps, vector<int> &stat
       for (int state = delayed_state + 1; state < ori_size; state ++) {
         new_path.push_back(ori_path[state]);
       }
-      paths.push_back(new_path);
-    }
-
-    accum_stateCnts.push_back((*get<2>(adg))[agent] + delay_sum);
-  }
-
-  Graph graph = new_graph(accum_stateCnts.back());
-
-  // add dependencies from the old plan. We cannot directly copy because the idxs of some nodes are changed.
-  add_type1_edges(graph, paths, accum_stateCnts);
-  input_sw_cnt = add_type2_edges_cnt(graph, paths, accum_stateCnts);
-
-  // set some switchable edges to non-swtichable because an edge cannot point out from a past state and the reversed edge cannot point to a past state.
-  // TODO(rivers): I suggest we move this part into add_type2_edges* for clarity by passing in a state vector directly. 
-  // TODO(rivers): double check here
-  for (int v = 0; v < get<3>(graph); v ++) {
-    int agent, state;
-    tie(agent, state) = compute_agent_state(accum_stateCnts, v);
-    if (state-1 <= states[agent]) {
-      set<int> outNeib = get_switchable_outNeib(graph, v);
-      for (auto it: outNeib) {
-        rem_type2_switchable_edge(graph, v, it);
-        set_type2_nonSwitchable_edge(graph, v, it);
-        input_sw_cnt = input_sw_cnt - 1;
-      }
+      new_paths->push_back(new_path);
     }
   }
 
-  return make_tuple(graph, paths_ptr, accum_stateCnts_ptr);
+  auto new_graph=make_shared<Graph>(new_paths, states);
+
+  return new_graph;
 }

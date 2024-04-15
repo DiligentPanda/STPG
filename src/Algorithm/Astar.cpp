@@ -69,7 +69,7 @@ int Astar::calcTime(Simulator simulator) {
   return totalSpend;
 }
 
-int Astar::compute_partial_cost(ADG &adg) {
+int Astar::compute_partial_cost(const shared_ptr<Graph> & adg) {
   // Graph &graph = get<0>(copy);
   // remove_all_switchable_edges(graph);
 
@@ -80,12 +80,15 @@ int Astar::compute_partial_cost(ADG &adg) {
 
 // compute the longest path length from any current vertices to an agent's goal vertex.
 // the heuristic is the sum of the longest path length.
-double Astar::heuristic_graph(ADG &adg, shared_ptr<vector<int> > & ts, shared_ptr<vector<int> > & values) {
-  Graph &graph = get<0>(adg);
+double Astar::heuristic_graph(
+    const shared_ptr<Graph> & adg, 
+    const shared_ptr<vector<int> > & ts, 
+    const shared_ptr<vector<int> > & values
+  ) {
 
   for (int i: (*ts)) {
     int prevVal = values->at(i);
-    set<int> outNeib = get_nonSwitchable_outNeib(graph, i);
+    auto && outNeib = adg->get_out_neighbor_global_ids(i);
     for (auto it = outNeib.begin(); it != outNeib.end(); it++) {
       int j = *it;
       int weight = 1;
@@ -94,7 +97,7 @@ double Astar::heuristic_graph(ADG &adg, shared_ptr<vector<int> > & ts, shared_pt
   }
   double sum = 0;
   for (int agent = 0; agent < agentCnt; agent ++) {
-    int goalVert = compute_vertex((*get<2>(adg)), agent, get_stateCnt(adg, agent) - 1);
+    int goalVert = (*adg->accum_state_cnts_end)[agent]-1;
     sum += values->at(goalVert);
   }
 
@@ -105,15 +108,15 @@ double Astar::heuristic_graph(ADG &adg, shared_ptr<vector<int> > & ts, shared_pt
   return sum;
 }
 
-tuple<int, int, int> Astar::branch(Graph &graph, shared_ptr<vector<int> > values) {
+tuple<int, int, int> Astar::branch(const shared_ptr<Graph> & adg, const shared_ptr<vector<int> > & values) {
   int maxDiff = -1;
   int maxI = -1;
   int maxJ = -1;
 
   if (branch_order==BranchOrder::DEFAULT) {
-    for (int i = 0; i < get<3>(graph); i++) {
+    for (int i = 0; i < adg->get_num_states(); ++i) {
       int iTime = values->at(i);
-      set<int> &outNeib = get_switchable_outNeib(graph, i);
+      auto &outNeib = adg->switchable_type2_edges->get_out_neighbor_global_ids(i);
       for (auto it : outNeib) {
         int j = it;
         int jTime = values->at(j);
@@ -134,9 +137,9 @@ tuple<int, int, int> Astar::branch(Graph &graph, shared_ptr<vector<int> > values
       } 
     }
   } else if (branch_order==BranchOrder::LARGEST_DIFF) {
-    for (int i = 0; i < get<3>(graph); i++) {
+    for (int i = 0; i < adg->get_num_states(); ++i) {
       int iTime = values->at(i);
-      set<int> &outNeib = get_switchable_outNeib(graph, i);
+      auto &outNeib = adg->switchable_type2_edges->get_out_neighbor_global_ids(i);
       for (auto it : outNeib) {
         int j = it;
         int jTime = values->at(j);
@@ -150,9 +153,9 @@ tuple<int, int, int> Astar::branch(Graph &graph, shared_ptr<vector<int> > values
     }
   } else if (branch_order==BranchOrder::EARLIEST) {
     int earliest_t=INT_MAX;
-    for (int i = 0; i < get<3>(graph); i++) {
+    for (int i = 0; i < adg->get_num_states(); ++i) {
       int iTime = values->at(i);
-      set<int> &outNeib = get_switchable_outNeib(graph, i);
+      auto &outNeib = adg->switchable_type2_edges->get_out_neighbor_global_ids(i);
       for (auto it : outNeib) {
         int j = it;
         int jTime = values->at(j);
@@ -168,9 +171,9 @@ tuple<int, int, int> Astar::branch(Graph &graph, shared_ptr<vector<int> > values
   } else if (branch_order==BranchOrder::RANDOM) {
 
     std::vector<std::tuple<int,int,int> > tuples;
-    for (int i = 0; i < get<3>(graph); i++) {
+    for (int i = 0; i < adg->get_num_states(); ++i) {
       int iTime = values->at(i);
-      set<int> &outNeib = get_switchable_outNeib(graph, i);
+      auto &outNeib = adg->switchable_type2_edges->get_out_neighbor_global_ids(i);
       for (auto it : outNeib) {
         int j = it;
         int jTime = values->at(j);
@@ -193,13 +196,13 @@ tuple<int, int, int> Astar::branch(Graph &graph, shared_ptr<vector<int> > values
   return make_tuple(maxDiff, maxI, maxJ);
 }
 
-tuple<int, int, int> Astar::enhanced_branch(Graph &graph, shared_ptr<vector<int> > values) {
+tuple<int, int, int> Astar::enhanced_branch(const shared_ptr<Graph> & adg, const shared_ptr<vector<int> > & values) {
   int maxDiff = -1;
   int maxI = -1;
   int maxJ = -1;
-  for (int i = 0; i < get<3>(graph); i++) {
+  for (int i = 0; i < adg->get_num_states(); ++i) {
     int iTime = values->at(i);
-    set<int> &outNeib = get_switchable_outNeib(graph, i);
+    auto &outNeib = adg->switchable_type2_edges->get_out_neighbor_global_ids(i);
     for (auto it : outNeib) {
       int j = it;
       int backI = j+1;
@@ -231,11 +234,11 @@ tuple<int, int, int> Astar::enhanced_branch(Graph &graph, shared_ptr<vector<int>
   return make_tuple(maxDiff, maxI, maxJ);
 }
 
-bool Astar::terminated(Graph &graph, shared_ptr<vector<int> > values) {
+bool Astar::terminated(const shared_ptr<Graph> & adg, const shared_ptr<vector<int> > & values) {
   if (early_termination) {
-    for (int i = 0; i < get<3>(graph); i++) {
+    for (int i = 0; i < adg->get_num_states(); ++i) {
       int iTime = values->at(i);
-      set<int> &outNeib = get_switchable_outNeib(graph, i);
+      auto &outNeib = adg->switchable_type2_edges->get_out_neighbor_global_ids(i);
       for (auto it : outNeib) {
         int j = it;
         int backI = j+1;
@@ -253,9 +256,9 @@ bool Astar::terminated(Graph &graph, shared_ptr<vector<int> > values) {
     }
     return true;
   } else {
-    for (int i = 0; i < get<3>(graph); i++) {
+    for (int i = 0; i < adg->get_num_states(); ++i) {
       int iTime = values->at(i);
-      set<int> &outNeib = get_switchable_outNeib(graph, i);
+      auto &outNeib = adg->switchable_type2_edges->get_out_neighbor_global_ids(i);
       for (auto it : outNeib) {
         int j = it;
         int jTime = values->at(j);
@@ -342,12 +345,12 @@ void Astar::print_stats() {
     std::cout << "dfs time: " << dfsT.count() << "\n";
 }
 
-int Astar::count_double_conflicting_edge_groups(Graph &graph, shared_ptr<vector<int> > values) {
+int Astar::count_double_conflicting_edge_groups(const shared_ptr<Graph> & adg, const shared_ptr<vector<int> > & values) {
   set<int> double_conflicting_edge_groups;
   int cnt=0;
-  for (int i = 0; i < get<3>(graph); i++) {
+  for (int i = 0; i < adg->get_num_states(); ++i) {
     int iTime = values->at(i);
-    set<int> &outNeib = get_switchable_outNeib(graph, i);
+    auto & outNeib = adg->switchable_type2_edges->get_out_neighbor_global_ids(i);
     for (auto it : outNeib) {
       int j = it;
       int backI = j+1;
@@ -381,8 +384,7 @@ int Astar::count_double_conflicting_edge_groups(Graph &graph, shared_ptr<vector<
 
 
 // adg in parent_node might be changed by forward node, so don't use it.
-void Astar::add_node(ADG & adg, shared_ptr<SearchNode> & parent_node) {
-  Graph &graph = get<0>(adg);
+void Astar::add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode> & parent_node) {
 
   auto start_sort = high_resolution_clock::now();
   shared_ptr<vector<int> > newts_tv_init;
@@ -390,13 +392,14 @@ void Astar::add_node(ADG & adg, shared_ptr<SearchNode> & parent_node) {
   sortResult newInitResult = make_pair(newts_tv_init, newts_vt_init);
   shared_ptr<vector<int> > newts_tv;
   shared_ptr<vector<int> > newts_vt;
-  std::tie(newts_tv, newts_vt) = topologicalSort(graph, newInitResult, currents, -1, -1);
+  std::tie(newts_tv, newts_vt) = topologicalSort(*adg, newInitResult, currents, -1, -1);
+
   auto end_sort = high_resolution_clock::now();
   sortT += duration_cast<microseconds>(end_sort - start_sort);
 
   auto start_heuristic = high_resolution_clock::now();
   // initialize the array for longest path length from any current vertices to an agent's goal vertex.
-  auto node_values = make_shared<vector<int> >(get<3>(graph), 0);
+  auto node_values = make_shared<vector<int> >(adg->get_num_states(), 0);
   // compute the longest path length from any current vertices to an agent's goal vertex.
   auto g = heuristic_graph(adg, newts_tv, node_values);
   auto end_heuristic = high_resolution_clock::now();
@@ -420,9 +423,46 @@ void Astar::add_node(ADG & adg, shared_ptr<SearchNode> & parent_node) {
   }
 }
 
+void Astar::reverse_nonSwitchable_edges_basedOn_LongestPathValues(
+  const shared_ptr<Graph> & adg, 
+  const shared_ptr<vector<int> > & values
+) {
+  auto & times=*values;
+
+  std::vector<std::pair<int,int> > need_to_reverse;
 
 
-ADG Astar::exploreNode() {
+  for (int i = 0; i < adg->get_num_states(); ++i) {
+    auto &outNeib = adg->switchable_type2_edges->get_out_neighbor_global_ids(i);
+    for (auto it : outNeib) {
+      int j = it;
+      int time_i=times[i];
+      int time_j=times[j];
+
+      int back_i=j+1;
+      int back_j=i-1;
+      int time_back_i=times[back_i];
+      int time_back_j=times[back_j];
+
+      if (time_i>=time_j) {
+          if (time_back_i>=time_back_j) {
+              std::cout<<"error in set_switchable_nonSwitchable_basedOn_LongestPath: conflict not solved yet!"<<std::endl;
+              std::cout<<"time_i="<<time_i<<" time_j="<<time_j<<std::endl;
+              std::cout<<"time_back_i="<<time_back_i<<" time_back_j="<<time_back_j<<std::endl;
+              exit(200);
+          }
+          // need to reverse
+          need_to_reverse.emplace_back(i,j);
+      }
+    }
+  }
+
+  adg->fix_switchable_type2_edges(need_to_reverse, true);
+
+}
+
+
+shared_ptr<Graph> Astar::exploreNode() {
   auto start = high_resolution_clock::now();
   while (open_list->size() > 0) {
     explored_node_cnt += 1;
@@ -438,34 +478,20 @@ ADG Astar::exploreNode() {
     
     auto & adg = node->adg;
     auto & values = node->longest_path_lengths;
-    Graph &graph = get<0>(adg);
 
     int maxDiff, maxI, maxJ;
     auto start_branch = high_resolution_clock::now();
     // maxI, maxJ returns a type 2 edge to branch (maxDiff is useless for now)
     if (branch_order==BranchOrder::CONFLICT) {
-      std::tie(maxDiff, maxI, maxJ) = enhanced_branch(graph, values);  
+      std::tie(maxDiff, maxI, maxJ) = enhanced_branch(adg, values);  
     } else {
-      std::tie(maxDiff, maxI, maxJ) = branch(graph, values);
+      std::tie(maxDiff, maxI, maxJ) = branch(adg, values);
     }
     auto end_branch = high_resolution_clock::now();
     branchT += duration_cast<microseconds>(end_branch - start_branch);
 
-    bool terminate = true;
+    bool terminate = terminated(adg, values);
 
-    if (true) {
-      terminate = terminated(graph, values);
-    } else {
-      for (int v = 0; v < get<3>(graph); v ++) {
-        set<int>& outNeib = get_switchable_outNeib(graph, v);
-        if (outNeib.size() != 0) {
-          terminate = false;
-          maxI = v;
-          maxJ = *(outNeib.begin());
-          break;
-        }
-      }
-    }
     auto end_term = high_resolution_clock::now();
     termT += duration_cast<microseconds>(end_term - end_branch);
 
@@ -486,9 +512,10 @@ ADG Astar::exploreNode() {
 
      // return the current ADG by fix switchable edges to non-switchable.
       if (terminate && early_termination) {
-        reverse_nonSwitchable_edges_basedOn_LongestPathValues(get<0>(res), values);
+        reverse_nonSwitchable_edges_basedOn_LongestPathValues(adg, values);
       }
-      set_switchable_nonSwitchable(get<0>(res));
+
+      adg->fix_all_switchable_type2_edges();
 
       auto start_graph_free = high_resolution_clock::now();
       // we explicitly reset to count the time
@@ -499,37 +526,42 @@ ADG Astar::exploreNode() {
       return res;
     } else {
       auto start_graph_copy = high_resolution_clock::now();
-      ADG copy = copy_ADG(adg);
+      int agent1 = adg->get_agent_id(maxI);
+      int agent2 = adg->get_agent_id(maxJ);
+      shared_ptr<Graph> copy1 = adg->copy(agent1, agent2);
+      shared_ptr<Graph> copy2 = adg->copy(agent1, agent2);
       auto end_graph_copy = high_resolution_clock::now();
       copy_free_graphsT += duration_cast<microseconds>(end_graph_copy - start_graph_copy);
 
-      std::array<std::reference_wrapper<ADG>, 2> branch_adgs { adg, copy };
+      std::array<shared_ptr<Graph>, 2> branch_adgs { copy1,copy2 };
+      // TODO(rivers): this order may affect the focal search, because we don't have rules to break tie if g,h,num_sw are all the same.
+      // maybe we should break tie in the way that the edge should make less change (increase) to the longest distance of any nodes. In this way, the overall costs are less likely to increase.
+      // Then since the edge to be branched voilates its original direction, the best one is to keep the reverse direction?
       std::array<bool, 2> branch_reversing_flags { true, false };
 
       /* Following is the two branches. */
       for (int i=0;i<2;++i) {
-        auto & child_adg=branch_adgs[i].get();
+        auto & child_adg=branch_adgs[i];
         auto branch_reversing_flag=branch_reversing_flags[i];
-        auto & child_graph=std::get<0>(child_adg);
 
         // Fix the edge
         bool pruned;
         if (!use_grouping) {
-          auto fixed_edge=fix_switchable_edge(child_graph, maxI, maxJ, branch_reversing_flag);
+          auto fixed_edge=child_adg->fix_switchable_type2_edge(maxI, maxJ, branch_reversing_flag, true);
           auto start_dfs = high_resolution_clock::now();
-          pruned = check_cycle_dfs(child_graph, fixed_edge.first);
+          pruned = check_cycle_dfs(*child_adg, fixed_edge.first);
           auto end_dfs = high_resolution_clock::now();
           dfsT += duration_cast<microseconds>(end_dfs - start_dfs);
         } else {
           // get the group of edges
           std::vector<std::pair<int,int> > edges= group_manager->get_groupable_edges(maxI, maxJ);
-          auto fixed_edges=fix_switchable_edges(child_graph, edges, branch_reversing_flag);
+          auto fixed_edges=child_adg->fix_switchable_type2_edges(edges, branch_reversing_flag, true);
           auto start_dfs = high_resolution_clock::now();
           std::vector<int> out_states;
           std::for_each(std::begin(fixed_edges), std::end(fixed_edges), [&out_states](std::pair<int,int> & edge) {
               out_states.emplace_back(edge.first);
           });
-          pruned = check_cycle_dfs(child_graph,out_states);
+          pruned = check_cycle_dfs(*child_adg,out_states);
           auto end_dfs = high_resolution_clock::now();
           dfsT += duration_cast<microseconds>(end_dfs - start_dfs);
         }
@@ -555,9 +587,9 @@ ADG Astar::exploreNode() {
   // throw invalid_argument("no solution found");
 }
 
-ADG Astar::startExplore(ADG & adg, double cost, int input_sw_cnt, vector<int> & states) {
+shared_ptr<Graph> Astar::startExplore(const shared_ptr<Graph> & adg, double cost, vector<int> & states) {
   auto start_graph_free = high_resolution_clock::now();
-  init_adg=copy_ADG(adg);
+  init_adg=adg->copy();
   auto end_graph_free = high_resolution_clock::now();
   copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
   
@@ -565,27 +597,28 @@ ADG Astar::startExplore(ADG & adg, double cost, int input_sw_cnt, vector<int> & 
 
   open_list=std::make_shared<OpenList>(w_focal);
   
+  vertex_cnt = adg->get_num_states();
+  sw_edge_cnt = adg->get_num_switchable_edges();
+  agentCnt = adg->get_num_agents();
+  std::cout << "vertex_cnt = " << vertex_cnt << ", sw_edge_cnt = " << sw_edge_cnt << "\n";
+
   // TODO(rivers): if use grouping
   if (use_grouping) {
     // std::cout<<"input_sw_cnt: "<<input_sw_cnt<<std::endl;
     auto start = high_resolution_clock::now();
-    group_manager=std::make_shared<GroupManager>(adg, states);
+    group_manager=std::make_shared<GroupManager>(init_adg, states);
     auto end = high_resolution_clock::now();
     groupingT += duration_cast<microseconds>(end - start);
-    // std::cout<<"group size: "<<group_manager->groups.size()<<std::endl;
+    std::cout<<"group size: "<<group_manager->groups.size()<<std::endl;
    // group_manager->print_groups();
   }
 
-  vertex_cnt = get<3>(get<0>(adg));
-  sw_edge_cnt = input_sw_cnt;
-  // std::cout << "vertex_cnt = " << vertex_cnt << ", sw_edge_cnt = " << sw_edge_cnt << "\n";
-
   /* Graph-Based Search */
-  agentCnt = get_agentCnt(adg);
+  // BUG(rivers): why we start current at 0, would it be a bug? shouldn't we start with current states?
   for (int agent = 0; agent < agentCnt; agent ++) {
     // get current global vertex idx
-    int current = compute_vertex((*get<2>(adg)), agent, 0);
-    currents.push_back(current);
+    int global_state_id = adg->get_global_state_id(agent, 0);
+    currents.push_back(global_state_id);
   }
 
   auto fake_parent=std::make_shared<SearchNode>(0);

@@ -1,22 +1,19 @@
 #include "Algorithm/simulator.h"
 
-Simulator::Simulator(ADG input_adg) {
-  adg = input_adg;
-  vector<int> init_states(get_agentCnt(adg), 0);
+Simulator::Simulator(const shared_ptr<Graph> & adg): adg(adg) {
+  vector<int> init_states(adg->get_num_agents(), 0);
   states = init_states;
 }
 
-Simulator::Simulator(ADG input_adg, vector<int> visited_states) {
-  adg = input_adg;
-  states = visited_states;
-}
+Simulator::Simulator(const shared_ptr<Graph> & adg, vector<int> visited_states): adg(adg), states(visited_states) {}
 
+// [Q] rivers: what is switchCheck?
 int Simulator::checkMovable(vector<int>& movable, bool switchCheck) {
   int timeSpent = 0;
-  int agentCnt = get_agentCnt(adg);
+  int agentCnt = adg->get_num_agents();
   for (int agent = 0; agent < agentCnt; agent++) {
     int state = states[agent];
-    if (state >= get_stateCnt(adg, agent) - 1) {
+    if (state >= adg->get_num_states(agent) - 1) {
       continue;
     }
     timeSpent += 1;
@@ -24,82 +21,13 @@ int Simulator::checkMovable(vector<int>& movable, bool switchCheck) {
 
     vector<pair<int, int>> dependencies;
     if (!switchCheck) {
-      dependencies = get_nonSwitchable_inNeibPair(adg, agent, next_state);
+      dependencies = adg->get_non_switchable_in_neighbor_pairs(agent, next_state);
     } else {
-      dependencies = get_inNeibPair(adg, agent, next_state);
+      dependencies = adg->get_in_neighbor_pairs(agent, next_state);
     }
 
     movable[agent] = 1;
-    for (pair<int, int> dependency: dependencies) {
-      int dep_agent = get<0>(dependency);
-      int dep_state = get<1>(dependency);
-      
-      if (dep_agent != agent) {
-        if (dep_state > states[dep_agent]) {
-          movable[agent] = 0;
-          break;
-        }
-      }
-    }
-  }
-  return timeSpent;
-}
-
-bool Simulator::incident_to_switchable(int & v_from, int & v_to) {
-  int agentCnt = get_agentCnt(adg);
-  Graph &graph = get<0>(adg);
-  for (int agent = 0; agent < agentCnt; agent++) {
-    int state = states[agent];
-    if (state >= get_stateCnt(adg, agent) - 1) continue;
-
-    state += 1;
-    // get switchable type-2 edges from others pointing to this state
-    set<int>& inNeib = get_switchable_inNeib(graph, compute_vertex((*get<2>(adg)), agent, state));
-    for (auto it = inNeib.begin(); it != inNeib.end(); it++) {
-      int from = *it;
-      v_from = from;
-      v_to = compute_vertex((*get<2>(adg)), agent, state);
-      return true;
-    }
-
-    if (state >= get_stateCnt(adg, agent) - 1) continue;
-    
-    
-    state += 1;
-    // get switchable type-2 edges from this state pointing to others
-    set<int>& outNeib = get_switchable_outNeib(graph, compute_vertex((*get<2>(adg)), agent, state));
-    for (auto it = outNeib.begin(); it != outNeib.end(); it++) {
-      int to = *it;
-      v_to = to;
-      v_from = compute_vertex((*get<2>(adg)), agent, state);
-      return true;
-    }
-  }
-  return false;
-}
-
-// check if each agent is movable and doesn't arrive at its goal. haventStop=notArriveGoal
-int Simulator::checkMovable(vector<int>& movable, vector<int>& haventStop, bool switchCheck) {
-  int timeSpent = 0;
-  int agentCnt = get_agentCnt(adg);
-  for (int agent = 0; agent < agentCnt; agent++) {
-    int state = states[agent];
-    if (state >= get_stateCnt(adg, agent) - 1) {
-      continue;
-    }
-    timeSpent += 1;
-    int next_state = state + 1;
-
-    vector<pair<int, int>> dependencies;
-    if (!switchCheck) {
-      dependencies = get_nonSwitchable_inNeibPair(adg, agent, next_state);
-    } else {
-      dependencies = get_inNeibPair(adg, agent, next_state);
-    }
-
-    movable[agent] = 1;
-    haventStop[agent] = 1;
-    for (pair<int, int> dependency: dependencies) {
+    for (auto & dependency: dependencies) {
       int dep_agent = get<0>(dependency);
       int dep_state = get<1>(dependency);
       
@@ -115,7 +43,7 @@ int Simulator::checkMovable(vector<int>& movable, vector<int>& haventStop, bool 
 }
 
 int Simulator::step(bool switchCheck) {
-  int agentCnt = get_agentCnt(adg);
+  int agentCnt = adg->get_num_agents();
   vector<int> movable(agentCnt, 0);
   int timeSpent = checkMovable(movable, switchCheck);
   int moveCnt = 0;
@@ -128,10 +56,10 @@ int Simulator::step(bool switchCheck) {
   }
   if (moveCnt == 0 && timeSpent != 0) {
     std::cout << "err: "<<moveCnt<<" "<<timeSpent<<std::endl;
-    Paths &paths = (*get<1>(adg));
-    int agentCnt=get_agentCnt(adg);
+    Paths &paths = *adg->paths;
+    int agentCnt = adg->get_num_agents();
     for (auto agent=0;agent<agentCnt;++agent) {
-      cout<<agent<<": "<<states[agent]<<" "<<get_stateCnt(adg, agent)-1<<std::endl;
+      cout<<agent<<": "<<states[agent]<<" "<<adg->get_num_states(agent)-1<<std::endl;
       Location new_location = get<0>((paths[agent])[(states[agent])]);
       cout<<new_location.first<<" "<<new_location.second<<std::endl;
     }
@@ -154,8 +82,8 @@ int Simulator::print_soln(const char* outFileName) {
 
   if (outFile.is_open()) {
     vector<vector<Location>> expanded_paths;
-    int agentCnt = get_agentCnt(adg);
-    Paths &paths = (*get<1>(adg));
+    int agentCnt = adg->get_num_agents();
+    Paths &paths = *adg->paths;
 
     for (int agent = 0; agent < agentCnt; agent ++) {
       vector<Location> expanded_path;
@@ -173,7 +101,7 @@ int Simulator::print_soln(const char* outFileName) {
       // outFile << "step=" << stepSpend << "\n";
       for (int agent = 0; agent < agentCnt; agent ++) {
         Location new_location = get<0>((paths[agent])[(states[agent])]);
-        if (!((same_locations(new_location, (expanded_paths[agent]).back())) && 
+        if (!((new_location==expanded_paths[agent].back()) && 
             ((size_t)(states[agent]) == (paths[agent]).size() - 1))) {
           (expanded_paths[agent]).push_back(new_location);
         }

@@ -4,7 +4,7 @@
 
 struct SearchNode {
     SearchNode(
-        const ADG & adg, 
+        const shared_ptr<Graph> & adg, 
         const double g, 
         const double h, 
         const shared_ptr<vector<int> > & longest_path_lengths,
@@ -21,7 +21,7 @@ struct SearchNode {
 
     SearchNode(double f): f(f) {};
 
-    ADG adg;
+    shared_ptr<Graph> adg;
     double g;
     double h;
     shared_ptr<vector<int> > longest_path_lengths;

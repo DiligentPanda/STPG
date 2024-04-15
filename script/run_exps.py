@@ -24,7 +24,7 @@ branch_orders=["largest_diff"] #,"random","earliest"]
 use_groupings=["true"]
 heuristics=["wcg_greedy"]
 early_terminations=["true"]
-w_focals=[1.0,1.25,1.5,1.75,2.0,2.25,2.5,2.75,3.0]
+w_focals=[1.0,1.1]
 MAX_VIRTUAL_MEMORY = 8 * 1024 * 1024 # 8 GB
 skip=False
 
@@ -162,6 +162,6 @@ for map_name,setting in maps.items():
     pool.starmap(run,zip(cmds,output_names))
     
 subprocess.check_output(f"python script/get_stats.py -f {output_folder}", shell=True) 
-subprocess.check_output(f"python script/get_stats.py -f {output_folder} -a", shell=True) 
+subprocess.check_output(f"python script/get_stats.py -f {output_folder} -s", shell=True) 
 subprocess.check_output(f"python script/get_stats.py -f {output_folder} -g", shell=True) 
-subprocess.check_output(f"python script/get_stats.py -f {output_folder} -a -g", shell=True) 
+subprocess.check_output(f"python script/get_stats.py -f {output_folder} -s -g", shell=True) 

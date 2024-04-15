@@ -7,7 +7,7 @@ import argparse
 arg_parser=argparse.ArgumentParser()
 arg_parser.add_argument("-f","--folder",type=str,default="")
 arg_parser.add_argument("-c","--check_missing",action="store_true")
-arg_parser.add_argument("-a","--only_all_solved",action="store_true")
+arg_parser.add_argument("-s","--only_all_solved",action="store_true")
 arg_parser.add_argument("-g","--group_agent_num",action="store_true")
 
 args=arg_parser.parse_args()
@@ -41,7 +41,7 @@ branch_orders=["default","conflict","largest_diff","random","earliest"]
 use_groupings=["false","true"]
 heuristics=["zero","cg_greedy","wcg_greedy"]
 early_terminations=["false","true"]
-w_focals=[1.0,1.25,1.5,1.75,2.0,2.25,2.5,2.75,3.0]
+w_focals=[1.0,1.1]
 
 settings=[]
 for algo in algos:

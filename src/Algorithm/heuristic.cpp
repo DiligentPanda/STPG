@@ -1,15 +1,13 @@
 #include "Algorithm/heuristic.h"
-#include "ADG/ADG_utilities.h"
-#include "graph/graph.h"
 #include <unordered_set>
 
 HeuristicManager::HeuristicManager(HeuristicType _type):type(_type) {
 
 }
 
-double HeuristicManager::computeInformedHeuristics(ADG & adg, vector<int> & tp_ordered_states, vector<int> & tp_times, double time_limit) {
+double HeuristicManager::computeInformedHeuristics(const shared_ptr<Graph> & adg, const vector<int> & tp_ordered_states, const vector<int> & tp_times, double time_limit) {
     // TODO: add timer
-    int num_of_agents=get_agentCnt(adg);
+    int num_of_agents=adg->get_num_agents();
 
     vector<int> HG(num_of_agents*num_of_agents,0);
     int h=0;
@@ -30,16 +28,15 @@ double HeuristicManager::computeInformedHeuristics(ADG & adg, vector<int> & tp_o
     return h;
 }
 
-void HeuristicManager::buildCardinalConflictGraph(ADG & adg, vector<int> & tp_ordered_states, vector<int> & tp_times, vector<int> & CG, bool weighted) {
-    int num_of_agents=get_agentCnt(adg);
-    auto & graph=get<0>(adg);
-    int num_of_states=get<3>(graph);
+void HeuristicManager::buildCardinalConflictGraph(const shared_ptr<Graph> & adg, const vector<int> & tp_ordered_states, const vector<int> & tp_times, vector<int> & CG, bool weighted) {
+    int num_of_agents=adg->get_num_agents();
+    int num_of_states=adg->get_num_states();
 
     // TODO(rivers): this can computed during the forward computation.
     // a map from a state to a set of agent indexs.
     std::vector<std::unordered_set<int> > on_whose_critical_paths(num_of_states);
 
-    auto & accum_state_cnts=(*get<2>(adg));
+    auto & accum_state_cnts=*adg->accum_state_cnts_end;
 
     // initialize the last state for each agent
     for (auto i=0;i<num_of_agents;++i) {
@@ -52,7 +49,7 @@ void HeuristicManager::buildCardinalConflictGraph(ADG & adg, vector<int> & tp_or
     for (int i=(int)tp_ordered_states.size()-1;i>=0;--i) {
         int state_idx=tp_ordered_states[i];
         if (on_whose_critical_paths[state_idx].size()==0) {
-            auto successors=get_nonSwitchable_outNeib(graph, state_idx);
+            auto && successors=adg->get_out_neighbor_global_ids(state_idx);
             for (auto successor: successors) {
                 // NOTE(rivers): this is specific to the discrete-time case, where time diff==1 means no wait.
                 if (tp_times[state_idx]+1==tp_times[successor]) {
@@ -66,9 +63,9 @@ void HeuristicManager::buildCardinalConflictGraph(ADG & adg, vector<int> & tp_or
     }
 
     // get all conflicts
-    for (int i=0;i<get<3>(graph);++i) {
+    for (int i=0;i<num_of_states;++i) {
         int i_time=tp_times[i];
-        set<int> & in_state_idxs = get_switchable_outNeib(graph, i);
+        auto & in_state_idxs = adg->switchable_type2_edges->get_out_neighbor_global_ids(i);
         for (auto j: in_state_idxs) {
             int j_time=tp_times[j];
             int back_i=j+1;

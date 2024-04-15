@@ -1,5 +1,4 @@
 #pragma once
-#include "types.h"
 #include <queue>
 #include "Algorithm/SearchNode.h"
 #include <cstdlib>

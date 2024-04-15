@@ -5,7 +5,6 @@
 #include <chrono>
 using namespace std::chrono;
 
-#include "ADG/ADG_utilities.h"
 #include "simulator.h"
 #include "nlohmann/json.hpp"
 #include "group/group.h"
@@ -13,7 +12,9 @@ using namespace std::chrono;
 #include <vector>
 #include "Algorithm/heuristic.h"
 #include "Algorithm/SearchNode.h"
+#include "Algorithm/graph.h"
 #include "OpenList.h"
+#include <random>
 
 enum BranchOrder {
   DEFAULT,
@@ -38,10 +39,10 @@ class Astar {
       double _w_focal=1.0,
       uint random_seed=0
     );
-    ADG startExplore(ADG &adg, double cost, int input_sw_cnt, vector<int> & states);
-    double heuristic_graph(ADG &adg, shared_ptr<vector<int> > & topological_sort_order, shared_ptr<vector<int> > & longest_path_lengths);
+    shared_ptr<Graph> startExplore(const shared_ptr<Graph> & adg, double cost, vector<int> & states);
+    double heuristic_graph(const shared_ptr<Graph> & adg, const shared_ptr<vector<int> > & topological_sort_order, const shared_ptr<vector<int> > & longest_path_lengths);
 
-    int compute_partial_cost(ADG &adg);
+    int compute_partial_cost(const shared_ptr<Graph> & adg);
 
     void print_stats();
     void print_stats(ofstream &outFile);
@@ -49,13 +50,14 @@ class Astar {
 
   private:
     int calcTime(Simulator simulator);
-    ADG exploreNode();
-    tuple<int, int, int> enhanced_branch(Graph &graph, shared_ptr<vector<int> > values);
-    tuple<int, int, int> branch(Graph &graph, shared_ptr<vector<int> > values);
-    bool terminated(Graph &graph, shared_ptr<vector<int> > values);
-    int count_double_conflicting_edge_groups(Graph &graph, shared_ptr<vector<int> > values);
+    shared_ptr<Graph> exploreNode();
+    tuple<int, int, int> enhanced_branch(const shared_ptr<Graph> & adg, const shared_ptr<vector<int> > & values);
+    tuple<int, int, int> branch(const shared_ptr<Graph> & adg, const shared_ptr<vector<int> > & values);
+    bool terminated(const shared_ptr<Graph> & adg, const shared_ptr<vector<int> > & values);
+    int count_double_conflicting_edge_groups(const shared_ptr<Graph> & adg, const shared_ptr<vector<int> > & values);
+    void reverse_nonSwitchable_edges_basedOn_LongestPathValues(const shared_ptr<Graph> & adg, const shared_ptr<vector<int> > & values);
 
-    void add_node(ADG & adg, shared_ptr<SearchNode> & parent_node);
+    void add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode> & parent_node);
 
     microseconds extraHeuristicT = std::chrono::microseconds::zero();
     microseconds groupingT = std::chrono::microseconds::zero();
@@ -79,23 +81,23 @@ class Astar {
     int timeout = 300;
 
     vector<int> currents;
-    std::shared_ptr<OpenList> open_list;
+    shared_ptr<OpenList> open_list;
     int agentCnt = 0;
 
     bool fast_version = false;
     BranchOrder branch_order=BranchOrder::DEFAULT;  
-    std::mt19937 rng;
+    mt19937 rng;
 
     bool use_grouping=false;
-    std::shared_ptr<GroupManager> group_manager;
-    std::shared_ptr<HeuristicManager> heuristic_manager;
+    shared_ptr<GroupManager> group_manager;
+    shared_ptr<HeuristicManager> heuristic_manager;
 
     bool early_termination = false;
 
     double w_astar = 1.0;
     double w_focal = 1.0;
 
-    ADG init_adg;
+    shared_ptr<Graph> init_adg;
     double init_cost;
 };
 #endif

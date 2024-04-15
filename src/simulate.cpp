@@ -5,171 +5,6 @@
 
 using json=nlohmann::json;
 
-// print the state in which replanning (Switchable ADG optimization) happens.
-// The state include the current locations and target locations of all agents.
-void print_for_replanning(ADG &adg, vector<int> states, ofstream &outFile_path) {
-  outFile_path << "version 1\n";
-  int agentCnt = get_agentCnt(adg);
-  for (int agent = 0; agent < agentCnt; agent ++) {
-    outFile_path << "4	random-32-32-10.map	32	32	";
-    Location l = get_state_target(adg, agent, states[agent]);
-    Location e = get_state_target(adg, agent, get_stateCnt(adg, agent)-1);
-    outFile_path << get<1>(l) << "	" << get<0>(l) << "	" << get<1>(e) << "	" << get<0>(e) << "	18.72792206\n";
-  }
-}
-
-int Simulator::step_wdelay(int p, bool &delay_mark, vector<int> &delayed_agents) {
-  int agentCnt = get_agentCnt(adg);
-
-  random_device rd;  
-  mt19937 gen(rd());
-  uniform_int_distribution<> distrib(1, 1000);
-
-  // if dependencies are satisified, then an agent is movable
-  vector<int> movable(agentCnt, 0);
-  // if an agent arrives its goal, then it has stopped.
-  vector<int> haventStop(agentCnt, 0);
-  int timeSpent = checkMovable(movable, haventStop, true);
-  int moveCnt = 0;
-
-  for (int agent = 0; agent < agentCnt; agent++) {
-    if (haventStop[agent] == 1) {
-      // each agent is delayed independently
-      if (distrib(gen) <= p) {
-        delayed_agents[agent] = 1;
-        delay_mark = true;
-      }
-    }
-  }
-
-  // if delayed
-  if (delay_mark) {
-    return 0;
-  }
-
-  for (int agent = 0; agent < agentCnt; agent++) {
-    if (movable[agent] == 1) {
-      // an agent moves to its next state if moveable
-      states[agent] += 1;
-      moveCnt += 1;
-    }
-  }
-  // if no agent can move but still cost time (namely, some agents haven't arrive their goals)
-  // this means a global deadlock happens.
-  if (moveCnt == 0 && timeSpent != 0) {
-    return -1;
-  }
-  // return total time cost in this timestep.
-  return timeSpent;
-}
-
-int Simulator::simulate_wdelay(int p, int dlow, int dhigh, ofstream &outFile, ofstream &outFile_slow, ofstream &outFile_path, ofstream &outFile_setup, const char * outFileName_Execution, int timeout) {
-  int agentCnt = get_agentCnt(adg);
-  int stepSpend = 1;
-  bool delay_mark = false;
-  vector<int> delayed_agents(agentCnt, 0);
-
-  while (stepSpend != 0) {
-    stepSpend = step_wdelay(p, delay_mark, delayed_agents);
-    // if a delay just happened
-    // NOTE(rivers): multiple agents can be delayed independently at the same timestep.
-    if (delay_mark)
-    {
-      print_for_replanning(adg, states, outFile_path);
-      outFile_path.close();
-      // int delayed_state = states[delayed_agent];
-
-      // switchable edge count
-      int input_sw_cnt;
-
-      // construct the delayed ADG by inserting dummy nodes
-      microseconds timer_constructADG(0);
-      auto start = high_resolution_clock::now();
-      ADG adg_delayed = construct_delayed_ADG(adg, dlow, dhigh, delayed_agents, states, input_sw_cnt, outFile_setup);
-      outFile_setup.close();
-      auto stop = high_resolution_clock::now();
-      timer_constructADG += duration_cast<microseconds>(stop - start);
-
-      ADG adg_delayed_copy = copy_ADG(adg_delayed);
-      set_switchable_nonSwitchable(get<0>(adg_delayed_copy));
-      // simulate from the initial state
-      Simulator simulator_original(adg_delayed_copy);
-      int originalTime = simulator_original.print_soln();
-      // simulate from the current state
-      Simulator simulator_ori_trunc(adg_delayed_copy, states);
-      int oriTime_trunc = simulator_ori_trunc.print_soln();
-
-      // make a copy of delayed ADG for slow search later
-      ADG adg_delayed_slow = copy_ADG(adg_delayed);
-
-      /* [start] Optimize Switchable ADG use graph-based search */
-      microseconds timer(0);
-      start = high_resolution_clock::now();
-      Astar search(timeout, true);
-      ADG replanned_adg = search.startExplore(adg_delayed, originalTime, input_sw_cnt, states);
-      stop = high_resolution_clock::now();
-      timer += duration_cast<microseconds>(stop - start);
-
-      if (duration_cast<seconds>(timer).count() >= timeout) {
-        outFile << timer.count() << "," << 
-        timer.count() + timer_constructADG.count() << ",,,,,";
-        search.print_stats(outFile);
-        exit(0);
-      }
-      
-      Simulator simulator_res(replanned_adg);
-      int timeSum = simulator_res.print_soln(outFileName_Execution);
-      Simulator simulator_res_trunc(replanned_adg, states);
-      int timeSum_trunc = simulator_res_trunc.print_soln();
-
-      outFile << timer.count() << "," << 
-      timer.count() + timer_constructADG.count() << "," << 
-      originalTime << "," <<
-      timeSum << "," << 
-      oriTime_trunc << "," <<
-      timeSum_trunc << ",";
-      
-      search.print_stats(outFile);
-      /* [ end ] Optimize Switchable ADG use graph-based search */
-
-      /* [start] Optimize Switchable ADG use simulation-based search */
-      microseconds timer_slow(0);
-      start = high_resolution_clock::now();
-      Astar search_slow(timeout, false);
-      ADG replanned_slow = search_slow.startExplore(adg_delayed_slow, originalTime, input_sw_cnt, states);
-      stop = high_resolution_clock::now();
-      timer_slow += duration_cast<microseconds>(stop - start);
-
-      if (duration_cast<seconds>(timer_slow).count() >= timeout) {
-        outFile_slow << timer_slow.count() << "," << 
-        timer_slow.count() + timer_constructADG.count() << ",,,,,";
-        search_slow.print_stats(outFile_slow);
-        exit(0);
-      }
-      
-      Simulator simulator_slow(replanned_slow);
-      timeSum = simulator_slow.print_soln();
-      Simulator simulator_slow_trunc(replanned_slow, states);
-      timeSum_trunc = simulator_slow_trunc.print_soln();
-
-      outFile_slow << timer_slow.count() << "," << 
-      timer_slow.count() + timer_constructADG.count() << "," << 
-      originalTime << "," <<
-      timeSum << "," << 
-      oriTime_trunc << "," <<
-      timeSum_trunc << ",";
-      
-      search_slow.print_stats(outFile_slow);
-      exit(0);
-      /* [ end ] Optimize Switchable ADG use simulation-based search */
-
-    }
-    if (stepSpend < 0) return -1; // stuck
-  }
-  std::cout << "no delay happened\n";
-  return 0;
-}
-
 void simulate(
   const string & path_fp, 
   const string & sit_fp, 
@@ -185,11 +20,11 @@ void simulate(
   const string & stat_ofp, 
   const string & new_path_ofp
 ) {
-  ADG adg=construct_ADG(path_fp.c_str());
+  auto adg=construct_ADG(path_fp.c_str());
   ifstream in(sit_fp);
   json data=json::parse(in);
 
-  size_t agent_num=get_agentCnt(adg);
+  size_t agent_num=adg->get_num_agents();
 
   vector<int> states=data.at("states").get<vector<int> >();
   vector<int> delay_steps=data.at("delay_steps").get<vector<int> >();
@@ -200,25 +35,24 @@ void simulate(
     exit(50);
   }
 
-  // switchable edge count
-  int input_sw_cnt;
-
   // construct the delayed ADG by inserting dummy nodes
   microseconds timer_constructADG(0);
   auto start = high_resolution_clock::now();
-  ADG adg_delayed = construct_delayed_ADG(adg, delay_steps, states, input_sw_cnt);
+  auto adg_delayed = construct_delayed_ADG(adg, delay_steps, states);
   auto stop = high_resolution_clock::now();
   timer_constructADG += duration_cast<microseconds>(stop - start);
 
   // simulate without replanning
-  ADG adg_delayed_copy = copy_ADG(adg_delayed);
-  set_switchable_nonSwitchable(get<0>(adg_delayed_copy));
+  auto adg_delayed_copy = adg_delayed->copy();
+  adg_delayed_copy->fix_all_switchable_type2_edges();
   // simulate from the initial state
   Simulator simulator_original(adg_delayed_copy);
   int originalTime = simulator_original.print_soln();
   // simulate from the current state
   Simulator simulator_ori_trunc(adg_delayed_copy, states);
   int oriTime_trunc = simulator_ori_trunc.print_soln();
+
+  cout<<"original_total_cost: "<<originalTime<<", original_trunc_cost: "<<oriTime_trunc<<endl;
 
   // replanning ADG
   shared_ptr<Astar> search=make_shared<Astar>(
@@ -283,7 +117,7 @@ void simulate(
 
   microseconds timer(0);
   start = high_resolution_clock::now();
-  ADG replanned_adg = search->startExplore(adg_delayed, originalTime, input_sw_cnt, states);
+  auto replanned_adg = search->startExplore(adg_delayed, originalTime, states);
   stop = high_resolution_clock::now();
   timer += duration_cast<microseconds>(stop - start);
 
@@ -294,6 +128,8 @@ void simulate(
     int timeSum = simulator_res.print_soln(new_path_ofp.c_str());
     Simulator simulator_res_trunc(replanned_adg, states);
     int timeSum_trunc = simulator_res_trunc.print_soln();
+
+    cout<<"optimized_total_cost: "<<timeSum<<", optimized_trunc_cost: "<<timeSum_trunc<<endl;
 
     stats["status"]="Succ";
     stats["search_time"]=timer.count();
