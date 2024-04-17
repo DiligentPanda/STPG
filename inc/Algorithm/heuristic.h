@@ -14,8 +14,19 @@ public:
 
     HeuristicManager(HeuristicType type);
 
-    double computeInformedHeuristics(const shared_ptr<Graph> & graph, const vector<int> & tp_ordered_states, const vector<int> & tp_times, double time_limit);
-    void buildCardinalConflictGraph(const shared_ptr<Graph> & graph, const vector<int> & tp_ordered_states, const vector<int> & tp_times, vector<int> & CG, bool weighted);
+    double computeInformedHeuristics(
+        const shared_ptr<Graph> & graph, 
+        const vector<int> & longest_paths, 
+        const vector<map<int,int> > & reverse_longest_paths,
+        double time_limit
+    );
+    void buildCardinalConflictGraph(
+        const shared_ptr<Graph> & graph, 
+        const vector<int> & longest_paths, 
+        const vector<map<int,int> > & reverse_longest_paths,
+        vector<int> & CG, 
+        bool weighted
+    );
     double greedyMatching(const std::vector<int> & CG, int num_vertices);
 
 };

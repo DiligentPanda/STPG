@@ -1,5 +1,6 @@
 #include "Algorithm/graph.h"
 #include <queue>
+#include <map>
 
 bool isCyclicUtil(Graph &graph, int v, vector<bool> &visited,
                          vector<bool> &recStack)
@@ -177,4 +178,94 @@ shared_ptr<vector<int> > compute_longest_paths(const shared_ptr<vector<int> > & 
     }
 
     return longest_path_lengths_ptr;
+}
+
+shared_ptr<vector<map<int,int> > > compute_reverse_longest_paths(
+    const shared_ptr<vector<map<int,int> > > & old_reverse_longest_path_lengths_ptr, 
+    const shared_ptr<vector<int> > & longest_path_lengths_ptr, // we use the new longest_path_lengths, which is essentially the topoligical order for efficient udpate.
+    const shared_ptr<Graph> & graph, 
+    vector<pair<int,int> > & fixed_edges
+    ) {
+    // BUG(rivers): NOTE: here we start from the initial state, which is not necessary or even buggy. We should start from the current state
+    if (fixed_edges.size() == 0) {
+        // init case: there is only type 1 edges, which is easy
+        auto & reverse_longest_path_length = *old_reverse_longest_path_lengths_ptr;
+        for (int agent_id=0; agent_id<graph->get_num_agents(); agent_id++) {
+            int num_states = graph->get_num_states(agent_id);
+            for (int state_id=0; state_id<num_states; state_id++) {
+                int global_state_id=graph->get_global_state_id(agent_id, state_id);
+                reverse_longest_path_length[global_state_id][agent_id] = num_states-1-state_id;
+            }
+        }
+        return old_reverse_longest_path_lengths_ptr;
+    }
+
+    bool no_need_to_update=true;
+    auto & old_reverse_longest_path_lengths = *old_reverse_longest_path_lengths_ptr;
+    for (auto & edge: fixed_edges) {
+        for (auto & p: old_reverse_longest_path_lengths[edge.second]) {
+            if (old_reverse_longest_path_lengths[edge.first].find(p.first)==old_reverse_longest_path_lengths[edge.first].end() || p.second+1>old_reverse_longest_path_lengths[edge.first][p.first]) {
+                no_need_to_update=false;
+                break;
+            }
+        }
+    }
+
+    if (no_need_to_update) {
+        return old_reverse_longest_path_lengths_ptr;
+    }
+
+    // the newly added edge from start state to end state.
+    // we will update longest path lengths incrementally from the edge end_state
+    // TODO(rivers): check whether it is a min heap
+    auto reverse_longest_path_lengths_ptr=make_shared<vector<map<int,int> > >(*old_reverse_longest_path_lengths_ptr);
+    auto & reverse_longest_path_lengths=*reverse_longest_path_lengths_ptr;
+    auto & longest_path_lengths = *longest_path_lengths_ptr;
+
+    std::vector<bool> visited(graph->get_num_states(), false);
+    // we should use a max heap for the backward propagation
+    std::priority_queue<pair<int, int>, vector<pair<int, int> >, less<pair<int, int> > > pq;
+
+    for (auto & p: fixed_edges) {
+        visited[p.first] = true;
+        pq.emplace(longest_path_lengths[p.first], p.first);
+    }
+
+    while (!pq.empty()) {
+        auto top = pq.top();
+        pq.pop();
+        int state = top.second;
+
+        // update the 
+        auto && successors = graph->get_out_neighbor_global_ids(state);
+        for (auto successor: successors) {
+            for (auto & p: reverse_longest_path_lengths[successor]) {
+                if (reverse_longest_path_lengths[state].find(p.first)==reverse_longest_path_lengths[state].end() || p.second+1>reverse_longest_path_lengths[state][p.first]) {
+                    reverse_longest_path_lengths[state][p.first] = p.second+1;
+                }
+            }
+        }
+
+        auto && predecessors = graph->get_in_neighbor_global_ids(state);
+        for (auto predecessor: predecessors) {
+            if (!visited[predecessor]) {
+                bool no_need_to_update=true;
+                for (auto & p: reverse_longest_path_lengths[state]) {
+                    if (reverse_longest_path_lengths[predecessor].find(p.first)==reverse_longest_path_lengths[predecessor].end() || p.second+1>reverse_longest_path_lengths[predecessor][p.first]) {
+                        no_need_to_update=false;
+                        break;
+                    }
+                }
+
+                if (no_need_to_update) {
+                    continue;
+                }
+ 
+                visited[predecessor] = true;
+                pq.emplace(longest_path_lengths[predecessor], predecessor);
+            }
+        }
+    }
+
+    return reverse_longest_path_lengths_ptr;
 }

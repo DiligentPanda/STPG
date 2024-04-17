@@ -7,6 +7,7 @@
 #include <utility>
 #include <memory>
 #include <iostream>
+#include <map>
 
 // TODO(rivers): bad habit. fix this.
 using namespace std;

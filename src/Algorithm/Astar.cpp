@@ -403,24 +403,26 @@ void Astar::add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode>
   // auto node_values = make_shared<vector<int> >(parent_node->longest_path_lengths);
   // compute the longest path length from any current vertices to an agent's goal vertex.
   // auto g = heuristic_graph(adg, newts_tv, node_values);
-  auto node_values = compute_longest_paths(parent_node->longest_path_lengths, adg, fixed_edges);
+  auto longest_path_lengths = compute_longest_paths(parent_node->longest_path_lengths, adg, fixed_edges);
   double g = 0;
   for (int agent_id=0;agent_id<adg->get_num_agents();++agent_id) {
     int goal_state=adg->get_global_state_id(agent_id, adg->get_num_states(agent_id)-1);
-    g+=node_values->at(goal_state);
+    g+=longest_path_lengths->at(goal_state);
   }
   auto end_heuristic = high_resolution_clock::now();
   heuristicT += duration_cast<microseconds>(end_heuristic - start_heuristic);
 
   auto start = high_resolution_clock::now();
-  auto h= heuristic_manager->computeInformedHeuristics(adg, *newts_tv, *node_values, 0);
+  auto reverse_longest_path_lengths=compute_reverse_longest_paths(parent_node->reverse_longest_path_lengths, longest_path_lengths, adg, fixed_edges);
+
+  auto h= heuristic_manager->computeInformedHeuristics(adg, *longest_path_lengths, *reverse_longest_path_lengths, 0);
   auto end = high_resolution_clock::now();
   extraHeuristicT += duration_cast<microseconds>(end - start);
 
   if (g+h<init_cost) {
     int num_sw=parent_node->num_sw-1;
     // int num_sw=count_double_conflicting_edge_groups(graph, node_values);
-    auto child_node = std::make_shared<SearchNode>(adg, g, h*w_astar, node_values, num_sw);
+    auto child_node = std::make_shared<SearchNode>(adg, g, h*w_astar, longest_path_lengths, reverse_longest_path_lengths, num_sw);
     auto start_pq_push = high_resolution_clock::now();
     open_list->push(child_node);
     auto end_pq_push = high_resolution_clock::now();
@@ -637,6 +639,7 @@ shared_ptr<Graph> Astar::startExplore(const shared_ptr<Graph> & adg, double cost
     fake_parent->num_sw=sw_edge_cnt;
   }
   fake_parent->longest_path_lengths=make_shared<vector<int> >(adg->get_num_states(), 0);
+  fake_parent->reverse_longest_path_lengths=make_shared<vector<map<int,int> > >(adg->get_num_states());
   fake_parent->num_sw=sw_edge_cnt;
   vector<pair<int,int> > fixed_edges;
   add_node(adg, fake_parent, fixed_edges);
