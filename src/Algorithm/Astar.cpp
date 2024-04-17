@@ -388,12 +388,12 @@ int Astar::count_double_conflicting_edge_groups(const shared_ptr<Graph> & adg, c
 void Astar::add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode> & parent_node, vector<std::pair<int,int> > & fixed_edges) {
 
   auto start_sort = high_resolution_clock::now();
-  shared_ptr<vector<int> > newts_tv_init;
-  shared_ptr<vector<int> > newts_vt_init;
-  sortResult newInitResult = make_pair(newts_tv_init, newts_vt_init);
-  shared_ptr<vector<int> > newts_tv;
-  shared_ptr<vector<int> > newts_vt;
-  std::tie(newts_tv, newts_vt) = topologicalSort(*adg, newInitResult, currents, -1, -1);
+  // shared_ptr<vector<int> > newts_tv_init;
+  // shared_ptr<vector<int> > newts_vt_init;
+  // sortResult newInitResult = make_pair(newts_tv_init, newts_vt_init);
+  // shared_ptr<vector<int> > newts_tv;
+  // shared_ptr<vector<int> > newts_vt;
+  // std::tie(newts_tv, newts_vt) = topologicalSort(*adg, newInitResult, currents, -1, -1);
 
   auto end_sort = high_resolution_clock::now();
   sortT += duration_cast<microseconds>(end_sort - start_sort);
