@@ -17,13 +17,13 @@ public:
     double computeInformedHeuristics(
         const shared_ptr<Graph> & graph, 
         const vector<int> & longest_paths, 
-        const vector<map<int,int> > & reverse_longest_paths,
+        const vector<shared_ptr<map<int,int> > > & reverse_longest_paths,
         double time_limit
     );
     void buildCardinalConflictGraph(
         const shared_ptr<Graph> & graph, 
         const vector<int> & longest_paths, 
-        const vector<map<int,int> > & reverse_longest_paths,
+        const vector<shared_ptr<map<int,int> > > & old_reverse_longest_path_lengths_ptr, 
         vector<int> & CG, 
         bool weighted
     );

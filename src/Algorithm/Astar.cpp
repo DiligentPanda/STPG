@@ -639,7 +639,10 @@ shared_ptr<Graph> Astar::startExplore(const shared_ptr<Graph> & adg, double cost
     fake_parent->num_sw=sw_edge_cnt;
   }
   fake_parent->longest_path_lengths=make_shared<vector<int> >(adg->get_num_states(), 0);
-  fake_parent->reverse_longest_path_lengths=make_shared<vector<map<int,int> > >(adg->get_num_states());
+  fake_parent->reverse_longest_path_lengths=make_shared<vector<shared_ptr<map<int,int> > > >();
+  for (int i=0;i<adg->get_num_states();++i) {
+    fake_parent->reverse_longest_path_lengths->emplace_back(make_shared<map<int,int> >());
+  }
   fake_parent->num_sw=sw_edge_cnt;
   vector<pair<int,int> > fixed_edges;
   add_node(adg, fake_parent, fixed_edges);

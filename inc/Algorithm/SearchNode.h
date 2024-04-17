@@ -8,7 +8,7 @@ struct SearchNode {
         const double g, 
         const double h, 
         const shared_ptr<vector<int> > & _longest_path_lengths,
-        const shared_ptr<vector<map<int,int> > > & _reverse_longest_path_lengths,
+        const shared_ptr<vector<shared_ptr<map<int,int> > > > & _reverse_longest_path_lengths,
         int num_sw):
         adg(adg), 
         g(g), 
@@ -27,7 +27,7 @@ struct SearchNode {
     double g;
     double h;
     shared_ptr<vector<int> > longest_path_lengths;
-    shared_ptr<vector<map<int,int> > > reverse_longest_path_lengths;
+    shared_ptr<vector<shared_ptr<map<int,int> > > > reverse_longest_path_lengths;
     double f;
     int num_sw; // the number of switchable (edge groups)
 

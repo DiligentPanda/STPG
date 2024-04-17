@@ -8,7 +8,7 @@ HeuristicManager::HeuristicManager(HeuristicType _type):type(_type) {
 double HeuristicManager::computeInformedHeuristics(
     const shared_ptr<Graph> & adg, 
     const vector<int> & longest_paths, 
-    const vector<map<int,int> > & reverse_longest_paths, 
+    const vector<shared_ptr<map<int,int> > > & reverse_longest_paths, 
     double time_limit
     ) {
     // TODO: add timer
@@ -48,7 +48,7 @@ double HeuristicManager::computeInformedHeuristics(
 void HeuristicManager::buildCardinalConflictGraph(
     const shared_ptr<Graph> & adg, 
     const vector<int> & longest_paths, 
-    const vector<map<int,int> > & reverse_longest_paths,
+    const vector<shared_ptr<map<int,int> > > & reverse_longest_paths,
     vector<int> & CG, 
     bool weighted
     ) {
@@ -73,17 +73,17 @@ void HeuristicManager::buildCardinalConflictGraph(
             int diff=i_time-j_time;
             int back_diff=back_i_time-back_j_time;
             if (diff>=0 && back_diff>=0) {
-                for (auto & pi: reverse_longest_paths[back_j]) {
+                for (auto & pi: *reverse_longest_paths[back_j]) {
                     int a_i=pi.first;
                     int delta_i=back_i_time+1-back_j_time;
                     int slack_i=longest_paths[last_state_idxs[a_i]]-back_j_time-pi.second;
                     int increase_i=delta_i-slack_i;
-                    if (slack_i<0) {
-                        std::cout<<"Error: slack_i<0"<<std::endl;
-                        exit(-1);
-                    }
+                    // if (slack_i<0) {
+                    //     std::cout<<"Error: slack_i<0"<<std::endl;
+                    //     exit(-1);
+                    // }
                     if (increase_i>0) {
-                        for (auto & pj: reverse_longest_paths[j]) {
+                        for (auto & pj: *reverse_longest_paths[j]) {
                             int a_j=pj.first;
                             int delta_j=i_time+1-j_time;
                             int slack_j=longest_paths[last_state_idxs[a_j]]-j_time-pj.second;
@@ -100,10 +100,10 @@ void HeuristicManager::buildCardinalConflictGraph(
                                     }
                                 }
                             }
-                                                if (slack_j<0) {
-                        std::cout<<"Error: slack_j<0"<<std::endl;
-                        exit(-1);
-                    }
+                            // if (slack_j<0) {
+                            //     std::cout<<"Error: slack_j<0"<<std::endl;
+                            //     exit(-1);
+                            // }
                         }
                     }
                 }

@@ -180,8 +180,8 @@ shared_ptr<vector<int> > compute_longest_paths(const shared_ptr<vector<int> > & 
     return longest_path_lengths_ptr;
 }
 
-shared_ptr<vector<map<int,int> > > compute_reverse_longest_paths(
-    const shared_ptr<vector<map<int,int> > > & old_reverse_longest_path_lengths_ptr, 
+shared_ptr<vector<shared_ptr<map<int,int> > > > compute_reverse_longest_paths(
+    const shared_ptr<vector<shared_ptr<map<int,int> > > > & old_reverse_longest_path_lengths_ptr, 
     const shared_ptr<vector<int> > & longest_path_lengths_ptr, // we use the new longest_path_lengths, which is essentially the topoligical order for efficient udpate.
     const shared_ptr<Graph> & graph, 
     vector<pair<int,int> > & fixed_edges
@@ -194,7 +194,7 @@ shared_ptr<vector<map<int,int> > > compute_reverse_longest_paths(
             int num_states = graph->get_num_states(agent_id);
             for (int state_id=0; state_id<num_states; state_id++) {
                 int global_state_id=graph->get_global_state_id(agent_id, state_id);
-                reverse_longest_path_length[global_state_id][agent_id] = num_states-1-state_id;
+                (*reverse_longest_path_length[global_state_id])[agent_id] = num_states-1-state_id;
             }
         }
         return old_reverse_longest_path_lengths_ptr;
@@ -203,8 +203,8 @@ shared_ptr<vector<map<int,int> > > compute_reverse_longest_paths(
     bool no_need_to_update=true;
     auto & old_reverse_longest_path_lengths = *old_reverse_longest_path_lengths_ptr;
     for (auto & edge: fixed_edges) {
-        for (auto & p: old_reverse_longest_path_lengths[edge.second]) {
-            if (old_reverse_longest_path_lengths[edge.first].find(p.first)==old_reverse_longest_path_lengths[edge.first].end() || p.second+1>old_reverse_longest_path_lengths[edge.first][p.first]) {
+        for (auto & p: *(old_reverse_longest_path_lengths[edge.second]) ) {
+            if (old_reverse_longest_path_lengths[edge.first]->find(p.first)==old_reverse_longest_path_lengths[edge.first]->end() || p.second+1>(*old_reverse_longest_path_lengths[edge.first])[p.first]) {
                 no_need_to_update=false;
                 break;
             }
@@ -218,7 +218,7 @@ shared_ptr<vector<map<int,int> > > compute_reverse_longest_paths(
     // the newly added edge from start state to end state.
     // we will update longest path lengths incrementally from the edge end_state
     // TODO(rivers): check whether it is a min heap
-    auto reverse_longest_path_lengths_ptr=make_shared<vector<map<int,int> > >(*old_reverse_longest_path_lengths_ptr);
+    auto reverse_longest_path_lengths_ptr=make_shared<vector<shared_ptr<map<int,int> > > >(*old_reverse_longest_path_lengths_ptr);
     auto & reverse_longest_path_lengths=*reverse_longest_path_lengths_ptr;
     auto & longest_path_lengths = *longest_path_lengths_ptr;
 
@@ -239,9 +239,13 @@ shared_ptr<vector<map<int,int> > > compute_reverse_longest_paths(
         // update the 
         auto && successors = graph->get_out_neighbor_global_ids(state);
         for (auto successor: successors) {
-            for (auto & p: reverse_longest_path_lengths[successor]) {
-                if (reverse_longest_path_lengths[state].find(p.first)==reverse_longest_path_lengths[state].end() || p.second+1>reverse_longest_path_lengths[state][p.first]) {
-                    reverse_longest_path_lengths[state][p.first] = p.second+1;
+            bool first=true;
+            for (auto & p: *reverse_longest_path_lengths[successor]) {
+                if (reverse_longest_path_lengths[state]->find(p.first)==reverse_longest_path_lengths[state]->end() || p.second+1>(*reverse_longest_path_lengths[state])[p.first]) {
+                    if (first) {
+                        reverse_longest_path_lengths[state] = make_shared<map<int,int> >(*reverse_longest_path_lengths[state]);
+                    }
+                    (*reverse_longest_path_lengths[state])[p.first] = p.second+1;
                 }
             }
         }
@@ -250,8 +254,8 @@ shared_ptr<vector<map<int,int> > > compute_reverse_longest_paths(
         for (auto predecessor: predecessors) {
             if (!visited[predecessor]) {
                 bool no_need_to_update=true;
-                for (auto & p: reverse_longest_path_lengths[state]) {
-                    if (reverse_longest_path_lengths[predecessor].find(p.first)==reverse_longest_path_lengths[predecessor].end() || p.second+1>reverse_longest_path_lengths[predecessor][p.first]) {
+                for (auto & p: *(reverse_longest_path_lengths[state])) {
+                    if (reverse_longest_path_lengths[predecessor]->find(p.first)==reverse_longest_path_lengths[predecessor]->end() || p.second+1>(*reverse_longest_path_lengths[predecessor])[p.first]) {
                         no_need_to_update=false;
                         break;
                     }
