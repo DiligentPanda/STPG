@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <limits.h>
 #include "group/group.h"
+#include "Algorithm/graph.h"
 
 Astar::Astar() {
 }
@@ -384,7 +385,7 @@ int Astar::count_double_conflicting_edge_groups(const shared_ptr<Graph> & adg, c
 
 
 // adg in parent_node might be changed by forward node, so don't use it.
-void Astar::add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode> & parent_node) {
+void Astar::add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode> & parent_node, vector<std::pair<int,int> > & fixed_edges) {
 
   auto start_sort = high_resolution_clock::now();
   shared_ptr<vector<int> > newts_tv_init;
@@ -399,9 +400,15 @@ void Astar::add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode>
 
   auto start_heuristic = high_resolution_clock::now();
   // initialize the array for longest path length from any current vertices to an agent's goal vertex.
-  auto node_values = make_shared<vector<int> >(adg->get_num_states(), 0);
+  // auto node_values = make_shared<vector<int> >(parent_node->longest_path_lengths);
   // compute the longest path length from any current vertices to an agent's goal vertex.
-  auto g = heuristic_graph(adg, newts_tv, node_values);
+  // auto g = heuristic_graph(adg, newts_tv, node_values);
+  auto node_values = compute_longest_paths(parent_node->longest_path_lengths, adg, fixed_edges);
+  double g = 0;
+  for (int agent_id=0;agent_id<adg->get_num_agents();++agent_id) {
+    int goal_state=adg->get_global_state_id(agent_id, adg->get_num_states(agent_id)-1);
+    g+=node_values->at(goal_state);
+  }
   auto end_heuristic = high_resolution_clock::now();
   heuristicT += duration_cast<microseconds>(end_heuristic - start_heuristic);
 
@@ -546,8 +553,10 @@ shared_ptr<Graph> Astar::exploreNode() {
 
         // Fix the edge
         bool pruned;
+        vector<std::pair<int,int> > fixed_edges;
         if (!use_grouping) {
           auto fixed_edge=child_adg->fix_switchable_type2_edge(maxI, maxJ, branch_reversing_flag, true);
+          fixed_edges.emplace_back(fixed_edge);
           auto start_dfs = high_resolution_clock::now();
           pruned = check_cycle_dfs(*child_adg, fixed_edge.first);
           auto end_dfs = high_resolution_clock::now();
@@ -555,7 +564,7 @@ shared_ptr<Graph> Astar::exploreNode() {
         } else {
           // get the group of edges
           std::vector<std::pair<int,int> > edges= group_manager->get_groupable_edges(maxI, maxJ);
-          auto fixed_edges=child_adg->fix_switchable_type2_edges(edges, branch_reversing_flag, true);
+          fixed_edges=child_adg->fix_switchable_type2_edges(edges, branch_reversing_flag, true);
           auto start_dfs = high_resolution_clock::now();
           std::vector<int> out_states;
           std::for_each(std::begin(fixed_edges), std::end(fixed_edges), [&out_states](std::pair<int,int> & edge) {
@@ -569,7 +578,7 @@ shared_ptr<Graph> Astar::exploreNode() {
         if (pruned) { // Prune node
           pruned_node_cnt += 1;
         } else {
-          add_node(child_adg, node);
+          add_node(child_adg, node, fixed_edges);
         }
       }
 
@@ -627,8 +636,10 @@ shared_ptr<Graph> Astar::startExplore(const shared_ptr<Graph> & adg, double cost
   } else {
     fake_parent->num_sw=sw_edge_cnt;
   }
+  fake_parent->longest_path_lengths=make_shared<vector<int> >(adg->get_num_states(), 0);
   fake_parent->num_sw=sw_edge_cnt;
-  add_node(adg, fake_parent);
+  vector<pair<int,int> > fixed_edges;
+  add_node(adg, fake_parent, fixed_edges);
 
   // expand the node
   return exploreNode();

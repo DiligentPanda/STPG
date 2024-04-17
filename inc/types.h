@@ -126,6 +126,11 @@ struct Subgraph {
         return (*out_neighbors[agent])[state];
     }
 
+    inline set<int> & get_in_neighbor_global_ids(int global_state_id) {
+        auto && p=get_agent_state_id(global_state_id);
+        return (*in_neighbors[p.first])[p.second];
+    }
+
     inline set<int> & get_out_neighbor_global_ids(int global_state_id) {
         auto && p=get_agent_state_id(global_state_id);
         return (*out_neighbors[p.first])[p.second];
@@ -429,6 +434,14 @@ struct Graph {
         return out_neighbor_global_ids;
     }
 
+    set<int> get_in_neighbor_global_ids(int global_state_id) {
+
+        set<int> in_neighbor_global_ids = non_switchable_type2_edges->get_in_neighbor_global_ids(global_state_id);
+        set<int> & type1_edge_global_ids = type1_edges->get_in_neighbor_global_ids(global_state_id);
+        in_neighbor_global_ids.insert(type1_edge_global_ids.begin(), type1_edge_global_ids.end());
+
+        return in_neighbor_global_ids;
+    }
 
     // returns a vector of <agent_id, local_state_id>, which are pointint to this <agent, state>
     vector<pair<int,int> > get_non_switchable_in_neighbor_pairs(int agent, int state) {

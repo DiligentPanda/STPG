@@ -1,4 +1,5 @@
 #include "Algorithm/graph.h"
+#include <queue>
 
 bool isCyclicUtil(Graph &graph, int v, vector<bool> &visited,
                          vector<bool> &recStack)
@@ -108,4 +109,72 @@ sortResult topologicalSort(Graph & graph, sortResult state, vector<int> & starts
     }
 
     
+}
+
+
+shared_ptr<vector<int> > compute_longest_paths(const shared_ptr<vector<int> > & old_longest_path_lengths_ptr, const shared_ptr<Graph> & graph, vector<pair<int,int> > & fixed_edges) {
+    // BUG(rivers): NOTE: here we start from the initial state, which is not necessary or even buggy. We should start from the current state
+    if (fixed_edges.size() == 0) {
+        // init case: there is only type 1 edges, which is easy
+        auto & longest_path_length = *old_longest_path_lengths_ptr;
+        for (int agent_id=0; agent_id<graph->get_num_agents(); agent_id++) {
+            int num_states = graph->get_num_states(agent_id);
+            for (int state_id=0; state_id<num_states; state_id++) {
+                int global_state_id=graph->get_global_state_id(agent_id, state_id);
+                longest_path_length[global_state_id] = state_id;
+            }
+        }
+        return old_longest_path_lengths_ptr;
+    }
+
+    bool no_need_to_update=true;
+    for (auto & p: fixed_edges) {
+        if ((*old_longest_path_lengths_ptr)[p.first]+1>(*old_longest_path_lengths_ptr)[p.second]) {
+            no_need_to_update=false;
+            break;
+        }
+    }
+
+    if (no_need_to_update) {
+        return old_longest_path_lengths_ptr;
+    }
+
+    auto longest_path_lengths_ptr=make_shared<vector<int> >(*old_longest_path_lengths_ptr);
+    auto & longest_path_lengths = *longest_path_lengths_ptr;
+
+    // the newly added edge from start state to end state.
+    // we will update longest path lengths incrementally from the edge end_state
+    // TODO(rivers): check whether it is a min heap
+    std::vector<bool> visited(graph->get_num_states(), false);
+    std::priority_queue<pair<int, int>, vector<pair<int, int> >, greater<pair<int, int> > > pq;
+
+    for (auto & p: fixed_edges) {
+        visited[p.second] = true;
+        pq.emplace(longest_path_lengths[p.second], p.second);
+    }
+
+    while (!pq.empty()) {
+        auto top = pq.top();
+        pq.pop();
+        int state = top.second;
+
+        // update the 
+        auto && predecessors = graph->get_in_neighbor_global_ids(state);
+        for (auto predecessor: predecessors) {
+
+            if (longest_path_lengths[predecessor]+1>=longest_path_lengths[state]) {
+                longest_path_lengths[state] = longest_path_lengths[predecessor]+1;
+            }
+        }
+
+        auto && successors = graph->get_out_neighbor_global_ids(state);
+        for (auto successor: successors) {
+            if (!visited[successor] && longest_path_lengths[state]+1>longest_path_lengths[successor]) {
+                visited[successor] = true;
+                pq.emplace(longest_path_lengths[successor], successor);
+            }
+        }
+    }
+
+    return longest_path_lengths_ptr;
 }
