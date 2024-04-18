@@ -5,7 +5,8 @@
 enum HeuristicType {
     ZERO,
     CG_GREEDY,
-    WCG_GREEDY
+    WCG_GREEDY,
+    FAST_WCG_GREEDY
 };
 
 class HeuristicManager {
@@ -16,16 +17,18 @@ public:
 
     double computeInformedHeuristics(
         const shared_ptr<Graph> & graph, 
-        const vector<int> & longest_paths, 
-        const vector<shared_ptr<map<int,int> > > & reverse_longest_paths,
-        double time_limit
+        const shared_ptr<vector<int> > & longest_paths, 
+        const shared_ptr<vector<shared_ptr<map<int,int> > > > & reverse_longest_paths,
+        double time_limit,
+        bool fast_approximate
     );
     void buildCardinalConflictGraph(
         const shared_ptr<Graph> & graph, 
-        const vector<int> & longest_paths, 
-        const vector<shared_ptr<map<int,int> > > & old_reverse_longest_path_lengths_ptr, 
+        const shared_ptr<vector<int> > & longest_paths, 
+        const shared_ptr<vector<shared_ptr<map<int,int> > > > & old_reverse_longest_path_lengths_ptr, 
         vector<int> & CG, 
-        bool weighted
+        bool weighted,
+        bool fast_approximate
     );
     double greedyMatching(const std::vector<int> & CG, int num_vertices);
 

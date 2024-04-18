@@ -170,7 +170,7 @@ int main(int argc, char** argv) {
     ("new_path_ofp,n",po::value<std::string>()->required(),"the output file path of new paths")
     ("branch_order,b",po::value<std::string>()->required(),"the branch order to use, [default, conflict, largest_diff, random, earliest]")
     ("use_grouping,g",po::value<bool>()->required(),"whether to use grouping")
-    ("heuristic,h",po::value<std::string>()->required(),"the heuristic to use, [zero, cg_greedy]")
+    ("heuristic,h",po::value<std::string>()->required(),"the heuristic to use, [zero, cg_greedy, wcg_greedy, fast_wcg_greedy]")
     ("early_termination,e",po::value<bool>()->required(),"whether to use early termination")
     ("w_astar",po::value<double>()->default_value(1.0),"heuristic weight for weighted A Star")
     ("w_focal",po::value<double>()->default_value(1.0),"heuristic weight for focal search")

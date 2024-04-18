@@ -46,6 +46,8 @@ Astar::Astar(
     heuristic=HeuristicType::CG_GREEDY;
   } else if (_heuristic=="wcg_greedy") {
     heuristic=HeuristicType::WCG_GREEDY;
+  } else if (_heuristic=="fast_wcg_greedy") {
+    heuristic=HeuristicType::FAST_WCG_GREEDY;
   } else {
     std::cout<<"unknown heuristic: "<<_heuristic<<std::endl;
     exit(18);
@@ -413,9 +415,16 @@ void Astar::add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode>
   heuristicT += duration_cast<microseconds>(end_heuristic - start_heuristic);
 
   auto start = high_resolution_clock::now();
-  auto reverse_longest_path_lengths=compute_reverse_longest_paths(parent_node->reverse_longest_path_lengths, longest_path_lengths, adg, fixed_edges);
+  // TODO(rivers): we can write a fast but approximate version.
+  const bool fast_approximate=heuristic_manager->type==HeuristicType::FAST_WCG_GREEDY;
+  double h;
+  shared_ptr<vector<shared_ptr<map<int,int> > > > reverse_longest_path_lengths;
+  if (heuristic_manager->type==HeuristicType::WCG_GREEDY) {
+    reverse_longest_path_lengths=compute_reverse_longest_paths(parent_node->reverse_longest_path_lengths, longest_path_lengths, adg, fixed_edges);
+  }
+  h = heuristic_manager->computeInformedHeuristics(adg, longest_path_lengths, reverse_longest_path_lengths, 0, fast_approximate);
 
-  auto h= heuristic_manager->computeInformedHeuristics(adg, *longest_path_lengths, *reverse_longest_path_lengths, 0);
+  h=max(h,parent_node->g+parent_node->h-g);
   auto end = high_resolution_clock::now();
   extraHeuristicT += duration_cast<microseconds>(end - start);
 
