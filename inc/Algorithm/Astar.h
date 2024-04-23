@@ -34,7 +34,8 @@ class Astar {
       const string & branch_order="default", 
       bool use_grouping=false, 
       const string & _heuristic="zero", 
-      const bool early_termination=false,
+      bool early_termination=false,
+      bool incremental=false,
       double _w_astar=1.0,
       double _w_focal=1.0,
       uint random_seed=0
@@ -84,6 +85,8 @@ class Astar {
     shared_ptr<OpenList> open_list;
     int agentCnt = 0;
 
+    // the fast version simply means to use graph-based heuristics, which is faster than the one based on the simulation.
+    // TODO: I think we no longer support the simulation-based heuristics and we should remove this option.
     bool fast_version = false;
     BranchOrder branch_order=BranchOrder::DEFAULT;  
     mt19937 rng;
@@ -93,6 +96,10 @@ class Astar {
     shared_ptr<HeuristicManager> heuristic_manager;
 
     bool early_termination = false;
+
+    // for heuristic computation
+
+    bool incremental = false;
 
     double w_astar = 1.0;
     double w_focal = 1.0;

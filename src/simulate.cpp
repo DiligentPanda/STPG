@@ -14,6 +14,7 @@ void simulate(
   bool use_grouping,
   const string & heuristic,
   bool early_termination,
+  bool incremental,
   double w_astar,
   double w_focal,
   uint random_seed,
@@ -62,6 +63,7 @@ void simulate(
     use_grouping, 
     heuristic, 
     early_termination, 
+    incremental,
     w_astar,
     w_focal,
     random_seed
@@ -75,6 +77,7 @@ void simulate(
   stats["use_grouping"]=use_grouping;
   stats["heuristic"]=heuristic;
   stats["early_termination"]=early_termination;
+  stats["incremental"]=incremental;
   stats["w_astar"]=w_astar;
   stats["w_focal"]=w_focal;
   stats["random_seed"]=random_seed;
@@ -172,6 +175,7 @@ int main(int argc, char** argv) {
     ("use_grouping,g",po::value<bool>()->required(),"whether to use grouping")
     ("heuristic,h",po::value<std::string>()->required(),"the heuristic to use, [zero, cg_greedy, wcg_greedy, fast_wcg_greedy]")
     ("early_termination,e",po::value<bool>()->required(),"whether to use early termination")
+    ("incremental,i",po::value<bool>()->required(),"whether to use incremental update")
     ("w_astar",po::value<double>()->default_value(1.0),"heuristic weight for weighted A Star")
     ("w_focal",po::value<double>()->default_value(1.0),"heuristic weight for focal search")
     ("random_seed,r",po::value<uint>()->default_value(0),"random seed")
@@ -206,6 +210,7 @@ int main(int argc, char** argv) {
   }
 
   bool early_termination=vm.at("early_termination").as<bool>();
+  bool incremental=vm.at("incremental").as<bool>();
 
   simulate(
     path_fp,
@@ -216,6 +221,7 @@ int main(int argc, char** argv) {
     use_grouping,
     heuristic,
     early_termination,
+    incremental,
     w_astar,
     w_focal,
     random_seed,

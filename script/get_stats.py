@@ -36,11 +36,12 @@ path_list_fp=os.path.join(result_folder,"path_file_names.csv")
 time_limit=90
 num_sits=6
 
-algos=["graph"] # ["graph","exec"]
-branch_orders=["default","conflict","largest_diff","random","earliest"]
-use_groupings=["false","true"]
-heuristics=["zero","cg_greedy","wcg_greedy"]
-early_terminations=["false","true"]
+algos=["graph"] # ["graph"]
+branch_orders=["largest_diff", "default"] #,"random","earliest"]
+use_groupings=["true","false"]
+heuristics=["zero","wcg_greedy"]
+early_terminations=["true"]
+incrementals=["true","false"]
 w_focals=[1.0,1.1]
 
 settings=[]
@@ -49,11 +50,12 @@ for algo in algos:
         for use_grouping in use_groupings:
             for heuristic in heuristics:
                 for early_termination in early_terminations:
-                    for w_focal in w_focals:
-                        settings.append([algo,branch_order,use_grouping,heuristic,early_termination,w_focal])   
+                    for incremental in incrementals:
+                        for w_focal in w_focals:
+                            settings.append([algo,branch_order,use_grouping,heuristic,early_termination,incremental,w_focal])   
 
 exp_headers=["map_name","agent_num","instance_idx","sit_idx"]
-result_headers=["algo","branch_order","use_grouping","heuristic","w_focal","w_astar","early_termination","random_seed","status","search_time","total_time","ori_total_cost","total_cost","ori_trunc_cost","trunc_cost",
+result_headers=["algo","branch_order","use_grouping","heuristic","w_focal","w_astar","early_termination","incremental","random_seed","status","search_time","total_time","ori_total_cost","total_cost","ori_trunc_cost","trunc_cost",
          "explored_node","pruned_node","added_node","vertex","sw_edge","heuristic_time","extra_heuristic_time","branch_time",
          "sort_time","priority_queue_time","copy_free_graphs_time","termination_time","dfs_time","grouping_time","group","group_merge_edge","group_size_max","group_size_min","group_size_avg"]
 headers=exp_headers+result_headers
@@ -74,8 +76,8 @@ for idx in range(len(path_list)):
     for sit_idx in range(num_sits):
         sit_name="map_{}_ins_{}_an_{}_sit_{}".format(map_name,instance_idx,agent_num,sit_idx)
         for setting in settings:
-            algo,branch_order,use_grouping,heuristic,early_termination,w_focal=setting
-            trial_name="{}_algo_{}_br_{}_gp_{}_heu_{}_et_{}_wf_{}".format(sit_name,algo,branch_order,use_grouping,heuristic,early_termination,w_focal)
+            algo,branch_order,use_grouping,heuristic,early_termination,incremental,w_focal=setting
+            trial_name="{}_algo_{}_br_{}_gp_{}_heu_{}_et_{}_inc_{}_wf_{}".format(sit_name,algo,branch_order,use_grouping,heuristic,early_termination,incremental,w_focal)
             trial_stat_fp=os.path.join(stat_folder,trial_name+".json")
             datum=[map_name,agent_num,instance_idx,sit_idx]
             if not os.path.isfile(trial_stat_fp):
@@ -113,7 +115,7 @@ if only_all_solved:
 
 df.to_csv(stats_ofp,index_label="index")
 
-grouping_keys=["map_name","agent_num","algo","branch_order","use_grouping","heuristic","w_focal","w_astar","early_termination"]
+grouping_keys=["map_name","agent_num","algo","branch_order","use_grouping","heuristic","w_focal","w_astar","early_termination","incremental"]
 if group_agent_num:
     grouping_keys.remove("agent_num")
 

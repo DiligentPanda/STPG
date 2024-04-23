@@ -8,9 +8,10 @@ import time
 import multiprocessing
 import pandas as pd
 
-path_folder="data/benchmark/example/path"
-file_names_ofp="data/benchmark/example/path_file_names.csv"
-stats_ofp="data/benchmark/example/path_stats.csv"
+root_folder="data/benchmark/example"
+path_folder=os.path.join(root_folder,"path")
+file_names_ofp=os.path.join(root_folder,"path_file_names.csv")
+stats_ofp=os.path.join(root_folder,"path_stats.csv")
 
 data=[]
 for path_file_name in os.listdir(path_folder):

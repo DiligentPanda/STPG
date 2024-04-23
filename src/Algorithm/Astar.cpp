@@ -17,11 +17,12 @@ Astar::Astar(
     const string & _branch_order, 
     bool use_grouping, 
     const string & _heuristic, 
-    bool early_termination, 
+    bool early_termination,
+    bool incremental, 
     double _w_astar,
     double _w_focal,
     uint random_seed
-  ): rng(random_seed), w_astar(_w_astar), w_focal(_w_focal) {
+  ): rng(random_seed), incremental(incremental), w_astar(_w_astar), w_focal(_w_focal) {
   timeout = input_timeout;
   fast_version = input_fast_version;
   if (_branch_order=="default") {
@@ -405,7 +406,7 @@ void Astar::add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode>
   // auto node_values = make_shared<vector<int> >(parent_node->longest_path_lengths);
   // compute the longest path length from any current vertices to an agent's goal vertex.
   // auto g = heuristic_graph(adg, newts_tv, node_values);
-  auto longest_path_lengths = compute_longest_paths(parent_node->longest_path_lengths, adg, fixed_edges);
+  auto longest_path_lengths = compute_longest_paths(parent_node->longest_path_lengths, adg, fixed_edges, incremental);
   double g = 0;
   for (int agent_id=0;agent_id<adg->get_num_agents();++agent_id) {
     int goal_state=adg->get_global_state_id(agent_id, adg->get_num_states(agent_id)-1);
@@ -420,7 +421,7 @@ void Astar::add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode>
   double h;
   shared_ptr<vector<shared_ptr<map<int,int> > > > reverse_longest_path_lengths;
   if (heuristic_manager->type==HeuristicType::WCG_GREEDY) {
-    reverse_longest_path_lengths=compute_reverse_longest_paths(parent_node->reverse_longest_path_lengths, longest_path_lengths, adg, fixed_edges);
+    reverse_longest_path_lengths=compute_reverse_longest_paths(parent_node->reverse_longest_path_lengths, longest_path_lengths, adg, fixed_edges, incremental);
   }
   h = heuristic_manager->computeInformedHeuristics(adg, longest_path_lengths, reverse_longest_path_lengths, 0, fast_approximate);
 
@@ -428,10 +429,19 @@ void Astar::add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode>
   auto end = high_resolution_clock::now();
   extraHeuristicT += duration_cast<microseconds>(end - start);
 
+  // TODO(rivers): we could also select the next edge to branch here.
+
   if (g+h<init_cost) {
     int num_sw=parent_node->num_sw-1;
     // int num_sw=count_double_conflicting_edge_groups(graph, node_values);
-    auto child_node = std::make_shared<SearchNode>(adg, g, h*w_astar, longest_path_lengths, reverse_longest_path_lengths, num_sw);
+
+    shared_ptr<SearchNode> child_node;
+    if (incremental) {
+      child_node = std::make_shared<SearchNode>(adg, g, h*w_astar, longest_path_lengths, reverse_longest_path_lengths, num_sw);
+    } else {
+      child_node = std::make_shared<SearchNode>(adg, g, h*w_astar, longest_path_lengths, nullptr, num_sw);
+    }
+
     auto start_pq_push = high_resolution_clock::now();
     open_list->push(child_node);
     auto end_pq_push = high_resolution_clock::now();
@@ -647,10 +657,15 @@ shared_ptr<Graph> Astar::startExplore(const shared_ptr<Graph> & adg, double cost
   } else {
     fake_parent->num_sw=sw_edge_cnt;
   }
-  fake_parent->longest_path_lengths=make_shared<vector<int> >(adg->get_num_states(), 0);
-  fake_parent->reverse_longest_path_lengths=make_shared<vector<shared_ptr<map<int,int> > > >();
-  for (int i=0;i<adg->get_num_states();++i) {
-    fake_parent->reverse_longest_path_lengths->emplace_back(make_shared<map<int,int> >());
+  if (incremental) {
+    fake_parent->longest_path_lengths=make_shared<vector<int> >(adg->get_num_states(), 0);
+    fake_parent->reverse_longest_path_lengths=make_shared<vector<shared_ptr<map<int,int> > > >();
+    for (int i=0;i<adg->get_num_states();++i) {
+      fake_parent->reverse_longest_path_lengths->emplace_back(make_shared<map<int,int> >());
+    }
+  } else {
+    fake_parent->longest_path_lengths=nullptr;
+    fake_parent->reverse_longest_path_lengths=nullptr;
   }
   fake_parent->num_sw=sw_edge_cnt;
   vector<pair<int,int> > fixed_edges;

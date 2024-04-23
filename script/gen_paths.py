@@ -7,9 +7,10 @@ map_folder="data/map"
 scen_folder="data/scen/scen-even"
 
 # timestamp=time.strftime("%Y_%m_%d_%H_%M_%S")
-stat_output_folder="example/stat"
-path_output_folder="example/path"
-fail_output_folder="example/path_fail"
+root_output_folder="data/benchmark/16891"
+stat_output_folder=os.path.join(root_output_folder,"stat")
+path_output_folder=os.path.join(root_output_folder,"path")
+fail_output_folder=os.path.join(root_output_folder,"path_fail")
 
 algos = "CBSH-RM"
 time_limit=180
@@ -20,10 +21,10 @@ instance_idxs=list(range(1,25+1)) # this is the number provided by the benchmark
 
 # setting: [agent_num_start, agent_num_end, agent_num_step, max_process_num]
 maps = {
-        "random-32-32-10":[25,50,5,32],
-        "warehouse-10-20-10-2-1":[40,90,10,32],
-        "Paris_1_256": [30,80,10,32],
-        "lak303d": [15,35,4,32]
+        "random-32-32-10":[55,60,5,32],
+        "warehouse-10-20-10-2-1":[100,110,10,32],
+        "Paris_1_256": [70,120,10,32],
+        "lak303d": [37,45,4,32]
        }
 
 # Maximal virtual memory for subprocesses (in bytes).
