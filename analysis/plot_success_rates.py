@@ -1,9 +1,9 @@
 result_csv="output/16891_exps/stats_all.csv"
 map_names = ["lak303d"]#,"lak303d"]
-map_labels = ["lak303d (37-45 agents)"]#, "lak303d (37-45 agents)"]
+map_labels = ["lak303d"]#, "lak303d (37-45 agents)"]
 # map_names = ["Paris_1_256"]#,"lak303d"]
-# map_labels = ["Paris_1_256 (70-110 agents)"]#, "lak303d (37-45 agents)"]
-output_fp="analysis/temp/16891_exps/focal_success_rates_{}.png".format(map_labels[0])
+# map_labels = ["Paris_1_256"]#, "lak303d (37-45 agents)"]
+output_fp="analysis/temp/16891_exps/success_rates_{}.pdf".format(map_labels[0])
 
 import matplotlib.pyplot as plt
 import matplotlib
@@ -13,19 +13,19 @@ df = pd.read_csv(result_csv,index_col="index")
 
 headers=["algo","branch_order","use_grouping","heuristic","incremental","w_focal"]
 algorithms={
-    "Our Best + Focal": ["graph","largest_diff",True,"wcg_greedy",True,1.1],
+    # "Our Best + Focal": ["graph","largest_diff",True,"wcg_greedy",True,1.1],
     "Our Best": ["graph","largest_diff",True,"wcg_greedy",True,1.0],
-    # "+ b,h": ["graph","largest_diff",False,"wcg_greedy",True,1.0],
-    # "+ d,h": ["graph","default",True,"wcg_greedy",True,1.0],
-    # "+ b,d": ["graph","largest_diff",True,"zero",True,1.0],
-    # "Baseline": ["graph","default",False,"zero",True,1.0],
-    # "+ d": ["graph","default",True,"zero",True,1.0],
-    # "+ b": ["graph","largest_diff",False,"zero",True,1.0],
-    # "+ h": ["graph","default",False,"wcg_greedy",True,1.0],
+    "+ b,h": ["graph","largest_diff",False,"wcg_greedy",True,1.0],
+    "+ d,h": ["graph","default",True,"wcg_greedy",True,1.0],
+    "+ b,d": ["graph","largest_diff",True,"zero",True,1.0],
+    "+ d": ["graph","default",True,"zero",True,1.0],
+    "+ b": ["graph","largest_diff",False,"zero",True,1.0],
+    "+ h": ["graph","default",False,"wcg_greedy",True,1.0],
+    "Baseline": ["graph","default",False,"zero",True,1.0],
 }
 
-plt.rcParams.update({'font.size': 14})
-fig1, ax1=plt.subplots(figsize=(8,6))
+plt.rcParams.update({'font.size': 20})
+fig1, ax1=plt.subplots(figsize=(10,6))
 
 time_limits=[0.1,0.2,0.5,1.0,2.0,5.0,10.0,20.0,50.0,90.0]
 
@@ -58,7 +58,7 @@ ax1.get_xaxis().set_tick_params(which='minor', size=0)
 ax1.get_xaxis().set_tick_params(which='minor', width=0) 
 
 plt.legend()
-plt.title("Success Rate Curves on {}".format(map_labels[0]))
+plt.title("{}".format(map_labels[0]))
 plt.xlabel("Time Limit (s)")
 plt.ylabel("Success Rate")
 

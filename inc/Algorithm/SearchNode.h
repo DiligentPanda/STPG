@@ -9,14 +9,17 @@ struct SearchNode {
         const double h, 
         const shared_ptr<vector<int> > & _longest_path_lengths,
         const shared_ptr<vector<shared_ptr<map<int,int> > > > & _reverse_longest_path_lengths,
-        int num_sw):
+        int num_sw,
+        const shared_ptr<SearchNode> & _parent
+        ):
         adg(adg), 
         g(g), 
         h(h), 
         longest_path_lengths(_longest_path_lengths), 
         reverse_longest_path_lengths(_reverse_longest_path_lengths),
         f(g+h),
-        num_sw(num_sw)
+        num_sw(num_sw),
+        parent(_parent)
         {
 
     }
@@ -31,6 +34,7 @@ struct SearchNode {
     double f;
     int num_sw; // the number of switchable (edge groups)
 
+    shared_ptr<SearchNode> parent;
 
     struct CompareOpenSet {
         public:

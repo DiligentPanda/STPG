@@ -76,6 +76,9 @@ class Astar {
     int pruned_node_cnt = 0;
     int added_node_cnt = 0;
 
+    vector<double> open_list_min_f_vals;
+    vector<tuple<int,int,int> > selected_edges;
+
     int vertex_cnt = 0;
     int sw_edge_cnt = 0;
     

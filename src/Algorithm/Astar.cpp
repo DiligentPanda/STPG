@@ -318,6 +318,8 @@ void Astar::print_stats(nlohmann::json & stats) {
     stats["group_size_min"]=1;
     stats["group_size_avg"]=1;
   }
+  stats["open_list_f_min_vals"]=open_list_min_f_vals;
+  stats["selected_edges"]=selected_edges;
 }
 
 void Astar::print_stats(ofstream &outFile) {
@@ -437,9 +439,9 @@ void Astar::add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode>
 
     shared_ptr<SearchNode> child_node;
     if (incremental) {
-      child_node = std::make_shared<SearchNode>(adg, g, h*w_astar, longest_path_lengths, reverse_longest_path_lengths, num_sw);
+      child_node = std::make_shared<SearchNode>(adg, g, h*w_astar, longest_path_lengths, reverse_longest_path_lengths, num_sw, parent_node);
     } else {
-      child_node = std::make_shared<SearchNode>(adg, g, h*w_astar, longest_path_lengths, nullptr, num_sw);
+      child_node = std::make_shared<SearchNode>(adg, g, h*w_astar, longest_path_lengths, nullptr, num_sw, parent_node);
     }
 
     auto start_pq_push = high_resolution_clock::now();
@@ -493,6 +495,9 @@ void Astar::reverse_nonSwitchable_edges_basedOn_LongestPathValues(
 shared_ptr<Graph> Astar::exploreNode() {
   auto start = high_resolution_clock::now();
   while (open_list->size() > 0) {
+    double f_min_val=open_list->top()->f;
+    open_list_min_f_vals.push_back(f_min_val);
+
     explored_node_cnt += 1;
 
     if (explored_node_cnt % 1000000 == 0) {
@@ -515,6 +520,7 @@ shared_ptr<Graph> Astar::exploreNode() {
     } else {
       std::tie(maxDiff, maxI, maxJ) = branch(adg, values);
     }
+    selected_edges.emplace_back(maxI,maxJ,maxDiff);
     auto end_branch = high_resolution_clock::now();
     branchT += duration_cast<microseconds>(end_branch - start_branch);
 
