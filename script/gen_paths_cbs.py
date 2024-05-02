@@ -8,6 +8,9 @@ scen_folder="data/scen/scen-even"
 
 # timestamp=time.strftime("%Y_%m_%d_%H_%M_%S")
 root_output_folder="data/benchmark/16891"
+if os.path.exists(root_output_folder):
+    print("output root folder {} exists. exit...".format(root_output_folder))
+    exit(1)
 stat_output_folder=os.path.join(root_output_folder,"stat")
 path_output_folder=os.path.join(root_output_folder,"path")
 fail_output_folder=os.path.join(root_output_folder,"path_fail")

@@ -5,7 +5,7 @@ import pandas as pd
 import subprocess
 
 exe_path="./build/simulate"
-root_folder="data/benchmark/16891"
+root_folder="data/benchmark/test_PBS"
 path_folder=os.path.join(root_folder,"path")
 sit_folder=os.path.join(root_folder,"sit")
 file_names_fp=os.path.join(root_folder,"path_file_names.csv")
@@ -21,12 +21,12 @@ delay_steps_low=10
 delay_steps_high=20
 time_limit=90
 algos=["graph"] # ["graph"]
-branch_orders=["largest_diff", "default"] #,"random","earliest"]
+branch_orders=["largest_diff","default"] #,"random","earliest"]
 use_groupings=["true","false"]
-heuristics=["zero","wcg_greedy"]
+heuristics=["wcg_greedy","zero"]
 early_terminations=["true"]
-incrementals=["true","false"]
-w_focals=[1.0,1.1]
+incrementals=["true"]
+w_focals=[1.0]
 MAX_VIRTUAL_MEMORY = 8 * 1024 * 1024 # 8 GB
 skip=False
 

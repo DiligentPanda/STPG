@@ -5,7 +5,7 @@ import pandas as pd
 import subprocess
 
 exe_path="./build/generate"
-root_folder="data/benchmark/16891"
+root_folder="data/benchmark/test_PBS"
 path_folder=os.path.join(root_folder,"path")
 file_names_fp=os.path.join(root_folder,"path_file_names.csv")
 output_folder=root_folder
