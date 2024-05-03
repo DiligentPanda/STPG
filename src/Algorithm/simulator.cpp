@@ -1,4 +1,5 @@
 #include "Algorithm/simulator.h"
+#include "Algorithm/graph.h"
 
 Simulator::Simulator(const shared_ptr<Graph> & adg): adg(adg) {
   vector<int> init_states(adg->get_num_agents(), 0);
@@ -55,13 +56,24 @@ int Simulator::step(bool switchCheck) {
     }
   }
   if (moveCnt == 0 && timeSpent != 0) {
-    std::cout << "err: "<<moveCnt<<" "<<timeSpent<<std::endl;
+    cout << "err: "<<moveCnt<<" "<<timeSpent<<endl<<endl;
     Paths &paths = *adg->paths;
     int agentCnt = adg->get_num_agents();
     for (auto agent=0;agent<agentCnt;++agent) {
-      cout<<agent<<": "<<states[agent]<<" "<<adg->get_num_states(agent)-1<<std::endl;
-      Location new_location = get<0>((paths[agent])[(states[agent])]);
-      cout<<new_location.first<<" "<<new_location.second<<std::endl;
+      auto curr_state=states[agent];
+      auto goal_state=adg->get_num_states(agent)-1;
+      if (curr_state!=goal_state) {
+        cout<<agent<<": "<<states[agent]<<" "<<adg->get_num_states(agent)-1<<endl;
+        Location new_location = get<0>((paths[agent])[(states[agent])]);
+        Location next_location = get<0>((paths[agent])[(states[agent]+1)]);
+        cout<<new_location.first<<","<<new_location.second<<"->"<<next_location.first<<","<<next_location.second<<endl;
+        auto && in_pairs=adg->get_in_neighbor_pairs(agent, curr_state+1);
+        cout<<"depenencies:"<<endl;
+        for (auto & in_pair: in_pairs) {
+          cout<<get<0>(in_pair)<<" "<<get<1>(in_pair)<<" = "<<adg->get_global_state_id(in_pair.first,in_pair.second)<<endl;
+        }
+        cout<<endl;
+      }
     }
     return -1;
   }

@@ -5,7 +5,7 @@ import pandas as pd
 import subprocess
 
 exe_path="./build/generate"
-root_folder="data/benchmark/test_PBS"
+root_folder="data/benchmark/test_PBS2"
 path_folder=os.path.join(root_folder,"path")
 file_names_fp=os.path.join(root_folder,"path_file_names.csv")
 output_folder=root_folder
@@ -24,10 +24,10 @@ subprocess.check_output("./compile.sh", shell=True)
 
 # setting: [agent_num_start, agent_num_end, agent_num_step, max_process_num]
 maps = {
-        # "random-32-32-10":[55,60,5,32],
-        # "warehouse-10-20-10-2-1":[100,110,10,32],
-        # "Paris_1_256": [70,120,10,32],
-        "lak303d": [25,45,4,32]
+        "random-32-32-10":[65,110,5,32],
+        "warehouse-10-20-10-2-1":[120,300,10,32],
+        "Paris_1_256": [70,300,10,32],
+        "lak303d": [49,169,4,32]
        }
 
 sit_output_folder=os.path.join(output_folder,"sit")

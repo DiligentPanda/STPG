@@ -15,7 +15,7 @@ Astar::Astar(
     int input_timeout, 
     bool input_fast_version, 
     const string & _branch_order, 
-    bool use_grouping, 
+    const string & _grouping_method, 
     const string & _heuristic, 
     bool early_termination,
     bool incremental, 
@@ -54,7 +54,24 @@ Astar::Astar(
     exit(18);
   }
 
-  this->use_grouping=use_grouping;
+  if (_grouping_method=="none") {
+    use_grouping=false;
+    grouping_method=GroupingMethod::NONE;
+  } else if (_grouping_method=="simple") {
+    use_grouping=true;
+    grouping_method=GroupingMethod::SIMPLE;
+  } else if (_grouping_method=="simple_merge") {
+    use_grouping=true;
+    grouping_method=GroupingMethod::SIMPLE_MERGE;
+  } else if (_grouping_method=="all") {
+    use_grouping=true;
+    grouping_method=GroupingMethod::ALL;
+  } else {
+    std::cout<<"unknown grouping method: "<<_grouping_method<<std::endl;
+    exit(19);
+  }
+
+
   this->early_termination=early_termination;
   this->heuristic_manager=std::make_shared<HeuristicManager>(heuristic);
 }
@@ -318,8 +335,8 @@ void Astar::print_stats(nlohmann::json & stats) {
     stats["group_size_min"]=1;
     stats["group_size_avg"]=1;
   }
-  stats["open_list_f_min_vals"]=open_list_min_f_vals;
-  stats["selected_edges"]=selected_edges;
+  // stats["open_list_f_min_vals"]=open_list_min_f_vals;
+  // stats["selected_edges"]=selected_edges;
 }
 
 void Astar::print_stats(ofstream &outFile) {
@@ -409,6 +426,23 @@ void Astar::add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode>
   // compute the longest path length from any current vertices to an agent's goal vertex.
   // auto g = heuristic_graph(adg, newts_tv, node_values);
   auto longest_path_lengths = compute_longest_paths(parent_node->longest_path_lengths, adg, fixed_edges, incremental);
+
+  // auto longest_path_lengths2 = compute_longest_paths(parent_node->longest_path_lengths, adg, fixed_edges, false);
+
+  // std::cout<<"node explored: "<<explored_node_cnt<<std::endl;
+  // bool err=false;
+  // for (int state=0;state<(int)adg->get_num_states();++state) {
+  //   if (longest_path_lengths->at(state)!=longest_path_lengths2->at(state)) {
+  //     auto p=adg->get_agent_state_id(state);
+  //     std::cout<<"error in longest path length computation. agent: "<<p.first<<" state: "<<p.second<<" length: "<<longest_path_lengths->at(state)<<" vs "<<longest_path_lengths2->at(state)<<std::endl;
+  //     err=true;
+  //   }
+  // }
+  // if (err) {
+  //   exit(200);
+  // }
+
+
   double g = 0;
   for (int agent_id=0;agent_id<adg->get_num_agents();++agent_id) {
     int goal_state=adg->get_global_state_id(agent_id, adg->get_num_states(agent_id)-1);
@@ -591,7 +625,8 @@ shared_ptr<Graph> Astar::exploreNode() {
         } else {
           // get the group of edges
           std::vector<std::pair<int,int> > edges= group_manager->get_groupable_edges(maxI, maxJ);
-          fixed_edges=child_adg->fix_switchable_type2_edges(edges, branch_reversing_flag, true);
+          // we cannot check here unless we find all groups
+          fixed_edges=child_adg->fix_switchable_type2_edges(edges, branch_reversing_flag, false);
           auto start_dfs = high_resolution_clock::now();
           std::vector<int> out_states;
           std::for_each(std::begin(fixed_edges), std::end(fixed_edges), [&out_states](std::pair<int,int> & edge) {
@@ -642,7 +677,7 @@ shared_ptr<Graph> Astar::startExplore(const shared_ptr<Graph> & adg, double cost
   if (use_grouping) {
     // std::cout<<"input_sw_cnt: "<<input_sw_cnt<<std::endl;
     auto start = high_resolution_clock::now();
-    group_manager=std::make_shared<GroupManager>(init_adg, states);
+    group_manager=std::make_shared<GroupManager>(init_adg, states, grouping_method);
     auto end = high_resolution_clock::now();
     groupingT += duration_cast<microseconds>(end - start);
     std::cout<<"group size: "<<group_manager->groups.size()<<std::endl;

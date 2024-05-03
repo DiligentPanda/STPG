@@ -38,16 +38,16 @@ num_sits=6
 
 algos=["graph"] # ["graph"]
 branch_orders=["largest_diff", "default"] #,"random","earliest"]
-use_groupings=["true","false"]
+grouping_methods=["simple","all"]
 heuristics=["zero","wcg_greedy"]
 early_terminations=["true"]
-incrementals=["true","false"]
+incrementals=["true"]
 w_focals=[1.0,1.1]
 
 settings=[]
 for algo in algos:
     for branch_order in branch_orders:
-        for use_grouping in use_groupings:
+        for use_grouping in grouping_methods:
             for heuristic in heuristics:
                 for early_termination in early_terminations:
                     for incremental in incrementals:
@@ -55,7 +55,7 @@ for algo in algos:
                             settings.append([algo,branch_order,use_grouping,heuristic,early_termination,incremental,w_focal])   
 
 exp_headers=["map_name","agent_num","instance_idx","sit_idx"]
-result_headers=["algo","branch_order","use_grouping","heuristic","w_focal","w_astar","early_termination","incremental","random_seed","status","search_time","total_time","ori_total_cost","total_cost","ori_trunc_cost","trunc_cost",
+result_headers=["algo","branch_order","grouping_method","heuristic","w_focal","w_astar","early_termination","incremental","random_seed","status","search_time","total_time","ori_total_cost","total_cost","ori_trunc_cost","trunc_cost",
          "explored_node","pruned_node","added_node","vertex","sw_edge","heuristic_time","extra_heuristic_time","branch_time",
          "sort_time","priority_queue_time","copy_free_graphs_time","termination_time","dfs_time","grouping_time","group","group_merge_edge","group_size_max","group_size_min","group_size_avg"]
 headers=exp_headers+result_headers
@@ -87,16 +87,22 @@ for idx in range(len(path_list)):
                 else:
                     continue
             with open(trial_stat_fp) as f:
-                stats=json.load(f)
-                for key in result_headers:
-                    try:
-                        datum.append(stats[key]) 
-                    except KeyError as e:
-                        print("key error in",trial_stat_fp)
-                        import traceback
-                        traceback.print_exc()
-                        datum.append(None)
-                        # raise e
+                try:
+                    stats=json.load(f)
+                    for key in result_headers:
+                        try:
+                            datum.append(stats[key]) 
+                        except KeyError as e:
+                            print("key error in",trial_stat_fp)
+                            import traceback
+                            traceback.print_exc()
+                            datum.append(None)
+                            # raise e
+                except:
+                    print("Error loading",trial_stat_fp)
+                    import traceback
+                    traceback.print_exc()
+                    continue
             data.append(datum)
 
 df=pd.DataFrame(data,columns=headers)
@@ -109,13 +115,13 @@ df["status"]=df["status"].apply(lambda x: 1 if x=="Succ" else 0)
         
 if only_all_solved:
     d=df.groupby(by=["map_name","agent_num","instance_idx","sit_idx"])
-    selected=d["status"].all().reset_index(name='selected')
+    selected=(d["status"].sum()==len(settings)).reset_index(name='selected')
     df=df.merge(selected,on=["map_name","agent_num","instance_idx","sit_idx"],how="inner")
     df = df[df["selected"]].drop("selected",axis=1)
 
 df.to_csv(stats_ofp,index_label="index")
 
-grouping_keys=["map_name","agent_num","algo","branch_order","use_grouping","heuristic","w_focal","w_astar","early_termination","incremental"]
+grouping_keys=["map_name","agent_num","algo","branch_order","grouping_method","heuristic","w_focal","w_astar","early_termination","incremental"]
 if group_agent_num:
     grouping_keys.remove("agent_num")
 

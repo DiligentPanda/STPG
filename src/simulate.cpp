@@ -11,7 +11,7 @@ void simulate(
   int time_limit, 
   const string & algo, 
   const string & branch_order,
-  bool use_grouping,
+  const string & grouping_method,
   const string & heuristic,
   bool early_termination,
   bool incremental,
@@ -60,7 +60,7 @@ void simulate(
     time_limit, 
     true, 
     branch_order,  
-    use_grouping, 
+    grouping_method, 
     heuristic, 
     early_termination, 
     incremental,
@@ -74,7 +74,7 @@ void simulate(
   // basic information
   stats["algo"]=algo;
   stats["branch_order"]=branch_order;
-  stats["use_grouping"]=use_grouping;
+  stats["grouping_method"]=grouping_method;
   stats["heuristic"]=heuristic;
   stats["early_termination"]=early_termination;
   stats["incremental"]=incremental;
@@ -172,7 +172,7 @@ int main(int argc, char** argv) {
     ("stat_ofp,o",po::value<std::string>()->required(),"the output file path of statistics")
     ("new_path_ofp,n",po::value<std::string>()->required(),"the output file path of new paths")
     ("branch_order,b",po::value<std::string>()->required(),"the branch order to use, [default, conflict, largest_diff, random, earliest]")
-    ("use_grouping,g",po::value<bool>()->required(),"whether to use grouping")
+    ("grouping_method,g",po::value<std::string>()->required(),"the grouping method to use, [none, simple, simple_merge, all]")
     ("heuristic,h",po::value<std::string>()->required(),"the heuristic to use, [zero, cg_greedy, wcg_greedy, fast_wcg_greedy]")
     ("early_termination,e",po::value<bool>()->required(),"whether to use early termination")
     ("incremental,i",po::value<bool>()->required(),"whether to use incremental update")
@@ -199,7 +199,7 @@ int main(int argc, char** argv) {
   uint random_seed=vm.at("random_seed").as<uint>();
   string stat_ofp=vm.at("stat_ofp").as<string>();
   string new_path_ofp=vm.at("new_path_ofp").as<string>();
-  bool use_grouping=vm.at("use_grouping").as<bool>();
+  string grouping_method=vm.at("grouping_method").as<string>();
   string heuristic=vm.at("heuristic").as<string>();
   double w_astar=vm.at("w_astar").as<double>();
   double w_focal=vm.at("w_focal").as<double>();
@@ -218,7 +218,7 @@ int main(int argc, char** argv) {
     time_limit,
     algo,
     branch_order,
-    use_grouping,
+    grouping_method,
     heuristic,
     early_termination,
     incremental,

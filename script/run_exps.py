@@ -5,7 +5,7 @@ import pandas as pd
 import subprocess
 
 exe_path="./build/simulate"
-root_folder="data/benchmark/test_PBS"
+root_folder="data/benchmark/test_PBS2"
 path_folder=os.path.join(root_folder,"path")
 sit_folder=os.path.join(root_folder,"sit")
 file_names_fp=os.path.join(root_folder,"path_file_names.csv")
@@ -22,12 +22,12 @@ delay_steps_high=20
 time_limit=90
 algos=["graph"] # ["graph"]
 branch_orders=["largest_diff","default"] #,"random","earliest"]
-use_groupings=["true","false"]
+grouping_methods=["simple","simple_merge","all"]
 heuristics=["wcg_greedy","zero"]
 early_terminations=["true"]
 incrementals=["true"]
-w_focals=[1.0]
-MAX_VIRTUAL_MEMORY = 8 * 1024 * 1024 # 8 GB
+w_focals=[1.1,1.0]
+MAX_VIRTUAL_MEMORY = 16 * 1024 * 1024 # 8 GB
 skip=False
 
 instance_idxs=list(range(1,25+1)) # this is the number provided by the benchmark
@@ -37,10 +37,10 @@ subprocess.check_output("./compile.sh", shell=True)
 
 # setting: [agent_num_start, agent_num_end, agent_num_step, max_process_num]
 maps = {
-        # "random-32-32-10":[55,60,5,8],
-        # "warehouse-10-20-10-2-1":[100,110,10,8],
-        "Paris_1_256": [70,120,10,8],
-        "lak303d": [37,45,4,8]
+        # "random-32-32-10":[75,100,5,8],
+        # "warehouse-10-20-10-2-1":[150,200,10,8],
+        "Paris_1_256": [150,200,10,8],
+        # "lak303d": [121,169,8,8]
        }
 
 stat_output_folder=os.path.join(output_folder,"stat")
@@ -115,12 +115,12 @@ def run(cmd,output_name):
 settings=[]
 for algo in algos:
     for branch_order in branch_orders:
-        for use_grouping in use_groupings:
+        for grouping_method in grouping_methods:
             for heuristic in heuristics:
                 for early_termination in early_terminations:
                     for incremental in incrementals:
                         for w_focal in w_focals:
-                            settings.append([algo,branch_order,use_grouping,heuristic,early_termination,incremental,w_focal])   
+                            settings.append([algo,branch_order,grouping_method,heuristic,early_termination,incremental,w_focal])   
 
 for map_name,setting in maps.items():
     print("processing map {}".format(map_name))
@@ -139,8 +139,8 @@ for map_name,setting in maps.items():
             sit_name="map_{}_ins_{}_an_{}_sit_{}".format(map_name,instance_idx,agent_num,sit_idx)
             sit_file_path=os.path.join(sit_folder,sit_name+".json")
             for setting in settings:
-                algo,branch_order,use_grouping,heuristic,early_termination,incremental,w_focal=setting
-                trial_name="{}_algo_{}_br_{}_gp_{}_heu_{}_et_{}_inc_{}_wf_{}".format(sit_name,algo,branch_order,use_grouping,heuristic,early_termination,incremental,w_focal)
+                algo,branch_order,grouping_method,heuristic,early_termination,incremental,w_focal=setting
+                trial_name="{}_algo_{}_br_{}_gp_{}_heu_{}_et_{}_inc_{}_wf_{}".format(sit_name,algo,branch_order,grouping_method,heuristic,early_termination,incremental,w_focal)
                 output_names.append(trial_name)
                 stat_ofp=os.path.join(stat_output_folder,trial_name+".json")
                 new_path_ofp=os.path.join(new_path_output_folder,trial_name+".path")
@@ -154,7 +154,7 @@ for map_name,setting in maps.items():
                 # we only require 1-robust, so --kDelay 1
                 cmd = f"ulimit -Sv {MAX_VIRTUAL_MEMORY} &&" \
                     f" {exe_path} -p {path_file_path} -s {sit_file_path}" \
-                    f" -t {time_limit} -a {algo} -b {branch_order} -g {use_grouping} -h {heuristic} -e {early_termination} -i {incremental}" \
+                    f" -t {time_limit} -a {algo} -b {branch_order} -g {grouping_method} -h {heuristic} -e {early_termination} -i {incremental}" \
                     f" -o {stat_ofp} -n {new_path_ofp} --w_focal {w_focal}"
                 
                 cmds.append(cmd)

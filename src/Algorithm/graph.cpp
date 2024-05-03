@@ -118,16 +118,7 @@ shared_ptr<vector<int> > compute_longest_paths(const shared_ptr<vector<int> > & 
     if (incremental) {
         // BUG(rivers): NOTE: here we start from the initial state, which is not necessary or even buggy. We should start from the current state
         if (fixed_edges.size() == 0) {
-            // init case: there is only type 1 edges, which is easy
-            auto & longest_path_length = *old_longest_path_lengths_ptr;
-            for (int agent_id=0; agent_id<graph->get_num_agents(); agent_id++) {
-                int num_states = graph->get_num_states(agent_id);
-                for (int state_id=0; state_id<num_states; state_id++) {
-                    int global_state_id=graph->get_global_state_id(agent_id, state_id);
-                    longest_path_length[global_state_id] = state_id;
-                }
-            }
-            return old_longest_path_lengths_ptr;
+            return compute_longest_paths(old_longest_path_lengths_ptr, graph, fixed_edges, false);
         }
 
         bool no_need_to_update=true;
@@ -234,16 +225,7 @@ shared_ptr<vector<shared_ptr<map<int,int> > > > compute_reverse_longest_paths(
     if (incremental) {
         // BUG(rivers): NOTE: here we start from the initial state, which is not necessary or even buggy. We should start from the current state
         if (fixed_edges.size() == 0) {
-            // init case: there is only type 1 edges, which is easy
-            auto & reverse_longest_path_length = *old_reverse_longest_path_lengths_ptr;
-            for (int agent_id=0; agent_id<graph->get_num_agents(); agent_id++) {
-                int num_states = graph->get_num_states(agent_id);
-                for (int state_id=0; state_id<num_states; state_id++) {
-                    int global_state_id=graph->get_global_state_id(agent_id, state_id);
-                    (*reverse_longest_path_length[global_state_id])[agent_id] = num_states-1-state_id;
-                }
-            }
-            return old_reverse_longest_path_lengths_ptr;
+            return compute_reverse_longest_paths(old_reverse_longest_path_lengths_ptr, longest_path_lengths_ptr, graph, fixed_edges, false);
         }
 
         bool no_need_to_update=true;
@@ -354,4 +336,26 @@ shared_ptr<vector<shared_ptr<map<int,int> > > > compute_reverse_longest_paths(
 
         return reverse_longest_path_lengths_ptr;
     }
+}
+
+bool exist_this_cycle(Graph & graph, vector<pair<int,int> > & states) {
+    for (int i=0;i<(int)states.size();++i) {
+        int next_idx=(i+1)%states.size();
+        // check next_idx is in the graph
+        auto global_id=graph.get_global_state_id(states[i].first, states[i].second);
+        auto && neighbors = graph.get_out_neighbor_global_ids(global_id);
+        bool found=false;
+        for (auto & neighbor : neighbors) {
+            auto p=graph.get_agent_state_id(neighbor);
+            if (p.first==states[next_idx].first && p.second==states[next_idx].second) {
+                found=true;
+                break;
+            }
+        }
+        if (!found) {
+            cout<<"not found edge from "<<states[i].first<<","<<states[i].second<<" to "<<states[next_idx].first<<","<<states[next_idx].second<<endl;
+            return false;
+        }
+    }
+    return true;
 }

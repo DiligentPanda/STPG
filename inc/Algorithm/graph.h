@@ -21,3 +21,5 @@ shared_ptr<vector<shared_ptr<map<int,int> > > > compute_reverse_longest_paths(
     vector<pair<int,int> > & fixed_edges,
     bool incremental
     );
+
+bool exist_this_cycle(Graph & graph, vector<pair<int,int> > & states);

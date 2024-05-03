@@ -355,24 +355,31 @@ struct Graph {
         int agent1, state1, agent2, state2;
         std::tie(agent1, state1)=get_agent_state_id(state_from);
         std::tie(agent2, state2)=get_agent_state_id(state_to);
-        _fix_switchable_type2_edge(agent1, state1, agent2, state2, reverse, check);
+        bool succ=_fix_switchable_type2_edge(agent1, state1, agent2, state2, reverse, check);
 
-        if (reverse) {
-            return {state_to+1,state_from-1};
+        if (succ) {
+            if (reverse) {
+                return {state_to+1,state_from-1};
+            } else {
+                return {state_from, state_to};
+            }
         } else {
-            return {state_from, state_to};
+            return {-1,-1};
         }
     }
 
     vector<pair<int,int> > fix_switchable_type2_edges(const vector<pair<int,int> > & edges, bool reverse=false, bool check=true) {
         vector<pair<int,int> > fixed_edges;
         for (auto & edge: edges) {
-            fixed_edges.emplace_back(fix_switchable_type2_edge(edge.first, edge.second, reverse, check));
+            auto && p=fix_switchable_type2_edge(edge.first, edge.second, reverse, check);
+            // Otherwise, the edge is probably fixed earlier
+            if (p.first>=0)
+                fixed_edges.emplace_back(p);
         }
         return fixed_edges;
     }
 
-    void _fix_switchable_type2_edge(int agent_from, int state_from, int agent_to, int state_to, bool reverse=false, bool check=true) {
+    bool _fix_switchable_type2_edge(int agent_from, int state_from, int agent_to, int state_to, bool reverse=false, bool check=true) {
         bool succ=switchable_type2_edges->remove_edge(agent_from, state_from, agent_to, state_to, check);
         if (check && !succ) {
             cout << "Error: edge not found" << endl;
@@ -385,6 +392,7 @@ struct Graph {
                 non_switchable_type2_edges->insert_edge(agent_from, state_from, agent_to, state_to, check);
             }
         }
+        return succ;
     }
 
     void fix_edges_after_last_states() {

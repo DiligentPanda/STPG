@@ -16,6 +16,12 @@ struct PairIntHash {
   }
 };
 
+enum GroupingMethod {
+    NONE,
+    SIMPLE,
+    SIMPLE_MERGE,
+    ALL
+};
 
 // TODO(rivers): currently we implement a simple version that only consider independent parallel and crossing patterns.
 // and only merge them if they share an edge. A case is clearly missing is concatenation of two such patterns.
@@ -24,11 +30,12 @@ struct PairIntHash {
 class GroupManager {
 public:
     // a set of edge_ids
-    using Group=unordered_set<int>;
+    // TODO(rivers): we should make the data type pair of int directly by pair int hash...
+    using Group=unordered_set<long>;
     using Groups=vector<Group>;
 
     Groups groups;
-    unordered_map<int,int> edge_id2group_id;
+    unordered_map<long,int> edge_id2group_id;
 
     // for simplicity, let's make a copy of adg here
     vector<int> states;
@@ -38,21 +45,32 @@ public:
     // we don't count any merge with size 1 group, which is just a single edge.
     int group_merge_edge_cnt=0;
 
-    GroupManager(const shared_ptr<Graph> & _adg, vector<int> & _states): states(_states), adg(_adg), num_states(_adg->get_num_states()) {
-        build2();
+    GroupingMethod grouping_method;
+
+    GroupManager(const shared_ptr<Graph> & _adg, vector<int> & _states, GroupingMethod _grouping_method): states(_states), adg(_adg), num_states(_adg->get_num_states()), grouping_method(_grouping_method) {
+        if (grouping_method==GroupingMethod::SIMPLE) {
+            build();
+        } else if (grouping_method==GroupingMethod::SIMPLE_MERGE) {
+            build();
+        } else if (grouping_method==GroupingMethod::ALL) {
+            build2();
+        } else {
+            cout<<"unknown method for dependency grouping"<<endl;
+            exit(1234);
+        }
     };
 
     // BUG(rivers): don't use int to encode, would overflow in the future.
-    int get_edge_id(int out_idx, int in_idx) {
-        return out_idx*num_states+in_idx;
+    long get_edge_id(int out_idx, int in_idx) {
+        return (long)out_idx*(long)num_states+(long)in_idx;
     }
 
-    int get_out_idx(int edge_id) {
-        return edge_id/num_states;
+    int get_out_idx(long edge_id) {
+        return (int)(edge_id/num_states);
     }
 
-    int get_in_idx(int edge_id) {
-        return edge_id%num_states;
+    int get_in_idx(long edge_id) {
+        return (int)(edge_id%num_states);
     }
 
     void build2() {
@@ -202,12 +220,12 @@ public:
 
             Group group;
             for (auto edge:groupable_edges) {
-                int edge_id=get_edge_id(edge.first+prev_accum_cnts[out_agent_idx],edge.second+prev_accum_cnts[in_agent_idx]);
+                long edge_id=get_edge_id(edge.first+prev_accum_cnts[out_agent_idx],edge.second+prev_accum_cnts[in_agent_idx]);
                 group.insert(edge_id);
             }
             int group_id=groups.size();
             groups.push_back(group);
-            for (int edge_id:group) {
+            for (long edge_id:group) {
                 edge_id2group_id[edge_id]=group_id;
             }
         }
@@ -242,8 +260,8 @@ public:
         int in_end_state_idx=accum_cnts[in_agent_idx];
 
         Groups unmerged_groups;
-        unordered_set<int> crossing_searched;
-        unordered_set<int> parallel_searched;
+        unordered_set<long> crossing_searched;
+        unordered_set<long> parallel_searched;
         for (int out_state_idx=out_start_state_idx;out_state_idx<out_end_state_idx;++out_state_idx) {
             auto & switchable_out_neighbors=adg->switchable_type2_edges->get_out_neighbor_global_ids(out_state_idx);
             for (int in_state_idx:switchable_out_neighbors) {
@@ -264,7 +282,7 @@ public:
     void find_simple_patterns_starting_with(
         int _out_state_idx, int _in_state_idx, 
         int out_end_state_idx, int in_start_state_idx, int in_end_state_idx,
-        Groups & groups, unordered_set<int> & crossing_searched, unordered_set<int> & parallel_searched
+        Groups & groups, unordered_set<long> & crossing_searched, unordered_set<long> & parallel_searched
     ) {
         if (crossing_searched.count(get_edge_id(_out_state_idx,_in_state_idx))==0) {
             int out_state_idx=_out_state_idx;
@@ -282,7 +300,7 @@ public:
                     break;
                 }
 
-                int edge_id=get_edge_id(out_state_idx,in_state_idx);
+                long edge_id=get_edge_id(out_state_idx,in_state_idx);
                 group.emplace(edge_id);
                 crossing_searched.emplace(edge_id);
                 // check if the next edge exists
@@ -308,7 +326,7 @@ public:
                     break;
                 }
                 
-                int edge_id=get_edge_id(out_state_idx,in_state_idx);
+                long edge_id=get_edge_id(out_state_idx,in_state_idx);
                 group.emplace(edge_id);
                 parallel_searched.emplace(edge_id);
                 // check if the next edge exists
@@ -325,27 +343,29 @@ public:
         vector<pair<int,int> > graph_edges;
 
         // build graphs
-        for (size_t i=0;i<groups.size();++i) {
-            auto & group_i=groups[i];
-            unordered_set<int> edge_set(group_i.begin(),group_i.end());
-            for (size_t j=i+1;j<groups.size();++j) {
-                auto & group_j=groups[j];
-                for (int edge_id: group_j) {
-                    if (edge_set.count(edge_id)>0) {
-                        graph_edges.emplace_back(i,j);
-                        if (group_i.size()>1 && group_j.size()>1) {
-                            // cout<<"group i: "<<group_i.size()<<" group j: "<<group_j.size()<<" "<<group_merge_edge_cnt<<endl;
-                            // cout<<"group i: "<<endl;
-                            // for (auto edge_id: group_i) {
-                            //     cout<<get_out_idx(edge_id)<<"->"<<get_in_idx(edge_id)<<",";
-                            // }
-                            // cout<<"group j: "<<endl;
-                            // for (auto edge_id: group_j) {
-                            //     cout<<get_out_idx(edge_id)<<"->"<<get_in_idx(edge_id)<<",";
-                            // }
-                            ++group_merge_edge_cnt;
+        if (grouping_method==GroupingMethod::SIMPLE_MERGE) {
+            for (size_t i=0;i<groups.size();++i) {
+                auto & group_i=groups[i];
+                unordered_set<int> edge_set(group_i.begin(),group_i.end());
+                for (size_t j=i+1;j<groups.size();++j) {
+                    auto & group_j=groups[j];
+                    for (long edge_id: group_j) {
+                        if (edge_set.count(edge_id)>0) {
+                            graph_edges.emplace_back(i,j);
+                            if (group_i.size()>1 && group_j.size()>1) {
+                                // cout<<"group i: "<<group_i.size()<<" group j: "<<group_j.size()<<" "<<group_merge_edge_cnt<<endl;
+                                // cout<<"group i: "<<endl;
+                                // for (auto edge_id: group_i) {
+                                //     cout<<get_out_idx(edge_id)<<"->"<<get_in_idx(edge_id)<<",";
+                                // }
+                                // cout<<"group j: "<<endl;
+                                // for (auto edge_id: group_j) {
+                                //     cout<<get_out_idx(edge_id)<<"->"<<get_in_idx(edge_id)<<",";
+                                // }
+                                ++group_merge_edge_cnt;
+                            }
+                            break;
                         }
-                        break;
                     }
                 }
             }
@@ -390,14 +410,14 @@ public:
                 auto & group=groups[group_id];
                 big_group.insert(group.begin(),group.end());
             }
-            for (int edge_id:big_group) {
+            for (long edge_id:big_group) {
                 this->edge_id2group_id[edge_id]=big_group_id;
             }
         }
     }
 
     int get_group_id(int out_idx, int in_idx) {
-        int edge_id=get_edge_id(out_idx, in_idx);
+        long edge_id=get_edge_id(out_idx, in_idx);
         auto itr=edge_id2group_id.find(edge_id);
         if (itr==edge_id2group_id.end()) {
             return -1;
@@ -405,21 +425,26 @@ public:
         return itr->second;
     }
 
-    bool get_equivalent_group(int out_idx, int in_idx, unordered_set<int> & group) {
+    bool get_equivalent_group(int out_idx, int in_idx, unordered_set<long> & group) {
         int group_id=get_group_id(out_idx, in_idx);
+        if (group_id==-1) {
+            return false;
+        }
         group=groups[group_id];
         return true;
     }
 
     vector<pair<int,int> > get_groupable_edges(int out_idx, int in_idx) {
-        unordered_set<int> group;
+        unordered_set<long> group;
         bool found=get_equivalent_group(out_idx,in_idx,group);
         if (!found) {
             int agent_idx,state_idx;
             tie(agent_idx,state_idx)=adg->get_agent_state_id(out_idx);
-            cout<<"out_idx: agent_idx="<<agent_idx<<",state_idx="<<state_idx<<",current states: "<<states[agent_idx]<<endl;
+            cout<<"out_idx: agent_idx="<<agent_idx<<",state_idx="<<state_idx<<",current states: "<<states[agent_idx]
+            <<". ("<<(*adg->paths)[agent_idx][state_idx].first.first<<","<<(*adg->paths)[agent_idx][state_idx].first.second<<")"<<","<<(*adg->paths)[agent_idx][state_idx].second<<endl;
             tie(agent_idx,state_idx)=adg->get_agent_state_id(in_idx);
-            cout<<"in_idx: agent_idx="<<agent_idx<<",state_idx="<<state_idx<<",current states: "<<states[agent_idx]<<endl;
+            cout<<"in_idx: agent_idx="<<agent_idx<<",state_idx="<<state_idx<<",current states: "<<states[agent_idx]
+            <<". ("<<(*adg->paths)[agent_idx][state_idx].first.first<<","<<(*adg->paths)[agent_idx][state_idx].first.second<<")"<<","<<(*adg->paths)[agent_idx][state_idx].second<<endl;
             exit(1234);
         }
 

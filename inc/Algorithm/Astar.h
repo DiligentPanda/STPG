@@ -31,8 +31,8 @@ class Astar {
     Astar(
       int input_timeout, 
       bool input_fast_version,
-      const string & branch_order="default", 
-      bool use_grouping=false, 
+      const string & _branch_order="default", 
+      const string & _grouping_method="none", 
       const string & _heuristic="zero", 
       bool early_termination=false,
       bool incremental=false,
@@ -95,6 +95,7 @@ class Astar {
     mt19937 rng;
 
     bool use_grouping=false;
+    GroupingMethod grouping_method=GroupingMethod::NONE;
     shared_ptr<GroupManager> group_manager;
     shared_ptr<HeuristicManager> heuristic_manager;
 
