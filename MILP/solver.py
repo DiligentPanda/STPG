@@ -20,7 +20,7 @@ class MILPSolver:
         # TODO(rivers): don't have any idea why M set to a too large constant, e.g. 10^8, the result is wrong. you can try it with the example
         # so we will estimate it in the solve.
         # or you can set to <=10000000, which is fine at least for the example
-        M = sum([len(path) for path in paths])*2
+        M = max([len(path) for path in paths])*2
         
         # create MILP dictorary
         m_opt = mip.Model(name="SwitchableTPG",sense=MINIMIZE)
