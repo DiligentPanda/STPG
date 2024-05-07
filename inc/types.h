@@ -460,8 +460,26 @@ struct Graph {
         return in_neighbor_global_ids.size() + type1_edge_global_ids.size();
     }
 
-    // returns a vector of <agent_id, local_state_id>, which are pointint to this <agent, state>
     vector<pair<int,int> > get_non_switchable_in_neighbor_pairs(int agent, int state) {
+        auto & type2_in_neighbor_global_ids = non_switchable_type2_edges->get_in_neighbor_global_ids(agent, state);
+        auto & type1_in_neighbor_global_ids = type1_edges->get_in_neighbor_global_ids(agent, state);
+
+        vector<pair<int,int> > in_neighbor_pairs;
+        for (auto in_neighbor_global_id: type2_in_neighbor_global_ids) {
+            in_neighbor_pairs.emplace_back(
+                non_switchable_type2_edges->get_agent_state_id(in_neighbor_global_id)
+            );
+        }
+        for (auto in_neighbor_global_id: type1_in_neighbor_global_ids) {
+            in_neighbor_pairs.emplace_back(
+                type1_edges->get_agent_state_id(in_neighbor_global_id)
+            );
+        }
+        return in_neighbor_pairs;
+    }
+
+    // returns a vector of <agent_id, local_state_id>, which are pointint to this <agent, state>
+    vector<pair<int,int> > get_non_switchable_type2_in_neighbor_pairs(int agent, int state) {
         auto & in_neighbor_global_ids = non_switchable_type2_edges->get_in_neighbor_global_ids(agent, state);
 
         vector<pair<int,int> > in_neighbor_pairs;
@@ -473,7 +491,7 @@ struct Graph {
         return in_neighbor_pairs;
     }
 
-    vector<pair<int,int> > get_in_neighbor_pairs(int agent, int state) {
+    vector<pair<int,int> > get_type2_in_neighbor_pairs(int agent, int state) {
         auto & non_switchable_in_neighbor_global_ids = non_switchable_type2_edges->get_in_neighbor_global_ids(agent, state);
         auto & switchable_in_neighbor_global_ids = switchable_type2_edges->get_in_neighbor_global_ids(agent, state);
 

@@ -10,7 +10,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Werror -Ofast")
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Werror -Ofast -fvisibility=hidden")
 
 find_package(Boost)
 if(Boost_FOUND)
@@ -25,10 +25,10 @@ endif()
 # Find SFML packages
 find_package(SFML 2.5 COMPONENTS graphics window system REQUIRED)
 
+add_subdirectory(pybind11)
+
 file(GLOB_RECURSE SOURCES "src/**.cpp")
 list(FILTER SOURCES EXCLUDE REGEX "(src/simulate.cpp)|(src/generate.cpp)|(src/enumerate_grouping.cpp)|(src/visualize.cpp)")
-
-
 
 set(SIMULATE_SOURCES ${SOURCES} "src/simulate.cpp")
 set(GENERATE_SOURCES ${SOURCES} "src/generate.cpp")
@@ -39,6 +39,7 @@ add_executable(simulate ${SIMULATE_SOURCES})
 target_include_directories(simulate PUBLIC "inc")
 target_include_directories(simulate PUBLIC ${Boost_INCLUDE_DIRS})
 target_link_libraries(simulate ${Boost_LIBRARIES})
+target_link_libraries(simulate pybind11::embed)
 
 add_executable(generate ${GENERATE_SOURCES})
 target_include_directories(generate PUBLIC "inc")

@@ -22,9 +22,9 @@ int Simulator::checkMovable(vector<int>& movable, bool switchCheck) {
 
     vector<pair<int, int>> dependencies;
     if (!switchCheck) {
-      dependencies = adg->get_non_switchable_in_neighbor_pairs(agent, next_state);
+      dependencies = adg->get_non_switchable_type2_in_neighbor_pairs(agent, next_state);
     } else {
-      dependencies = adg->get_in_neighbor_pairs(agent, next_state);
+      dependencies = adg->get_type2_in_neighbor_pairs(agent, next_state);
     }
 
     movable[agent] = 1;
@@ -67,7 +67,7 @@ int Simulator::step(bool switchCheck) {
         Location new_location = get<0>((paths[agent])[(states[agent])]);
         Location next_location = get<0>((paths[agent])[(states[agent]+1)]);
         cout<<new_location.first<<","<<new_location.second<<"->"<<next_location.first<<","<<next_location.second<<endl;
-        auto && in_pairs=adg->get_in_neighbor_pairs(agent, curr_state+1);
+        auto && in_pairs=adg->get_type2_in_neighbor_pairs(agent, curr_state+1);
         cout<<"depenencies:"<<endl;
         for (auto & in_pair: in_pairs) {
           cout<<get<0>(in_pair)<<" "<<get<1>(in_pair)<<" = "<<adg->get_global_state_id(in_pair.first,in_pair.second)<<endl;

@@ -5,9 +5,21 @@ import time
 from typing import Dict, List, Tuple
 
 class MILPSolver:
-    def __init__(self, time_limit=90, eps=0) -> None:
+    def __init__(self, time_limit=90, eps=0, verbose=False) -> None:
         self.time_limit=time_limit  # time limit in seconds
         self.EPSILON=eps
+        self.verbose=verbose
+        
+    def __str__(self):
+        return "MILPSolver(time_limit={}, eps={})".format(self.time_limit, self.EPSILON)
+    
+    def test(self):
+        print(self)
+        
+    def print(self,*args,**kwargs):
+        if not self.verbose:
+            return
+        print(*args,**kwargs)
         
     def solve(
         self, 
@@ -94,9 +106,9 @@ class MILPSolver:
         m_opt.objective = minimize(xsum(last_vars))
         
         # Print optimization problem
-        print(m_opt.objective)
+        self.print(m_opt.objective)
         for constr in m_opt.constrs:
-            print(constr)
+            self.print(constr)
 
         # Run the optimization
         s_time = time.time()
@@ -107,22 +119,22 @@ class MILPSolver:
         if opt_status == mip.OptimizationStatus.OPTIMAL:
             status=0
             objective_value=m_opt.objective_value
-            print("Optimal solution found")
+            self.print("Optimal solution found")
         elif opt_status == mip.OptimizationStatus.FEASIBLE:
             status=1
-            print("Feasible solution found")
+            self.print("Feasible solution found")
         else:
             status=2
-            print("No solution found")
+            self.print("No solution found")
         
         
-        print(f"objective value: {objective_value}")
+        self.print(f"objective value: {objective_value}")
         
-        print("Values of optimization variables")
+        self.print("Values of optimization variables")
         for var in m_opt.vars:
-            print(f"{var.name}: {var.x}")
+            self.print(f"{var.name}: {var.x}")
             
-        print("--------------------------------")
+        self.print("--------------------------------")
         
         group_ids_to_reverse=[]
         # if no solution found, just return empty list

@@ -20,7 +20,7 @@ delay_prob=10
 delay_steps_low=10
 delay_steps_high=20
 time_limit=90
-algos=["graph"] # ["graph"]
+algos=["search"] # ["search"]
 branch_orders=["largest_diff","default"] #,"random","earliest"]
 grouping_methods=["simple","simple_merge","all"]
 heuristics=["wcg_greedy","zero"]
@@ -108,8 +108,8 @@ def run(cmd,output_name):
         log_fail(output_name,exception=traceback.format_exc())
         
         
-# old_setting=["graph","default","false","zero","false",1.0]
-# new_setting=["graph","largest_diff","true","wcg_greedy","true",1.0]
+# old_setting=["search","default","false","zero","false",1.0]
+# new_setting=["search","largest_diff","true","wcg_greedy","true",1.0]
         
 # settings=[old_setting,new_setting]
 settings=[]

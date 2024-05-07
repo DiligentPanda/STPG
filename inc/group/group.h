@@ -456,6 +456,22 @@ public:
         return edges;
     }
 
+    vector<pair<int,int> > get_groupable_edges(int group_id) {
+        if (group_id<0 || group_id>=(int)groups.size()) {
+            cout<<"group_id out of range"<<endl;
+            exit(1234);
+        }
+
+        auto & group=groups[group_id];
+
+        vector<pair<int,int> > edges;
+        for (auto & edge_id: group) {
+            edges.emplace_back(get_out_idx(edge_id),get_in_idx(edge_id));
+        }
+
+        return edges;
+    }
+
     void print_group(Group & group) {
         for (auto & edge_id: group) {
             cout<<get_out_idx(edge_id)<<"->"<<get_in_idx(edge_id)<<",";

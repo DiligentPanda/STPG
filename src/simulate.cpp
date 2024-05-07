@@ -2,6 +2,8 @@
 #include <boost/program_options.hpp>
 #include "Algorithm/Astar.h"
 #include "nlohmann/json.hpp"
+#include "MILP/milp_solver.h"
+#include "solver.h"
 
 using json=nlohmann::json;
 
@@ -55,19 +57,27 @@ void simulate(
 
   cout<<"original_total_cost: "<<originalTime<<", original_trunc_cost: "<<oriTime_trunc<<endl;
 
-  // replanning ADG
-  shared_ptr<Astar> search=make_shared<Astar>(
-    time_limit, 
-    true, 
-    branch_order,  
-    grouping_method, 
-    heuristic, 
-    early_termination, 
-    incremental,
-    w_astar,
-    w_focal,
-    random_seed
-  );
+  shared_ptr<Solver> solver;
+  
+  if (algo=="milp") {
+    solver=make_shared<MILPSolver>(grouping_method, time_limit, 0.0);
+  } else if (algo=="search") {
+    solver=make_shared<Astar>(
+      time_limit, 
+      true, 
+      branch_order,  
+      grouping_method, 
+      heuristic, 
+      early_termination, 
+      incremental,
+      w_astar,
+      w_focal,
+      random_seed
+    );
+  } else {
+    std::cout<<"Unsupported algorithm: "<<algo<<std::endl;
+    exit(-1);
+  }
 
   json stats;
 
@@ -120,7 +130,7 @@ void simulate(
 
   microseconds timer(0);
   start = high_resolution_clock::now();
-  auto replanned_adg = search->startExplore(adg_delayed, originalTime, states);
+  auto replanned_adg = solver->solve(adg_delayed, originalTime, states);
   stop = high_resolution_clock::now();
   timer += duration_cast<microseconds>(stop - start);
 
@@ -135,7 +145,7 @@ void simulate(
     cout<<"optimized_total_cost: "<<timeSum<<", optimized_trunc_cost: "<<timeSum_trunc<<endl;
 
     stats["status"]="Succ";
-    stats["search_time"]=timer.count();
+    // stats["search_time"]=timer.count();
     stats["total_time"]=timer.count() + timer_constructADG.count();
     stats["ori_total_cost"]=originalTime;
     stats["ori_trunc_cost"]=oriTime_trunc;
@@ -143,7 +153,7 @@ void simulate(
     stats["trunc_cost"]=timeSum_trunc;
   } else {
     stats["status"]="Timeout";
-    stats["search_time"]=time_limit*1000000; // in micro-seconds
+    // stats["search_time"]=time_limit*1000000; // in micro-seconds
     stats["total_time"]=time_limit*1000000; // in micro-seconds
     stats["ori_total_cost"]=originalTime;
     stats["ori_trunc_cost"]=oriTime_trunc;
@@ -152,7 +162,7 @@ void simulate(
     stats["trunc_cost"]=oriTime_trunc;
   }
 
-  search->print_stats(stats);
+  solver->write_stats(stats);
 
   out.open(stat_ofp);
   out<<stats.dump(4)<<std::endl;
@@ -168,7 +178,7 @@ int main(int argc, char** argv) {
     ("path_fp,p",po::value<std::string>()->required(),"path file to construct ADG")
     ("sit_fp,s",po::value<std::string>()->required(),"situation file to construct delayed ADG")
     ("time_limit,t",po::value<int>()->required(),"time limit in seconds. need to be an integer")
-    ("algo,a",po::value<std::string>()->required(),"replaning algorithm to use, [graph]")
+    ("algo,a",po::value<std::string>()->required(),"replaning algorithm to use, [search, milp]")
     ("stat_ofp,o",po::value<std::string>()->required(),"the output file path of statistics")
     ("new_path_ofp,n",po::value<std::string>()->required(),"the output file path of new paths")
     ("branch_order,b",po::value<std::string>()->required(),"the branch order to use, [default, conflict, largest_diff, random, earliest]")

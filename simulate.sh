@@ -3,9 +3,9 @@ set -ex
 ./compile.sh
 
 OUTPUT_FOLDER="output/"
-ALGO="graph"
+ALGO="search"
 BRANCH_ORDER="largest_diff"
-GROUPING_METHOD="simple"
+GROUPING_METHOD="all"
 HEURISTIC="wcg_greedy"
 EARLY_TERMINATION=true
 INCREMENTAL=true

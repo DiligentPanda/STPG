@@ -36,7 +36,7 @@ path_list_fp=os.path.join(result_folder,"path_file_names.csv")
 time_limit=90
 num_sits=6
 
-algos=["graph"] # ["graph"]
+algos=["search"] # [searchh"]
 branch_orders=["largest_diff", "default"] #,"random","earliest"]
 grouping_methods=["simple","all"]
 heuristics=["zero","wcg_greedy"]
@@ -64,8 +64,8 @@ path_list=pd.read_csv(path_list_fp,index_col="index")
 # print(path_list)
 
 # settings=[
-#     ["graph","default","false","zero","true"],
-#     ["graph","largest_diff","true","wcg_greedy","true"],
+#     ["search","default","false","zero","true"],
+#     ["search","largest_diff","true","wcg_greedy","true"],
 # ]
 
 data=[]

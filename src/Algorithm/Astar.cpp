@@ -293,7 +293,7 @@ bool Astar::terminated(const shared_ptr<Graph> & adg, const shared_ptr<vector<in
   }
 }
 
-void Astar::print_stats(nlohmann::json & stats) {
+void Astar::write_stats(nlohmann::json & stats) {
   stats["explored_node"]=explored_node_cnt;
   stats["pruned_node"]=pruned_node_cnt;
   stats["added_node"]=added_node_cnt;
@@ -308,6 +308,7 @@ void Astar::print_stats(nlohmann::json & stats) {
   stats["termination_time"]=termT.count();
   stats["dfs_time"]=dfsT.count();
   stats["grouping_time"]=groupingT.count();
+  stats["search_time"]=searchT.count();
   if (use_grouping) {
     auto & groups=group_manager->groups;
     stats["group"]=groups.size();
@@ -337,35 +338,6 @@ void Astar::print_stats(nlohmann::json & stats) {
   }
   // stats["open_list_f_min_vals"]=open_list_min_f_vals;
   // stats["selected_edges"]=selected_edges;
-}
-
-void Astar::print_stats(ofstream &outFile) {
-    outFile << explored_node_cnt << "," << 
-    pruned_node_cnt << "," << 
-    added_node_cnt << "," << 
-    vertex_cnt << "," << 
-    sw_edge_cnt << "," << 
-    heuristicT.count() << "," << 
-    branchT.count() << "," <<
-    sortT.count() << "," << 
-    pqT.count() << "," << 
-    copy_free_graphsT.count() << "," << 
-    termT.count() << "," << 
-    dfsT.count() << endl;
-}
-
-void Astar::print_stats() {
-    std::cout << "explored_node_cnt =" << explored_node_cnt << "\n";
-    std::cout << "pruned_node_cnt =" << pruned_node_cnt << "\n";
-    std::cout << "added_node_cnt =" << added_node_cnt << "\n\n";
-
-    std::cout << "-------------------Time breakdown: \n";
-    std::cout << "heuristic time: " << heuristicT.count() << "\n";
-    std::cout << "branch time: " << branchT.count() << "\n";
-    std::cout << "sort time: " << sortT.count() << "\n";
-    std::cout << "pq time: " << pqT.count() << "\n";
-    std::cout << "copy_free_graphs time: " << branchT.count() << "\n";
-    std::cout << "dfs time: " << dfsT.count() << "\n";
 }
 
 int Astar::count_double_conflicting_edge_groups(const shared_ptr<Graph> & adg, const shared_ptr<vector<int> > & values) {
@@ -658,7 +630,10 @@ shared_ptr<Graph> Astar::exploreNode() {
   // throw invalid_argument("no solution found");
 }
 
-shared_ptr<Graph> Astar::startExplore(const shared_ptr<Graph> & adg, double cost, vector<int> & states) {
+shared_ptr<Graph> Astar::solve(const shared_ptr<Graph> & adg, double cost, vector<int> & states) {
+  searchT = microseconds(timeout*1000000);
+  auto start_search = high_resolution_clock::now();
+
   auto start_graph_free = high_resolution_clock::now();
   init_adg=adg->copy();
   auto end_graph_free = high_resolution_clock::now();
@@ -713,6 +688,11 @@ shared_ptr<Graph> Astar::startExplore(const shared_ptr<Graph> & adg, double cost
   add_node(adg, fake_parent, fixed_edges);
 
   // expand the node
-  return exploreNode();
+  auto && res_adg = exploreNode();
+
+  auto end_search = high_resolution_clock::now();
+  searchT=duration_cast<microseconds>(end_search - start_search);
+
+  return res_adg;
 }
 

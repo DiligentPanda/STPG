@@ -14,6 +14,7 @@ using namespace std::chrono;
 #include "Algorithm/SearchNode.h"
 #include "Algorithm/graph.h"
 #include "OpenList.h"
+#include "solver.h"
 #include <random>
 
 enum BranchOrder {
@@ -24,7 +25,7 @@ enum BranchOrder {
   EARLIEST
 };
 
-class Astar {
+class Astar: public Solver {
   public:
     Astar();
     Astar(int input_timeout);
@@ -40,14 +41,12 @@ class Astar {
       double _w_focal=1.0,
       uint random_seed=0
     );
-    shared_ptr<Graph> startExplore(const shared_ptr<Graph> & adg, double cost, vector<int> & states);
+    shared_ptr<Graph> solve(const shared_ptr<Graph> & adg, double cost, vector<int> & states);
     double heuristic_graph(const shared_ptr<Graph> & adg, const shared_ptr<vector<int> > & topological_sort_order, const shared_ptr<vector<int> > & longest_path_lengths);
 
     int compute_partial_cost(const shared_ptr<Graph> & adg);
 
-    void print_stats();
-    void print_stats(ofstream &outFile);
-    void print_stats(nlohmann::json & stats);
+    void write_stats(nlohmann::json & stats);
 
   private:
     int calcTime(Simulator simulator);
@@ -70,7 +69,7 @@ class Astar {
     microseconds dfsT = std::chrono::microseconds::zero();
     microseconds termT = std::chrono::microseconds::zero();
 
-    microseconds totalT  = std::chrono::seconds::zero();
+    microseconds searchT  = std::chrono::seconds::zero();
 
     int explored_node_cnt = 0;
     int pruned_node_cnt = 0;
