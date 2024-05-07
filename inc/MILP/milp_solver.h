@@ -138,7 +138,7 @@ public:
             switchable_edge_groups[group_id]=group_edges;
         }
 
-        py::object ret=solver->attr("solve")(paths, states, non_switchable_edges, switchable_edge_groups);
+        py::object ret=solver->attr("solve")(paths, states, non_switchable_edges, switchable_edge_groups, init_cost);
 
         auto && ret_tuple=ret.cast<py::tuple>();
         int status=ret_tuple[0].cast<int>();

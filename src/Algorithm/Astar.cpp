@@ -693,6 +693,8 @@ shared_ptr<Graph> Astar::solve(const shared_ptr<Graph> & adg, double cost, vecto
   auto end_search = high_resolution_clock::now();
   searchT=duration_cast<microseconds>(end_search - start_search);
 
+  std::cout<<"search time: "<<searchT.count()/1000000.0<<std::endl;
+
   return res_adg;
 }
 

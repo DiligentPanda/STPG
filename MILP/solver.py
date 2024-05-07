@@ -26,16 +26,22 @@ class MILPSolver:
         paths: List[List[int]],
         curr_states: List[int],
         non_switchable_edges: List[Tuple[int,int,int,int]],
-        switchable_edge_groups: Dict[int, List[Tuple[int, int, int, int]]]
+        switchable_edge_groups: Dict[int, List[Tuple[int, int, int, int]]],
+        init_cost: float=-1.0,
     ) -> Tuple[int, float, float, List[int]]:
         
         # TODO(rivers): don't have any idea why M set to a too large constant, e.g. 10^8, the result is wrong. you can try it with the example
         # so we will estimate it in the solve.
         # or you can set to <=10000000, which is fine at least for the example
-        M = max([len(path) for path in paths])*2
+        # NOTE(rivers): M influence time a lot.
+        # a better way is to set M separately for each switchable edge, so that M=max over two agents' path length.
+        # this is also one drawback of this algorithm.
+        # sum is a worst estimation for now if we don't consider the future delay.
+        M = sum([len(path) for path in paths])
         
         # create MILP dictorary
-        m_opt = mip.Model(name="SwitchableTPG",sense=MINIMIZE)
+        # TODO(rivers): we should try the commercial Gurobi solver later, which should be faster than CBC
+        m_opt = mip.Model(name="SwitchableTPG",sense=MINIMIZE, solver_name=mip.CBC)
         m_opt.clear()
         
         for agent_id, states in enumerate(paths):
@@ -104,6 +110,18 @@ class MILPSolver:
         
         m_opt.verbose = 0
         m_opt.objective = minimize(xsum(last_vars))
+        
+        # providing init cost makes it slower...
+        # m_opt += m_opt.objective<=init_cost
+        
+        # providing init sol also doesn't help...
+        # init_sol=[]
+        # for group_id, group in switchable_edge_groups.items():    
+        #     b: Var = m_opt.var_by_name(
+        #         name=f"switchable_{group_id}"
+        #     )
+        #     init_sol.append((b,0.0))
+        # m_opt.start=init_sol
         
         # Print optimization problem
         self.print(m_opt.objective)
