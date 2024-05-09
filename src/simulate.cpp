@@ -48,14 +48,11 @@ void simulate(
   // simulate without replanning
   auto adg_delayed_copy = adg_delayed->copy();
   adg_delayed_copy->fix_all_switchable_type2_edges();
-  // simulate from the initial state
-  Simulator simulator_original(adg_delayed_copy);
-  int originalTime = simulator_original.print_soln();
   // simulate from the current state
-  Simulator simulator_ori_trunc(adg_delayed_copy, states);
-  int oriTime_trunc = simulator_ori_trunc.print_soln();
+  Simulator simulator_original(adg_delayed_copy, states);
+  int original_cost = simulator_original.print_soln();
 
-  cout<<"original_total_cost: "<<originalTime<<", original_trunc_cost: "<<oriTime_trunc<<endl;
+  cout<<"original cost: "<<original_cost<<endl;
 
   shared_ptr<Solver> solver;
   
@@ -99,11 +96,9 @@ void simulate(
   stats["status"]="Fail";
   stats["search_time"]=time_limit*1000000; // in micro-seconds
   stats["total_time"]=time_limit*1000000; // in micro-seconds
-  stats["ori_total_cost"]=originalTime;
-  stats["ori_trunc_cost"]=oriTime_trunc;
+  stats["original_cost"]=original_cost;
   // implication: fail to replan, just use the original one
-  stats["total_cost"]=originalTime;
-  stats["trunc_cost"]=oriTime_trunc;
+  stats["cost"]=original_cost;
   stats["explored_node"]=nullptr;
   stats["pruned_node"]=nullptr;
   stats["added_node"]=nullptr;
@@ -130,36 +125,28 @@ void simulate(
 
   microseconds timer(0);
   start = high_resolution_clock::now();
-  auto replanned_adg = solver->solve(adg_delayed, originalTime, states);
+  auto replanned_adg = solver->solve(adg_delayed, original_cost, states);
   stop = high_resolution_clock::now();
   timer += duration_cast<microseconds>(stop - start);
 
 
   if (duration_cast<seconds>(timer).count() < time_limit) {
-    // simulate with new paths
-    Simulator simulator_res(replanned_adg);
-    int timeSum = simulator_res.print_soln(new_path_ofp.c_str());
-    Simulator simulator_res_trunc(replanned_adg, states);
-    int timeSum_trunc = simulator_res_trunc.print_soln();
+    // simulate with the replanned ADG
+    Simulator simulator(replanned_adg, states);
+    int cost= simulator.print_soln();
 
-    cout<<"optimized_total_cost: "<<timeSum<<", optimized_trunc_cost: "<<timeSum_trunc<<endl;
+    cout<<"optimized cost: "<<cost<<endl;
 
     stats["status"]="Succ";
     // stats["search_time"]=timer.count();
     stats["total_time"]=timer.count() + timer_constructADG.count();
-    stats["ori_total_cost"]=originalTime;
-    stats["ori_trunc_cost"]=oriTime_trunc;
-    stats["total_cost"]=timeSum;
-    stats["trunc_cost"]=timeSum_trunc;
+    stats["cost"]=cost;
   } else {
     stats["status"]="Timeout";
     // stats["search_time"]=time_limit*1000000; // in micro-seconds
     stats["total_time"]=time_limit*1000000; // in micro-seconds
-    stats["ori_total_cost"]=originalTime;
-    stats["ori_trunc_cost"]=oriTime_trunc;
     // implication: fail to replan, just use the original one
-    stats["total_cost"]=originalTime;
-    stats["trunc_cost"]=oriTime_trunc;
+    stats["cost"]=original_cost;
   }
 
   solver->write_stats(stats);

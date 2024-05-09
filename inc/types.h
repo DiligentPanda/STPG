@@ -298,29 +298,33 @@ struct Graph {
         non_switchable_type2_edges = make_shared<Subgraph>(num_agents, accum_state_cnts_begin, state_cnts, global_state_id_to_agent_state_ids);
         switchable_type2_edges = make_shared<Subgraph>(num_agents, accum_state_cnts_begin, state_cnts, global_state_id_to_agent_state_ids);
         
-        _build_type1_edges();
-        _build_type2_edges();
+        // we no longer keep the edges pointing from the state <= the current state
+        // but we need to keep states because states use idx as id now
+        _build_type1_edges(curr_states);
+        _build_type2_edges(curr_states);
 
         fix_edges_after_last_states();
         fix_edges_before_curr_states(curr_states);
 
     }
 
-    void _build_type1_edges() {
+    void _build_type1_edges(const vector<int> & curr_states) {
         for (auto agent=0;agent<get_num_agents();++agent) {
             int state_cnt=(*state_cnts)[agent];
-            for (auto state=1;state<state_cnt;++state) {
+            for (auto state=curr_states[agent]+1;state<state_cnt;++state) {
                 type1_edges->insert_edge(agent, state-1, agent, state);
             }
         }
     }
 
-    void _build_type2_edges() {
+    void _build_type2_edges(const vector<int> & curr_states) {
         for (auto agent1=0;agent1<get_num_agents();++agent1) {
             Path & path1=(*paths)[agent1];
+            int curr_state1=curr_states[agent1];
             int num_states1=path1.size();
             for (auto agent2=agent1+1;agent2<get_num_agents();++agent2) {
                 Path & path2=(*paths)[agent2];
+                int curr_state2=curr_states[agent2];
                 int num_states2=path2.size();
                 for (auto state1=0;state1<num_states1;++state1) {
                     for (auto state2=0;state2<num_states2;++state2) {
@@ -328,19 +332,21 @@ struct Graph {
                         auto & pair2 = path2[state2];
 
                         // if the same location and pair1 & pair 2 are not delayed nodes.
-                        if (pair1.first==pair2.first && pair1.second>=0 and pair2.second>=0) {
+                        if (pair1.first==pair2.first && pair1.second>=0 && pair2.second>=0) {
                             // if the same timestep
                             if (pair1.second==pair2.second) {
                                 std::cout<<"Error: two agents are at the same location at the same time"<<std::endl;
                                 exit(-1);
                             } else if (pair1.second<pair2.second) {
-                                // TODO(rivers): this is a bug, we need to add dummy ending nodes to encode the dependency from the last state
-                                if (state1<num_states1-1) {
+                                // ? BUG(rivers): this is a bug, we need to add dummy ending nodes to encode the dependency from the last state.
+                                // This bug might also exists in group manager.
+                                // ? NOTE(rivers): This is not a bug, because other agents won't go through the goal location of the agent in a valid plan. So, such dependency won't exist.
+                                if (state1<num_states1-1 && state1>=curr_state1) {
                                     // type 2 edge always points to the later state
                                     switchable_type2_edges->insert_edge(agent1, state1+1, agent2, state2);
                                 }
                             } else {
-                                if (state2<num_states2-1) {
+                                if (state2<num_states2-1 && state2>=curr_state2) {
                                     switchable_type2_edges->insert_edge(agent2, state2+1, agent1, state1);
                                 }
                             }

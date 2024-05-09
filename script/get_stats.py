@@ -36,7 +36,7 @@ path_list_fp=os.path.join(result_folder,"path_file_names.csv")
 time_limit=90
 num_sits=6
 
-algos=["search"] # [searchh"]
+algos=["search","milp"] # [searchh"]
 branch_orders=["largest_diff", "default"] #,"random","earliest"]
 grouping_methods=["simple","all"]
 heuristics=["zero","wcg_greedy"]
@@ -55,7 +55,7 @@ for algo in algos:
                             settings.append([algo,branch_order,use_grouping,heuristic,early_termination,incremental,w_focal])   
 
 exp_headers=["map_name","agent_num","instance_idx","sit_idx"]
-result_headers=["algo","branch_order","grouping_method","heuristic","w_focal","w_astar","early_termination","incremental","random_seed","status","search_time","total_time","ori_total_cost","total_cost","ori_trunc_cost","trunc_cost",
+result_headers=["algo","branch_order","grouping_method","heuristic","w_focal","w_astar","early_termination","incremental","random_seed","status","search_time","total_time","original_cost","cost",
          "explored_node","pruned_node","added_node","vertex","sw_edge","heuristic_time","extra_heuristic_time","branch_time",
          "sort_time","priority_queue_time","copy_free_graphs_time","termination_time","dfs_time","grouping_time","group","group_merge_edge","group_size_max","group_size_min","group_size_avg"]
 headers=exp_headers+result_headers
@@ -63,10 +63,12 @@ headers=exp_headers+result_headers
 path_list=pd.read_csv(path_list_fp,index_col="index")
 # print(path_list)
 
-# settings=[
-#     ["search","default","false","zero","true"],
-#     ["search","largest_diff","true","wcg_greedy","true"],
-# ]
+milp_setting2=["milp","default","simple","zero","true","true",1.0]           
+milp_setting1=["milp","default","all","zero","true","true",1.0]        
+old_setting=["search","default","simple","zero","true","true",1.0]
+new_setting=["search","largest_diff","all","wcg_greedy","true","true",1.0]
+        
+settings=[old_setting,new_setting,milp_setting1,milp_setting2]
 
 data=[]
 for idx in range(len(path_list)):

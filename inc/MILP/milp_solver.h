@@ -59,7 +59,7 @@ public:
         solver->attr("test")();
     }
 
-    shared_ptr<Graph> solve(const shared_ptr<Graph> & init_adg, double init_cost, vector<int> & states) {
+    shared_ptr<Graph> solve(const shared_ptr<Graph> & init_adg, double init_cost, vector<int> & curr_states) {
         searchT=microseconds((int64_t)(time_limit*1000000));
         vertex_cnt = init_adg->get_num_states();
         sw_edge_cnt = init_adg->get_num_switchable_edges();
@@ -68,13 +68,13 @@ public:
 
         // TODO(rivers): we should make grouping outside before the execution of an adg
         // TODO(rivers): make grouping method configurable
-        group_manager=make_shared<GroupManager>(adg, states, grouping_method);
+        group_manager=make_shared<GroupManager>(adg, curr_states, grouping_method);
         std::cout<<group_manager->groups.size()<<std::endl;
 
         if (use_grouping) {
             // std::cout<<"input_sw_cnt: "<<input_sw_cnt<<std::endl;
             auto start = high_resolution_clock::now();
-            group_manager=std::make_shared<GroupManager>(adg, states, grouping_method);
+            group_manager=std::make_shared<GroupManager>(adg, curr_states, grouping_method);
             auto end = high_resolution_clock::now();
             groupingT += duration_cast<microseconds>(end - start);
             std::cout<<"group size: "<<group_manager->groups.size()<<std::endl;
@@ -89,13 +89,11 @@ public:
         vector<vector<int> > paths;
         for (int agent_id=0; agent_id<num_agents; ++agent_id) {
             vector<int> path;
-            for (int state_id=0;state_id<adg->get_num_states(agent_id);++state_id) {
+            for (int state_id=curr_states[agent_id];state_id<adg->get_num_states(agent_id);++state_id) {
                 path.push_back(state_id);
             }
             paths.push_back(path);
         }
-
-        // curr_states: just states
 
         // non_switchable_edges
         vector<tuple<int,int,int,int> > non_switchable_edges;
@@ -138,7 +136,7 @@ public:
             switchable_edge_groups[group_id]=group_edges;
         }
 
-        py::object ret=solver->attr("solve")(paths, states, non_switchable_edges, switchable_edge_groups, init_cost);
+        py::object ret=solver->attr("solve")(paths, non_switchable_edges, switchable_edge_groups, init_cost);
 
         auto && ret_tuple=ret.cast<py::tuple>();
         int status=ret_tuple[0].cast<int>();
@@ -146,6 +144,7 @@ public:
         double objective_value=ret_tuple[2].cast<double>();
         vector<int> && group_ids_to_reverse=ret_tuple[3].cast<vector<int> >();
 
+        searchT=microseconds((int64_t)(elapse*1000000));
         if (status==0) {
             // success
             std::cout<<"Succeed. results: "<<status<<","<<elapse<<","<<objective_value<<std::endl;
@@ -154,7 +153,6 @@ public:
                 auto && edges = group_manager->get_groupable_edges(group_id);
                 adg->fix_switchable_type2_edges(edges, true, false);
             }
-            searchT=microseconds((int64_t)(elapse*1000000));
         } else {
             std::cout<<"Fail to find solution within "<<time_limit<<std::endl;
         }

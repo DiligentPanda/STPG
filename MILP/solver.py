@@ -24,11 +24,11 @@ class MILPSolver:
     def solve(
         self, 
         paths: List[List[int]],
-        curr_states: List[int],
         non_switchable_edges: List[Tuple[int,int,int,int]],
         switchable_edge_groups: Dict[int, List[Tuple[int, int, int, int]]],
         init_cost: float=-1.0,
     ) -> Tuple[int, float, float, List[int]]:
+        curr_states=[path[0] for path in paths]
         
         # TODO(rivers): don't have any idea why M set to a too large constant, e.g. 10^8, the result is wrong. you can try it with the example
         # so we will estimate it in the solve.
@@ -44,8 +44,8 @@ class MILPSolver:
         m_opt = mip.Model(name="SwitchableTPG",sense=MINIMIZE, solver_name=mip.CBC)
         m_opt.clear()
         
-        for agent_id, states in enumerate(paths):
-            for state_id in states:
+        for agent_id, state_ids in enumerate(paths):
+            for state_id in state_ids:
                 m_opt.add_var(
                     name=f"state_{agent_id}_{state_id}",
                     var_type=CONTINUOUS,
@@ -54,6 +54,9 @@ class MILPSolver:
         
         for edge_id, edge in enumerate(non_switchable_edges):
             head_agent_id, head_state_id, tail_agent_id, tail_state_id = edge
+            
+            if head_state_id==curr_states[head_agent_id] and tail_state_id==curr_states[tail_agent_id]:
+                print(edge)
             
             var_1 = m_opt.var_by_name(f"state_{head_agent_id}_{head_state_id}")
             var_2 = m_opt.var_by_name(f"state_{tail_agent_id}_{tail_state_id}")
@@ -72,7 +75,6 @@ class MILPSolver:
             
             for edge in group:
                 head_agent_id, head_state_id, tail_agent_id, tail_state_id = edge
-            
                 var_1 = m_opt.var_by_name(f"state_{head_agent_id}_{head_state_id}")
                 var_2 = m_opt.var_by_name(f"state_{tail_agent_id}_{tail_state_id}")
                 
@@ -104,8 +106,9 @@ class MILPSolver:
         
         # Add objective function
         last_vars = []
-        for agent_id, states in enumerate(paths):
-            var = m_opt.var_by_name(f"state_{agent_id}_{len(states)-1}")
+        for agent_id, state_ids in enumerate(paths):
+            last_state_id=state_ids[-1]
+            var = m_opt.var_by_name(f"state_{agent_id}_{last_state_id}")
             last_vars.append(var)
         
         m_opt.verbose = 0
@@ -132,6 +135,9 @@ class MILPSolver:
         s_time = time.time()
         opt_status = m_opt.optimize(max_seconds=self.time_limit)
         elapse = time.time()-s_time
+        
+        # TODO, we should allow feasible but not optimal solution later, which can be compared with focal.
+        print(opt_status)
         
         objective_value=-1
         if opt_status == mip.OptimizationStatus.OPTIMAL:

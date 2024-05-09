@@ -37,9 +37,9 @@ subprocess.check_output("./compile.sh", shell=True)
 
 # setting: [agent_num_start, agent_num_end, agent_num_step, max_process_num]
 maps = {
-        # "random-32-32-10":[75,100,5,8],
+        # "random-32-32-10":[70,100,10,8],
         # "warehouse-10-20-10-2-1":[150,200,10,8],
-        "Paris_1_256": [150,200,10,8],
+        "Paris_1_256": [150,190,20,8],
         # "lak303d": [121,169,8,8]
        }
 
@@ -65,7 +65,7 @@ def keep(row):
     setting = maps[map_name]
     agent_num_start,agent_num_end,agent_num_step,max_process_num=setting
     
-    if agent_num<agent_num_start or agent_num>=agent_num_end+agent_num_step:
+    if agent_num not in range(agent_num_start,agent_num_end+agent_num_step,agent_num_step):
         return False
     
     if instance_idx not in instance_idxs:
@@ -106,21 +106,22 @@ def run(cmd,output_name):
         import traceback
         print("[EXCEPTION]", traceback.format_exc())
         log_fail(output_name,exception=traceback.format_exc())
+
+milp_setting2=["milp","default","simple","zero","true","true",1.0]           
+milp_setting1=["milp","default","all","zero","true","true",1.0]        
+old_setting=["search","default","simple","zero","true","true",1.0]
+new_setting=["search","largest_diff","all","wcg_greedy","true","true",1.0]
         
-        
-# old_setting=["search","default","false","zero","false",1.0]
-# new_setting=["search","largest_diff","true","wcg_greedy","true",1.0]
-        
-# settings=[old_setting,new_setting]
-settings=[]
-for algo in algos:
-    for branch_order in branch_orders:
-        for grouping_method in grouping_methods:
-            for heuristic in heuristics:
-                for early_termination in early_terminations:
-                    for incremental in incrementals:
-                        for w_focal in w_focals:
-                            settings.append([algo,branch_order,grouping_method,heuristic,early_termination,incremental,w_focal])   
+settings=[old_setting,new_setting,milp_setting1,milp_setting2]
+# settings=[]
+# for algo in algos:
+#     for branch_order in branch_orders:
+#         for grouping_method in grouping_methods:
+#             for heuristic in heuristics:
+#                 for early_termination in early_terminations:
+#                     for incremental in incrementals:
+#                         for w_focal in w_focals:
+#                             settings.append([algo,branch_order,grouping_method,heuristic,early_termination,incremental,w_focal])   
 
 for map_name,setting in maps.items():
     print("processing map {}".format(map_name))
