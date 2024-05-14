@@ -8,6 +8,7 @@
 #include <memory>
 #include <iostream>
 #include <map>
+#include "util/Timer.h"
 
 // TODO(rivers): bad habit. fix this.
 using namespace std;
@@ -300,8 +301,12 @@ struct Graph {
         
         // we no longer keep the edges pointing from the state <= the current state
         // but we need to keep states because states use idx as id now
+        // g_timer.record_p("build_type1_edges_s");
         _build_type1_edges(curr_states);
+        // g_timer.record_d("build_type1_edges_s","build_type1_edges");
+        // g_timer.record_p("build_type2_edges_s");
         _build_type2_edges(curr_states);
+        // g_timer.record_d("build_type2_edges_s","build_type2_edges");
 
         fix_edges_after_last_states();
         fix_edges_before_curr_states(curr_states);

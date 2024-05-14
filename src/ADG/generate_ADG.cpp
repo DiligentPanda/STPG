@@ -1,4 +1,5 @@
 #include "ADG/generate_ADG.h"
+#include "util/Timer.h"
 
 bool same_locations(Location location1, Location location2) {
   int i1 = location1.first;
@@ -113,7 +114,11 @@ shared_ptr<Graph> construct_delayed_ADG(const shared_ptr<Graph> & graph, const v
     }
   }
 
+  // g_timer.record_p("make_graph_s");
   auto new_graph=make_shared<Graph>(new_paths, states);
+  // g_timer.record_d("make_graph_s","make_graph");
+
+  // g_timer.print_all_d();
 
   return new_graph;
 }

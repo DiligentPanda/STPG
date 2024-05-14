@@ -1,8 +1,8 @@
-result_csv="output/2024_05_09_09_37_54_exp/stats_all.csv"
+result_csv="output/2024_05_09_06_53_48_exp/stats_all.csv"
 # map_names = ["lak303d"]#,"lak303d"]
 # map_labels = ["lak303d"]#, "lak303d (37-45 agents)"]
-map_names = ["Paris_1_256"]#,"lak303d"]
-map_labels = ["Paris_1_256"]#, "lak303d (37-45 agents)"]
+map_names = ["random-32-32-10"]#,"lak303d"]
+map_labels = ["random-32-32-10"]#, "lak303d (37-45 agents)"]
 output_fp="analysis/temp/milp_compare/success_rates_{}.png".format(map_labels[0])
 
 import matplotlib.pyplot as plt
@@ -13,18 +13,18 @@ df = pd.read_csv(result_csv,index_col="index")
 
 headers=["algo","branch_order","grouping_method","heuristic","incremental","w_focal","agent_num"]
 algorithms={
-    "milp + simple g (150)": ["milp", "default","simple","zero",True,1.0,150],
-    "milp + all g (150)": ["milp", "default","all","zero",True,1.0,150],
-    "search default* (150)": ["search", "default","simple","zero",True,1.0,150],
-    "search best (150)": ["search", "largest_diff","all","wcg_greedy",True,1.0,150],
-    "milp + simple g (170)": ["milp", "default","simple","zero",True,1.0,170],
-    "milp + all g (170)": ["milp", "default","all","zero",True,1.0,170],
-    "search default* (170)": ["search", "default","simple","zero",True,1.0,170],
-    "search best (170)": ["search", "largest_diff","all","wcg_greedy",True,1.0,170],
-    "milp + simple g (190)": ["milp", "default","simple","zero",True,1.0,190],
-    "milp + all g (190)": ["milp", "default","all","zero",True,1.0,190],
-    "search default* (190)": ["search", "default","simple","zero",True,1.0,190],
-    "search best (190)": ["search", "largest_diff","all","wcg_greedy",True,1.0,190],
+    "milp + simple g (70)": ["milp", "default","simple","zero",True,1.0,70],
+    "milp + all g (70)": ["milp", "default","all","zero",True,1.0,70],
+    "search default* (70)": ["search", "default","simple","zero",True,1.0,70],
+    "search best (70)": ["search", "largest_diff","all","wcg_greedy",True,1.0,70],
+    "milp + simple g (85)": ["milp", "default","simple","zero",True,1.0,85],
+    "milp + all g (85)": ["milp", "default","all","zero",True,1.0,85],
+    "search default* (85)": ["search", "default","simple","zero",True,1.0,85],
+    "search best (85)": ["search", "largest_diff","all","wcg_greedy",True,1.0,85],
+    "milp + simple g (100)": ["milp", "default","simple","zero",True,1.0,100],
+    "milp + all g (100)": ["milp", "default","all","zero",True,1.0,100],
+    "search default* (100)": ["search", "default","simple","zero",True,1.0,100],
+    "search best (100)": ["search", "largest_diff","all","wcg_greedy",True,1.0,100],
 }
 
 plt.rcParams.update({'font.size': 15})
@@ -62,9 +62,9 @@ for map_name in map_names:
         else:
             linestyle="-"
         
-        if name.find("150")!=-1:
+        if name.find("70")!=-1:
             color='r'
-        elif name.find("170")!=-1:
+        elif name.find("85")!=-1:
             color='g'
         else:
             color='b'

@@ -130,6 +130,8 @@ void simulate(
   timer += duration_cast<microseconds>(stop - start);
 
 
+  solver->write_stats(stats);
+
   if (duration_cast<seconds>(timer).count() < time_limit) {
     // simulate with the replanned ADG
     Simulator simulator(replanned_adg, states);
@@ -149,7 +151,9 @@ void simulate(
     stats["cost"]=original_cost;
   }
 
-  solver->write_stats(stats);
+
+  std::cout<<"search time: "<<stats["search_time"].get<float>()/1000000.0<<", total time: "<<stats["total_time"].get<float>()/1000000.0<<std::endl;
+  std::cout<<"construct ADG time:"<<timer_constructADG.count()/1000000.0<<std::endl;
 
   out.open(stat_ofp);
   out<<stats.dump(4)<<std::endl;

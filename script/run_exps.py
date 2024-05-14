@@ -39,8 +39,8 @@ subprocess.check_output("./compile.sh", shell=True)
 maps = {
         # "random-32-32-10":[70,100,10,8],
         # "warehouse-10-20-10-2-1":[150,200,10,8],
-        "Paris_1_256": [150,190,20,8],
-        # "lak303d": [121,169,8,8]
+        # "Paris_1_256": [150,190,20,8],
+        "lak303d": [41,73,16,8]
        }
 
 stat_output_folder=os.path.join(output_folder,"stat")
