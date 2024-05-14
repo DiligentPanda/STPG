@@ -379,7 +379,11 @@ void Astar::add_node(const shared_ptr<Graph> & graph, const shared_ptr<SearchNod
   }
   h = heuristic_manager->computeInformedHeuristics(graph, longest_path_lengths, reverse_longest_path_lengths, 0, fast_approximate);
 
-  h=max(h,parent_node->g+parent_node->h-g);
+  // we cannot use the following for the root! A hidden bug.
+  // the following max basically comes from the fact that the child's cost must be larger than the parent's because of the increasing number of edges.
+  if (parent_node->longest_path_lengths!=nullptr) {
+    h=max(h,parent_node->g+parent_node->h-g);
+  }
   
   auto end = high_resolution_clock::now();
   extraHeuristicT += duration_cast<microseconds>(end - start);
