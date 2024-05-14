@@ -3,18 +3,9 @@
 #include <boost/pending/disjoint_sets.hpp>
 #include <unordered_map>
 #include <unordered_set>
-#include "types.h"
+#include "graph/graph.h"
 #include <iostream>
-#include <boost/functional/hash.hpp>
-
-struct PairIntHash {
-  size_t operator() (const pair<int, int>& p) const {
-    size_t seed = 0;
-    boost::hash_combine(seed, p.first);
-    boost::hash_combine(seed, p.second);
-    return seed;
-  }
-};
+#include "util/util.h"
 
 enum GroupingMethod {
     NONE,

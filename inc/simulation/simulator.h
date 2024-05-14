@@ -1,7 +1,7 @@
 #ifndef SIMULATOR
 #define SIMULATOR
 
-#include "../ADG/generate_ADG.h"
+#include "graph/graph.h"
 
 class Simulator {
   public:         

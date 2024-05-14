@@ -1,5 +1,5 @@
 #pragma once
-#include "types.h"
+#include "graph/graph.h"
 #include <pybind11/embed.h> // everything needed for embedding
 #include <pybind11/stl.h> // for conversion between C++ and Python types
 #include <unordered_map>
@@ -59,7 +59,7 @@ public:
         solver->attr("test")();
     }
 
-    shared_ptr<Graph> solve(const shared_ptr<Graph> & init_adg, double init_cost, vector<int> & curr_states) {
+    shared_ptr<Graph> solve(const shared_ptr<Graph> & init_adg, COST_TYPE init_cost, vector<int> & curr_states) {
         searchT=microseconds((int64_t)(time_limit*1000000));
         vertex_cnt = init_adg->get_num_states();
         sw_edge_cnt = init_adg->get_num_switchable_edges();
@@ -140,8 +140,8 @@ public:
 
         auto && ret_tuple=ret.cast<py::tuple>();
         int status=ret_tuple[0].cast<int>();
-        double elapse=ret_tuple[1].cast<double>();
-        double objective_value=ret_tuple[2].cast<double>();
+        COST_TYPE elapse=ret_tuple[1].cast<COST_TYPE>();
+        COST_TYPE objective_value=ret_tuple[2].cast<COST_TYPE>();
         vector<int> && group_ids_to_reverse=ret_tuple[3].cast<vector<int> >();
 
         searchT=microseconds((int64_t)(elapse*1000000));
@@ -171,9 +171,9 @@ public:
             auto & groups=group_manager->groups;
             stats["group"]=groups.size();
             stats["group_merge_edge"]=group_manager->group_merge_edge_cnt;
-            double group_size_max=0;
-            double group_size_avg=0;
-            double group_size_min=sw_edge_cnt;
+            COST_TYPE group_size_max=0;
+            COST_TYPE group_size_avg=0;
+            COST_TYPE group_size_min=sw_edge_cnt;
             for (int i=0;i<(int)groups.size();++i) {
             if((int)groups[i].size()>group_size_max) {
                 group_size_max=groups[i].size();

@@ -3,7 +3,7 @@
 #include <fstream>
 #include <string>
 
-#include "../types.h"
+#include "graph/graph.h"
 
 using namespace std;
 

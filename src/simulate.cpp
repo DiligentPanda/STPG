@@ -4,6 +4,9 @@
 #include "nlohmann/json.hpp"
 #include "MILP/milp_solver.h"
 #include "solver.h"
+#include "graph/generate_ADG.h"
+#include "simulation/simulator.h"
+#include "define.h"
 
 using json=nlohmann::json;
 
@@ -17,8 +20,8 @@ void simulate(
   const string & heuristic,
   bool early_termination,
   bool incremental,
-  double w_astar,
-  double w_focal,
+  COST_TYPE w_astar,
+  COST_TYPE w_focal,
   uint random_seed,
   const string & stat_ofp, 
   const string & new_path_ofp
@@ -177,8 +180,8 @@ int main(int argc, char** argv) {
     ("heuristic,h",po::value<std::string>()->required(),"the heuristic to use, [zero, cg_greedy, wcg_greedy, fast_wcg_greedy]")
     ("early_termination,e",po::value<bool>()->required(),"whether to use early termination")
     ("incremental,i",po::value<bool>()->required(),"whether to use incremental update")
-    ("w_astar",po::value<double>()->default_value(1.0),"heuristic weight for weighted A Star")
-    ("w_focal",po::value<double>()->default_value(1.0),"heuristic weight for focal search")
+    ("w_astar",po::value<COST_TYPE>()->default_value(1.0),"heuristic weight for weighted A Star")
+    ("w_focal",po::value<COST_TYPE>()->default_value(1.0),"heuristic weight for focal search")
     ("random_seed,r",po::value<uint>()->default_value(0),"random seed")
   ;
 
@@ -202,8 +205,8 @@ int main(int argc, char** argv) {
   string new_path_ofp=vm.at("new_path_ofp").as<string>();
   string grouping_method=vm.at("grouping_method").as<string>();
   string heuristic=vm.at("heuristic").as<string>();
-  double w_astar=vm.at("w_astar").as<double>();
-  double w_focal=vm.at("w_focal").as<double>();
+  COST_TYPE w_astar=vm.at("w_astar").as<COST_TYPE>();
+  COST_TYPE w_focal=vm.at("w_focal").as<COST_TYPE>();
 
   if (w_astar>1.0 && w_focal>1.0) {
     std::cout<<"Using both weighted astar and focal search is not supported."<<std::endl;

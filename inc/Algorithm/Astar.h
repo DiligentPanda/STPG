@@ -5,7 +5,6 @@
 #include <chrono>
 using namespace std::chrono;
 
-#include "simulator.h"
 #include "nlohmann/json.hpp"
 #include "group/group.h"
 #include <memory>
@@ -15,6 +14,7 @@ using namespace std::chrono;
 #include "Algorithm/graph.h"
 #include "OpenList.h"
 #include "solver.h"
+#include "define.h"
 #include <random>
 
 enum BranchOrder {
@@ -37,25 +37,20 @@ class Astar: public Solver {
       const string & _heuristic="zero", 
       bool early_termination=false,
       bool incremental=false,
-      double _w_astar=1.0,
-      double _w_focal=1.0,
+      COST_TYPE _w_astar=1.0,
+      COST_TYPE _w_focal=1.0,
       uint random_seed=0
     );
-    shared_ptr<Graph> solve(const shared_ptr<Graph> & adg, double cost, vector<int> & states);
-    double heuristic_graph(const shared_ptr<Graph> & adg, const shared_ptr<vector<int> > & topological_sort_order, const shared_ptr<vector<int> > & longest_path_lengths);
-
-    int compute_partial_cost(const shared_ptr<Graph> & adg);
-
+    shared_ptr<Graph> solve(const shared_ptr<Graph> & adg, COST_TYPE cost, vector<int> & states);
     void write_stats(nlohmann::json & stats);
 
   private:
-    int calcTime(Simulator simulator);
     shared_ptr<Graph> exploreNode();
-    tuple<int, int, int> enhanced_branch(const shared_ptr<Graph> & adg, const shared_ptr<vector<int> > & values);
-    tuple<int, int, int> branch(const shared_ptr<Graph> & adg, const shared_ptr<vector<int> > & values);
-    bool terminated(const shared_ptr<Graph> & adg, const shared_ptr<vector<int> > & values);
-    int count_double_conflicting_edge_groups(const shared_ptr<Graph> & adg, const shared_ptr<vector<int> > & values);
-    void reverse_nonSwitchable_edges_basedOn_LongestPathValues(const shared_ptr<Graph> & adg, const shared_ptr<vector<int> > & values);
+    tuple<int, int, COST_TYPE> enhanced_branch(const shared_ptr<Graph> & adg, const shared_ptr<vector<COST_TYPE> > & values);
+    tuple<int, int, COST_TYPE> branch(const shared_ptr<Graph> & adg, const shared_ptr<vector<COST_TYPE> > & values);
+    bool terminated(const shared_ptr<Graph> & adg, const shared_ptr<vector<COST_TYPE> > & values);
+    int count_COST_TYPE_conflicting_edge_groups(const shared_ptr<Graph> & adg, const shared_ptr<vector<COST_TYPE> > & values);
+    void reverse_nonSwitchable_edges_basedOn_LongestPathValues(const shared_ptr<Graph> & adg, const shared_ptr<vector<COST_TYPE> > & values);
 
     void add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode> & parent_node, vector<std::pair<int,int> > & fixed_edges);
 
@@ -75,7 +70,7 @@ class Astar: public Solver {
     int pruned_node_cnt = 0;
     int added_node_cnt = 0;
 
-    vector<double> open_list_min_f_vals;
+    vector<COST_TYPE> open_list_min_f_vals;
     vector<tuple<int,int,int> > selected_edges;
 
     int vertex_cnt = 0;
@@ -104,10 +99,10 @@ class Astar: public Solver {
 
     bool incremental = false;
 
-    double w_astar = 1.0;
-    double w_focal = 1.0;
+    COST_TYPE w_astar = 1.0;
+    COST_TYPE w_focal = 1.0;
 
     shared_ptr<Graph> init_adg;
-    double init_cost;
+    COST_TYPE init_cost;
 };
 #endif

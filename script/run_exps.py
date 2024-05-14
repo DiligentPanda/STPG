@@ -37,10 +37,10 @@ subprocess.check_output("./compile.sh", shell=True)
 
 # setting: [agent_num_start, agent_num_end, agent_num_step, max_process_num]
 maps = {
-        # "random-32-32-10":[70,100,10,8],
-        # "warehouse-10-20-10-2-1":[150,200,10,8],
-        # "Paris_1_256": [150,190,20,8],
-        "lak303d": [41,73,16,8]
+        "random-32-32-10":[70,100,10,8],
+        "warehouse-10-20-10-2-1":[150,200,10,8],
+        "Paris_1_256": [150,190,20,8],
+        # "lak303d": [41,73,16,8]
        }
 
 stat_output_folder=os.path.join(output_folder,"stat")
@@ -112,7 +112,7 @@ milp_setting1=["milp","default","all","zero","true","true",1.0]
 old_setting=["search","default","simple","zero","true","true",1.0]
 new_setting=["search","largest_diff","all","wcg_greedy","true","true",1.0]
         
-settings=[old_setting,new_setting,milp_setting1,milp_setting2]
+settings=[old_setting,new_setting]
 # settings=[]
 # for algo in algos:
 #     for branch_order in branch_orders:

@@ -4,10 +4,11 @@
 #include <cstdlib>
 #include <set>
 #include <iostream>
+#include "define.h"
 
 class OpenList {
 public:
-    OpenList(double w_focal=1.0): w_focal(w_focal), focal(w_focal>1.0), f_lowerbound(0.0) {
+    OpenList(COST_TYPE w_focal=1.0): w_focal(w_focal), focal(w_focal>1.0), f_lowerbound(0.0) {
         if (focal) {
             std::cout<<"focal search with w="<<w_focal<<std::endl;
         } else {
@@ -16,9 +17,9 @@ public:
 
     }
 
-    double w_focal;
+    COST_TYPE w_focal;
     bool focal;
-    double f_lowerbound;
+    COST_TYPE f_lowerbound;
 
     // used for A*
     priority_queue<shared_ptr<SearchNode>, vector<shared_ptr<SearchNode> >, SearchNode::CompareOpenHeap > open_heap;
@@ -81,9 +82,9 @@ private:
     void _update_focal_list() {
         auto open_top=*open_set.cbegin();
         if (open_top->f > f_lowerbound) {
-            double old_threshold = f_lowerbound*w_focal;
+            COST_TYPE old_threshold = f_lowerbound*w_focal;
             f_lowerbound = std::max(open_top->f, f_lowerbound);
-            double new_threshold = f_lowerbound*w_focal;
+            COST_TYPE new_threshold = f_lowerbound*w_focal;
 
             // begin_key
             auto begin_key=std::make_shared<SearchNode>(old_threshold);

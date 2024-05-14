@@ -4,6 +4,8 @@
 #include <boost/filesystem.hpp>
 #include <vector>
 #include "nlohmann/json.hpp"
+#include "graph/generate_ADG.h"
+#include "simulation/simulator.h"
 
 using json = nlohmann::json;
 

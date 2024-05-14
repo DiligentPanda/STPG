@@ -1,4 +1,4 @@
-#include "ADG/generate_ADG.h"
+#include "graph/generate_ADG.h"
 #include "util/Timer.h"
 
 bool same_locations(Location location1, Location location2) {

@@ -1,5 +1,6 @@
-#include "Algorithm/simulator.h"
+#include "simulation/simulator.h"
 #include "Algorithm/graph.h"
+#include "graph/generate_ADG.h"
 
 Simulator::Simulator(const shared_ptr<Graph> & adg): adg(adg) {
   vector<int> init_states(adg->get_num_agents(), 0);

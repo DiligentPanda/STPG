@@ -9,6 +9,8 @@
 #include <iostream>
 #include <map>
 #include "util/Timer.h"
+#include "graph/edge_manager.h"
+#include "define.h"
 
 // TODO(rivers): bad habit. fix this.
 using namespace std;
@@ -181,18 +183,45 @@ struct Graph {
     shared_ptr<vector<int> > state_cnts;
     shared_ptr<vector<int> > accum_state_cnts_begin;
     shared_ptr<vector<int> > accum_state_cnts_end;
- 
 
+    shared_ptr<EdgeManager> edge_manager;
+ 
     Graph(const shared_ptr<Paths> & _paths): 
-        paths(_paths) {
+        paths(_paths), edge_manager(make_shared<EdgeManager>()) {
         const vector<int> curr_states(get_num_agents(),0);
         _init(curr_states);
+        
     }
 
     Graph(const shared_ptr<Paths> & _paths, const vector<int> & curr_states): 
-        paths(_paths) {
+        paths(_paths), edge_manager(make_shared<EdgeManager>()) {
         _init(curr_states);
     }
+
+    /* In-Place Operations Begin */
+    // TODO: for recursive control
+    void _delay(int agent_id, int state_id, COST_TYPE delay) {
+        int global_state_id = get_global_state_id(agent_id, state_id);
+        int next_global_state_id = global_state_id+1;
+        edge_manager->get_edge(global_state_id, next_global_state_id).cost += delay;        
+    }
+
+    void delay(const vector<int> & curr_states, const vector<COST_TYPE> & delays) {
+        for (int agent_id=0;agent_id<(int)curr_states.size();++agent_id) {
+            _delay(agent_id, curr_states[agent_id], delays[agent_id]);
+        }
+        
+        prune_edges_before(curr_states);
+    }
+
+    void prune_edges_before(const vector<int> & states){
+
+    }
+
+    /* In-Place Operations End */
+
+
+    /* Copy Functions Begin */
 
     void _copy_type2_edges(const shared_ptr<Graph> & new_graph, int agent) {
         new_graph->non_switchable_type2_edges->out_neighbors[agent]=make_shared<vector<set<int> > >(
@@ -242,6 +271,11 @@ struct Graph {
         return new_graph;
     }
 
+    /* Copy Functions Begin */
+
+
+    /* Basic Information Begin */
+
     inline int get_num_states(int agent_id=-1) {
         if (agent_id<0)
             return total_state_cnt;
@@ -272,7 +306,12 @@ struct Graph {
     inline int get_state_id(int global_state_id) {
         return (*global_state_id_to_agent_state_ids)[global_state_id].second;
     }   
+
+    /* Basic Information End */
     
+
+    /* Graph Initialization Begin */
+
     void _init(const vector<int> & curr_states) {
        
         total_state_cnt = 0;
@@ -311,6 +350,37 @@ struct Graph {
         fix_edges_after_last_states();
         fix_edges_before_curr_states(curr_states);
 
+
+        // We could do it lazily but fine.
+        // add type-1 edges to the edge manager
+        for (int agent_id=0;agent_id<num_agents;++agent_id) {
+            for (int state_id=curr_states[agent_id];state_id<(*state_cnts)[agent_id]-1;++state_id) {
+                int global_state_id=get_global_state_id(agent_id, state_id);
+                edge_manager->add_edge(global_state_id, global_state_id+1, DEFAULT_EDGE_COST);
+            }
+        }
+
+        // add nonswitchable type-2 edges to the edge manager
+        for (int agent_id=0;agent_id<num_agents;++agent_id) {
+            for (int state_id=curr_states[agent_id];state_id<(*state_cnts)[agent_id];++state_id) {
+                int global_state_id=get_global_state_id(agent_id, state_id);
+                for (auto neighbor_global_id: non_switchable_type2_edges->out_neighbors[agent_id]->at(state_id)) {
+                    edge_manager->add_edge(global_state_id, neighbor_global_id, DEFAULT_EDGE_COST);
+                }
+            }
+        }
+
+        // add switchable type-2 edges and their reversed edges to the edge manager
+        for (int agent_id=0;agent_id<num_agents;++agent_id) {
+            for (int state_id=curr_states[agent_id];state_id<(*state_cnts)[agent_id];++state_id) {
+                int global_state_id=get_global_state_id(agent_id, state_id);
+                for (auto neighbor_global_id: switchable_type2_edges->out_neighbors[agent_id]->at(state_id)) {
+                    edge_manager->add_edge(global_state_id, neighbor_global_id, DEFAULT_EDGE_COST);
+                    // reveresed edge
+                    edge_manager->add_edge(neighbor_global_id+1, global_state_id-1, DEFAULT_EDGE_COST);
+                }
+            }
+        }
     }
 
     void _build_type1_edges(const vector<int> & curr_states) {
@@ -361,6 +431,8 @@ struct Graph {
             }
         }
     }
+
+    /* Graph Initialization End */
 
     pair<int,int> fix_switchable_type2_edge(int state_from, int state_to, bool reverse=false, bool check=true) {
         int agent1, state1, agent2, state2;

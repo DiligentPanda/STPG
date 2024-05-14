@@ -1,5 +1,6 @@
 #pragma once
-#include "types.h"
+#include "graph/graph.h"
+#include "define.h"
 
 // NOTE(rivers): we almost copy codes from https://github.com/Jiaoyang-Li/CBSH2-RTC/blob/main/src/CBSHeuristic.cpp
 enum HeuristicType {
@@ -15,21 +16,21 @@ public:
 
     HeuristicManager(HeuristicType type);
 
-    double computeInformedHeuristics(
+    COST_TYPE computeInformedHeuristics(
         const shared_ptr<Graph> & graph, 
-        const shared_ptr<vector<int> > & longest_paths, 
-        const shared_ptr<vector<shared_ptr<map<int,int> > > > & reverse_longest_paths,
-        double time_limit,
+        const shared_ptr<vector<COST_TYPE> > & longest_paths, 
+        const shared_ptr<vector<shared_ptr<map<int,COST_TYPE> > > > & reverse_longest_paths,
+        COST_TYPE time_limit,
         bool fast_approximate
     );
     void buildCardinalConflictGraph(
         const shared_ptr<Graph> & graph, 
-        const shared_ptr<vector<int> > & longest_paths, 
-        const shared_ptr<vector<shared_ptr<map<int,int> > > > & old_reverse_longest_path_lengths_ptr, 
-        vector<int> & CG, 
+        const shared_ptr<vector<COST_TYPE> > & longest_paths, 
+        const shared_ptr<vector<shared_ptr<map<int,COST_TYPE> > > > & old_reverse_longest_path_lengths_ptr, 
+        vector<COST_TYPE> & CG, 
         bool weighted,
         bool fast_approximate
     );
-    double greedyMatching(const std::vector<int> & CG, int num_vertices);
+    COST_TYPE greedyMatching(const std::vector<COST_TYPE> & CG, int num_vertices);
 
 };

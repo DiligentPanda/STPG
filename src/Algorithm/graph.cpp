@@ -114,7 +114,7 @@ sortResult topologicalSort(Graph & graph, sortResult state, vector<int> & starts
 }
 
 
-shared_ptr<vector<int> > compute_longest_paths(const shared_ptr<vector<int> > & old_longest_path_lengths_ptr, const shared_ptr<Graph> & graph, vector<pair<int,int> > & fixed_edges, bool incremental) {
+shared_ptr<vector<COST_TYPE> > compute_longest_paths(const shared_ptr<vector<COST_TYPE> > & old_longest_path_lengths_ptr, const shared_ptr<Graph> & graph, vector<pair<int,int> > & fixed_edges, bool incremental) {
     if (incremental) {
         // BUG(rivers): NOTE: here we start from the initial state, which is not necessary or even buggy. We should start from the current state
         if (fixed_edges.size() == 0) {
@@ -123,7 +123,8 @@ shared_ptr<vector<int> > compute_longest_paths(const shared_ptr<vector<int> > & 
 
         bool no_need_to_update=true;
         for (auto & p: fixed_edges) {
-            if ((*old_longest_path_lengths_ptr)[p.first]+1>(*old_longest_path_lengths_ptr)[p.second]) {
+            COST_TYPE edge_cost=graph->edge_manager->get_edge(p.first, p.second).cost;
+            if ((*old_longest_path_lengths_ptr)[p.first]+edge_cost>(*old_longest_path_lengths_ptr)[p.second]) {
                 no_need_to_update=false;
                 break;
             }
@@ -133,14 +134,14 @@ shared_ptr<vector<int> > compute_longest_paths(const shared_ptr<vector<int> > & 
             return old_longest_path_lengths_ptr;
         }
 
-        auto longest_path_lengths_ptr=make_shared<vector<int> >(*old_longest_path_lengths_ptr);
+        auto longest_path_lengths_ptr=make_shared<vector<COST_TYPE> >(*old_longest_path_lengths_ptr);
         auto & longest_path_lengths = *longest_path_lengths_ptr;
 
         // the newly added edge from start state to end state.
         // we will update longest path lengths incrementally from the edge end_state
         // TODO(rivers): check whether it is a min heap
         std::vector<bool> visited(graph->get_num_states(), false);
-        std::priority_queue<pair<int, int>, vector<pair<int, int> >, greater<pair<int, int> > > pq;
+        std::priority_queue<pair<COST_TYPE, int>, vector<pair<COST_TYPE, int> >, greater<pair<COST_TYPE, int> > > pq;
 
         for (auto & p: fixed_edges) {
             visited[p.second] = true;
@@ -155,15 +156,16 @@ shared_ptr<vector<int> > compute_longest_paths(const shared_ptr<vector<int> > & 
             // update the 
             auto && predecessors = graph->get_in_neighbor_global_ids(state);
             for (auto predecessor: predecessors) {
-
-                if (longest_path_lengths[predecessor]+1> longest_path_lengths[state]) {
-                    longest_path_lengths[state] = longest_path_lengths[predecessor]+1;
+                COST_TYPE edge_cost=graph->edge_manager->get_edge(predecessor, state).cost;
+                if (longest_path_lengths[predecessor]+edge_cost > longest_path_lengths[state]) {
+                    longest_path_lengths[state] = longest_path_lengths[predecessor]+edge_cost;
                 }
             }
 
             auto && successors = graph->get_out_neighbor_global_ids(state);
             for (auto successor: successors) {
-                if (!visited[successor] && longest_path_lengths[state]+1>longest_path_lengths[successor]) {
+                COST_TYPE edge_cost=graph->edge_manager->get_edge(state, successor).cost;
+                if (!visited[successor] && longest_path_lengths[state]+edge_cost>longest_path_lengths[successor]) {
                     visited[successor] = true;
                     pq.emplace(longest_path_lengths[successor], successor);
                 }
@@ -172,7 +174,7 @@ shared_ptr<vector<int> > compute_longest_paths(const shared_ptr<vector<int> > & 
 
         return longest_path_lengths_ptr;
     } else {
-        auto longest_path_lengths_ptr=make_shared<vector<int> >(graph->get_num_states(), -1);
+        auto longest_path_lengths_ptr=make_shared<vector<COST_TYPE> >(graph->get_num_states(), -1);
         std::vector<size_t> in_degrees(graph->get_num_states(), 0);
         // TODO: we don't need visited here, because of in_degree=0 means all predecessors have been updated
         std::vector<bool> visited(graph->get_num_states(), false);
@@ -190,10 +192,11 @@ shared_ptr<vector<int> > compute_longest_paths(const shared_ptr<vector<int> > & 
         while (!q.empty()) {
             auto state=q.front();
             q.pop();
-            int longest_lenghth=0;
+            COST_TYPE longest_lenghth=0;
             auto && predecessors = graph->get_in_neighbor_global_ids(state);
             for (auto predecessor: predecessors) {
-                longest_lenghth=max(longest_lenghth, (*longest_path_lengths_ptr)[predecessor]+1);
+                COST_TYPE edge_cost=graph->edge_manager->get_edge(predecessor, state).cost;
+                longest_lenghth=max(longest_lenghth, (*longest_path_lengths_ptr)[predecessor]+edge_cost);
             }
             (*longest_path_lengths_ptr)[state]=longest_lenghth;
 
@@ -214,9 +217,9 @@ shared_ptr<vector<int> > compute_longest_paths(const shared_ptr<vector<int> > & 
     }
 }
 
-shared_ptr<vector<shared_ptr<map<int,int> > > > compute_reverse_longest_paths(
-    const shared_ptr<vector<shared_ptr<map<int,int> > > > & old_reverse_longest_path_lengths_ptr, 
-    const shared_ptr<vector<int> > & longest_path_lengths_ptr, // we use the new longest_path_lengths, which is essentially the topoligical order for efficient udpate.
+shared_ptr<vector<shared_ptr<map<int,COST_TYPE> > > > compute_reverse_longest_paths(
+    const shared_ptr<vector<shared_ptr<map<int,COST_TYPE> > > > & old_reverse_longest_path_lengths_ptr, 
+    const shared_ptr<vector<COST_TYPE> > & longest_path_lengths_ptr, // we use the new longest_path_lengths, which is essentially the topoligical order for efficient udpate.
     const shared_ptr<Graph> & graph, 
     vector<pair<int,int> > & fixed_edges,
     bool incremental
@@ -231,8 +234,9 @@ shared_ptr<vector<shared_ptr<map<int,int> > > > compute_reverse_longest_paths(
         bool no_need_to_update=true;
         auto & old_reverse_longest_path_lengths = *old_reverse_longest_path_lengths_ptr;
         for (auto & edge: fixed_edges) {
+            COST_TYPE edge_cost = graph->edge_manager->get_edge(edge.first,edge.second).cost;
             for (auto & p: *(old_reverse_longest_path_lengths[edge.second]) ) {
-                if (old_reverse_longest_path_lengths[edge.first]->find(p.first)==old_reverse_longest_path_lengths[edge.first]->end() || p.second+1>(*old_reverse_longest_path_lengths[edge.first])[p.first]) {
+                if (old_reverse_longest_path_lengths[edge.first]->find(p.first)==old_reverse_longest_path_lengths[edge.first]->end() || p.second+edge_cost>(*old_reverse_longest_path_lengths[edge.first])[p.first]) {
                     no_need_to_update=false;
                     break;
                 }
@@ -246,13 +250,13 @@ shared_ptr<vector<shared_ptr<map<int,int> > > > compute_reverse_longest_paths(
         // the newly added edge from start state to end state.
         // we will update longest path lengths incrementally from the edge end_state
         // TODO(rivers): check whether it is a min heap
-        auto reverse_longest_path_lengths_ptr=make_shared<vector<shared_ptr<map<int,int> > > >(*old_reverse_longest_path_lengths_ptr);
+        auto reverse_longest_path_lengths_ptr=make_shared<vector<shared_ptr<map<int, COST_TYPE> > > >(*old_reverse_longest_path_lengths_ptr);
         auto & reverse_longest_path_lengths=*reverse_longest_path_lengths_ptr;
         auto & longest_path_lengths = *longest_path_lengths_ptr;
 
         std::vector<bool> visited(graph->get_num_states(), false);
         // we should use a max heap for the backward propagation
-        std::priority_queue<pair<int, int>, vector<pair<int, int> >, less<pair<int, int> > > pq;
+        std::priority_queue<pair<COST_TYPE, int>, vector<pair<COST_TYPE, int> >, less<pair<COST_TYPE, int> > > pq;
 
         for (auto & p: fixed_edges) {
             visited[p.first] = true;
@@ -267,24 +271,26 @@ shared_ptr<vector<shared_ptr<map<int,int> > > > compute_reverse_longest_paths(
             // update the 
             auto && successors = graph->get_out_neighbor_global_ids(state);
             for (auto successor: successors) {
+                COST_TYPE edge_cost = graph->edge_manager->get_edge(state, successor).cost;
                 bool first=true;
                 for (auto & p: *reverse_longest_path_lengths[successor]) {
-                    if (reverse_longest_path_lengths[state]->find(p.first)==reverse_longest_path_lengths[state]->end() || p.second+1>(*reverse_longest_path_lengths[state])[p.first]) {
+                    if (reverse_longest_path_lengths[state]->find(p.first)==reverse_longest_path_lengths[state]->end() || p.second+edge_cost>(*reverse_longest_path_lengths[state])[p.first]) {
                         if (first) {
-                            reverse_longest_path_lengths[state] = make_shared<map<int,int> >(*reverse_longest_path_lengths[state]);
+                            reverse_longest_path_lengths[state] = make_shared<map<int,COST_TYPE> >(*reverse_longest_path_lengths[state]);
                             first=false;
                         }
-                        (*reverse_longest_path_lengths[state])[p.first] = p.second+1;
+                        (*reverse_longest_path_lengths[state])[p.first] = p.second+edge_cost;
                     }
                 }
             }
 
             auto && predecessors = graph->get_in_neighbor_global_ids(state);
             for (auto predecessor: predecessors) {
+                COST_TYPE edge_cost = graph->edge_manager->get_edge(predecessor, state).cost;
                 if (!visited[predecessor]) {
                     bool no_need_to_update=true;
                     for (auto & p: *(reverse_longest_path_lengths[state])) {
-                        if (reverse_longest_path_lengths[predecessor]->find(p.first)==reverse_longest_path_lengths[predecessor]->end() || p.second+1>(*reverse_longest_path_lengths[predecessor])[p.first]) {
+                        if (reverse_longest_path_lengths[predecessor]->find(p.first)==reverse_longest_path_lengths[predecessor]->end() || p.second+edge_cost>(*reverse_longest_path_lengths[predecessor])[p.first]) {
                             no_need_to_update=false;
                             break;
                         }
@@ -302,10 +308,11 @@ shared_ptr<vector<shared_ptr<map<int,int> > > > compute_reverse_longest_paths(
 
         return reverse_longest_path_lengths_ptr;
     } else {
-        auto reverse_longest_path_lengths_ptr=make_shared<vector<shared_ptr<map<int,int> > > >();
+        // state_idx-> a map { agent_id (indicating its goal state): reverse longest path length }
+        auto reverse_longest_path_lengths_ptr=make_shared<vector<shared_ptr<map<int, COST_TYPE> > > >();
         auto & reverse_longest_path_lengths = *reverse_longest_path_lengths_ptr;
         for (int i=0; i<graph->get_num_states(); i++) {
-            reverse_longest_path_lengths.emplace_back(make_shared<map<int,int> >());
+            reverse_longest_path_lengths.emplace_back(make_shared<map<int, COST_TYPE> >());
         }
 
         std::vector<std::pair<int,int> > topo_orders;
@@ -313,7 +320,7 @@ shared_ptr<vector<shared_ptr<map<int,int> > > > compute_reverse_longest_paths(
             topo_orders.emplace_back((*longest_path_lengths_ptr)[i], i);
         }
 
-        std::sort(topo_orders.begin(), topo_orders.end(), std::greater<std::pair<int,int> >());
+        std::sort(topo_orders.begin(), topo_orders.end(), std::greater<std::pair<COST_TYPE, int> >());
 
         // initialize for the last state
         for (int i=0;i<graph->get_num_agents(); ++i) {
@@ -326,9 +333,11 @@ shared_ptr<vector<shared_ptr<map<int,int> > > > compute_reverse_longest_paths(
             auto && successors = graph->get_out_neighbor_global_ids(state);
             // all successors must be computed
             for (auto successor: successors) {
+                COST_TYPE edge_cost = graph->edge_manager->get_edge(state, successor).cost;
                 for (auto & q: *(*reverse_longest_path_lengths_ptr)[successor]) {
-                    if (reverse_longest_path_lengths[state]->find(q.first)==reverse_longest_path_lengths[state]->end() || q.second+1>(*reverse_longest_path_lengths[state])[q.first]) {
-                        (*reverse_longest_path_lengths[state])[q.first]=q.second+1;
+                    // q.first: agent_id, q.second: path length
+                    if (reverse_longest_path_lengths[state]->find(q.first)==reverse_longest_path_lengths[state]->end() || q.second+edge_cost>(*reverse_longest_path_lengths[state])[q.first]) {
+                        (*reverse_longest_path_lengths[state])[q.first]=q.second+edge_cost;
                     }
                 }
             }

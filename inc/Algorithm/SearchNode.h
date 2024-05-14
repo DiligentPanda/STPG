@@ -1,14 +1,15 @@
 #pragma once
-#include "types.h"
+#include "graph/graph.h"
 #include <boost/heap/pairing_heap.hpp>
+#include "define.h"
 
 struct SearchNode {
     SearchNode(
         const shared_ptr<Graph> & adg, 
-        const double g, 
-        const double h, 
-        const shared_ptr<vector<int> > & _longest_path_lengths,
-        const shared_ptr<vector<shared_ptr<map<int,int> > > > & _reverse_longest_path_lengths,
+        const COST_TYPE g, 
+        const COST_TYPE h, 
+        const shared_ptr<vector<COST_TYPE> > & _longest_path_lengths,
+        const shared_ptr<vector<shared_ptr<map<int,COST_TYPE> > > > & _reverse_longest_path_lengths,
         int num_sw,
         const shared_ptr<SearchNode> & _parent
         ):
@@ -24,14 +25,14 @@ struct SearchNode {
 
     }
 
-    SearchNode(double f): f(f) {};
+    SearchNode(COST_TYPE f): f(f) {};
 
     shared_ptr<Graph> adg;
-    double g;
-    double h;
-    shared_ptr<vector<int> > longest_path_lengths;
-    shared_ptr<vector<shared_ptr<map<int,int> > > > reverse_longest_path_lengths;
-    double f;
+    COST_TYPE g;
+    COST_TYPE h;
+    shared_ptr<vector<COST_TYPE> > longest_path_lengths;
+    shared_ptr<vector<shared_ptr<map<int,COST_TYPE> > > > reverse_longest_path_lengths;
+    COST_TYPE f;
     int num_sw; // the number of switchable (edge groups)
 
     shared_ptr<SearchNode> parent;
