@@ -1,21 +1,21 @@
 #include "simulation/simulator.h"
 #include "Algorithm/graph.h"
-#include "graph/generate_ADG.h"
+#include "graph/generate_graph.h"
 
-Simulator::Simulator(const shared_ptr<Graph> & adg): adg(adg) {
-  vector<int> init_states(adg->get_num_agents(), 0);
+Simulator::Simulator(const shared_ptr<Graph> & graph): graph(graph) {
+  vector<int> init_states(graph->get_num_agents(), 0);
   states = init_states;
 }
 
-Simulator::Simulator(const shared_ptr<Graph> & adg, vector<int> visited_states): adg(adg), states(visited_states) {}
+Simulator::Simulator(const shared_ptr<Graph> & graph, vector<int> visited_states): graph(graph), states(visited_states) {}
 
 // [Q] rivers: what is switchCheck?
 int Simulator::checkMovable(vector<int>& movable, bool switchCheck) {
   int timeSpent = 0;
-  int agentCnt = adg->get_num_agents();
+  int agentCnt = graph->get_num_agents();
   for (int agent = 0; agent < agentCnt; agent++) {
     int state = states[agent];
-    if (state >= adg->get_num_states(agent) - 1) {
+    if (state >= graph->get_num_states(agent) - 1) {
       continue;
     }
     timeSpent += 1;
@@ -23,9 +23,9 @@ int Simulator::checkMovable(vector<int>& movable, bool switchCheck) {
 
     vector<pair<int, int>> dependencies;
     if (!switchCheck) {
-      dependencies = adg->get_non_switchable_type2_in_neighbor_pairs(agent, next_state);
+      dependencies = graph->get_non_switchable_type2_in_neighbor_pairs(agent, next_state);
     } else {
-      dependencies = adg->get_type2_in_neighbor_pairs(agent, next_state);
+      dependencies = graph->get_type2_in_neighbor_pairs(agent, next_state);
     }
 
     movable[agent] = 1;
@@ -45,7 +45,7 @@ int Simulator::checkMovable(vector<int>& movable, bool switchCheck) {
 }
 
 int Simulator::step(bool switchCheck) {
-  int agentCnt = adg->get_num_agents();
+  int agentCnt = graph->get_num_agents();
   vector<int> movable(agentCnt, 0);
   int timeSpent = checkMovable(movable, switchCheck);
   int moveCnt = 0;
@@ -58,20 +58,20 @@ int Simulator::step(bool switchCheck) {
   }
   if (moveCnt == 0 && timeSpent != 0) {
     cout << "err: "<<moveCnt<<" "<<timeSpent<<endl<<endl;
-    Paths &paths = *adg->paths;
-    int agentCnt = adg->get_num_agents();
+    Paths &paths = *graph->paths;
+    int agentCnt = graph->get_num_agents();
     for (auto agent=0;agent<agentCnt;++agent) {
       auto curr_state=states[agent];
-      auto goal_state=adg->get_num_states(agent)-1;
+      auto goal_state=graph->get_num_states(agent)-1;
       if (curr_state!=goal_state) {
-        cout<<agent<<": "<<states[agent]<<" "<<adg->get_num_states(agent)-1<<endl;
+        cout<<agent<<": "<<states[agent]<<" "<<graph->get_num_states(agent)-1<<endl;
         Location new_location = get<0>((paths[agent])[(states[agent])]);
         Location next_location = get<0>((paths[agent])[(states[agent]+1)]);
         cout<<new_location.first<<","<<new_location.second<<"->"<<next_location.first<<","<<next_location.second<<endl;
-        auto && in_pairs=adg->get_type2_in_neighbor_pairs(agent, curr_state+1);
+        auto && in_pairs=graph->get_type2_in_neighbor_pairs(agent, curr_state+1);
         cout<<"depenencies:"<<endl;
         for (auto & in_pair: in_pairs) {
-          cout<<get<0>(in_pair)<<" "<<get<1>(in_pair)<<" = "<<adg->get_global_state_id(in_pair.first,in_pair.second)<<endl;
+          cout<<get<0>(in_pair)<<" "<<get<1>(in_pair)<<" = "<<graph->get_global_state_id(in_pair.first,in_pair.second)<<endl;
         }
         cout<<endl;
       }
@@ -95,8 +95,8 @@ int Simulator::print_soln(const char* outFileName) {
 
   if (outFile.is_open()) {
     vector<vector<Location>> expanded_paths;
-    int agentCnt = adg->get_num_agents();
-    Paths &paths = *adg->paths;
+    int agentCnt = graph->get_num_agents();
+    Paths &paths = *graph->paths;
 
     for (int agent = 0; agent < agentCnt; agent ++) {
       vector<Location> expanded_path;

@@ -4,7 +4,7 @@
 #include <boost/filesystem.hpp>
 #include <vector>
 #include "nlohmann/json.hpp"
-#include "graph/generate_ADG.h"
+#include "graph/generate_graph.h"
 #include "simulation/simulator.h"
 
 using json = nlohmann::json;
@@ -37,9 +37,9 @@ bool save_situation_file(const string & situation_fp, const string & path_fp, co
 }
 
 void gen_random_situation(int idx, const string & path_fp, uint seed, int delay_prob, int delay_steps_low, int delay_steps_high, const string & situation_fp) {
-  auto adg=construct_ADG(path_fp.c_str());
-  Simulator simulator(adg);
-  int num_agents=adg->get_num_agents();
+  auto graph=construct_graph(path_fp.c_str());
+  Simulator simulator(graph);
+  int num_agents=graph->get_num_agents();
 
   std::mt19937 rng(seed);
   std::uniform_int_distribution<int> delay_distrib(1,1000);
@@ -47,7 +47,7 @@ void gen_random_situation(int idx, const string & path_fp, uint seed, int delay_
 
   std::vector<int> delay_steps_vec(num_agents,0);
 
-  auto & state_cnts=*(adg->state_cnts);
+  auto & state_cnts=*(graph->state_cnts);
 
   int stepSpend = 1;
   bool delayed = false;
@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
   po::options_description desc("Switch ADG Optimization");
   desc.add_options()
     ("help", "show help message")
-    ("path_fp,p",po::value<std::string>()->required(),"path file to construct ADG")
+    ("path_fp,p",po::value<std::string>()->required(),"path file to construct TPG")
     ("sit_num,n",po::value<int>()->required(),"the number of random situations for this instance")
     ("sit_fd,o",po::value<std::string>()->required(),"output folder to store situation files")
     ("delay_prob,d",po::value<int>()->default_value(10),"delay probability*1000. need to be an integer")

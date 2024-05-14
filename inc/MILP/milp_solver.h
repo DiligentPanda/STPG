@@ -59,37 +59,37 @@ public:
         solver->attr("test")();
     }
 
-    shared_ptr<Graph> solve(const shared_ptr<Graph> & init_adg, COST_TYPE init_cost, vector<int> & curr_states) {
+    shared_ptr<Graph> solve(const shared_ptr<Graph> & init_graph, COST_TYPE init_cost, vector<int> & curr_states) {
         searchT=microseconds((int64_t)(time_limit*1000000));
-        vertex_cnt = init_adg->get_num_states();
-        sw_edge_cnt = init_adg->get_num_switchable_edges();
+        vertex_cnt = init_graph->get_num_states();
+        sw_edge_cnt = init_graph->get_num_switchable_edges();
 
-        auto adg = init_adg->copy();
+        auto graph = init_graph->copy();
 
-        // TODO(rivers): we should make grouping outside before the execution of an adg
+        // TODO(rivers): we should make grouping outside before the execution of an graph
         // TODO(rivers): make grouping method configurable
-        group_manager=make_shared<GroupManager>(adg, curr_states, grouping_method);
+        group_manager=make_shared<GroupManager>(graph, curr_states, grouping_method);
         std::cout<<group_manager->groups.size()<<std::endl;
 
         if (use_grouping) {
             // std::cout<<"input_sw_cnt: "<<input_sw_cnt<<std::endl;
             auto start = high_resolution_clock::now();
-            group_manager=std::make_shared<GroupManager>(adg, curr_states, grouping_method);
+            group_manager=std::make_shared<GroupManager>(graph, curr_states, grouping_method);
             auto end = high_resolution_clock::now();
             groupingT += duration_cast<microseconds>(end - start);
             std::cout<<"group size: "<<group_manager->groups.size()<<std::endl;
             // group_manager->print_groups();
         }
 
-        // we need to pack adg into the format that python solver can understand
-        int num_agents=adg->get_num_agents();
+        // we need to pack graph into the format that python solver can understand
+        int num_agents=graph->get_num_agents();
 
         // paths
         // TODO(rivers): we can start from states
         vector<vector<int> > paths;
         for (int agent_id=0; agent_id<num_agents; ++agent_id) {
             vector<int> path;
-            for (int state_id=curr_states[agent_id];state_id<adg->get_num_states(agent_id);++state_id) {
+            for (int state_id=curr_states[agent_id];state_id<graph->get_num_states(agent_id);++state_id) {
                 path.push_back(state_id);
             }
             paths.push_back(path);
@@ -98,8 +98,8 @@ public:
         // non_switchable_edges
         vector<tuple<int,int,int,int> > non_switchable_edges;
         for (int agent_id=0; agent_id<num_agents; ++agent_id) {
-            for (int state_id=0; state_id<adg->get_num_states(agent_id); ++state_id) {
-                for (auto & p: adg->get_non_switchable_in_neighbor_pairs(agent_id, state_id)) {
+            for (int state_id=0; state_id<graph->get_num_states(agent_id); ++state_id) {
+                for (auto & p: graph->get_non_switchable_in_neighbor_pairs(agent_id, state_id)) {
                     non_switchable_edges.emplace_back(p.first, p.second, agent_id, state_id);
                 }
             }
@@ -110,9 +110,9 @@ public:
         std::unordered_set<int> group_ids;
 
         for (int agent_id=0; agent_id<num_agents; ++agent_id) {
-            for (int state_id=0; state_id<adg->get_num_states(agent_id); ++state_id) {
-                int global_state_id=adg->switchable_type2_edges->get_global_state_id(agent_id, state_id);
-                for (int in_neighbor: adg->switchable_type2_edges->get_in_neighbor_global_ids(global_state_id)) {
+            for (int state_id=0; state_id<graph->get_num_states(agent_id); ++state_id) {
+                int global_state_id=graph->switchable_type2_edges->get_global_state_id(agent_id, state_id);
+                for (int in_neighbor: graph->switchable_type2_edges->get_in_neighbor_global_ids(global_state_id)) {
                     int group_id = group_manager->get_group_id(in_neighbor, global_state_id);
                     if (group_id==-1) {
                         cout<<"error: group_id==-1. group not found for edge: "<<in_neighbor<<"->"<<global_state_id<<endl;
@@ -129,8 +129,8 @@ public:
             for (long e: group) {
                 int out_idx=group_manager->get_out_idx(e);
                 int in_idx=group_manager->get_in_idx(e);
-                auto && out_pair=adg->get_agent_state_id(out_idx);
-                auto && in_pair=adg->get_agent_state_id(in_idx);
+                auto && out_pair=graph->get_agent_state_id(out_idx);
+                auto && in_pair=graph->get_agent_state_id(in_idx);
                 group_edges.emplace_back(out_pair.first, out_pair.second, in_pair.first, in_pair.second);
             }
             switchable_edge_groups[group_id]=group_edges;
@@ -151,15 +151,15 @@ public:
             // reverse the groups
             for (int group_id: group_ids_to_reverse) {
                 auto && edges = group_manager->get_groupable_edges(group_id);
-                adg->fix_switchable_type2_edges(edges, true, false);
+                graph->fix_switchable_type2_edges(edges, true, false);
             }
         } else {
             std::cout<<"Fail to find solution within "<<time_limit<<std::endl;
         }
 
-        adg->fix_all_switchable_type2_edges();
+        graph->fix_all_switchable_type2_edges();
         
-        return adg;
+        return graph;
     }
 
     void write_stats(nlohmann::json & stats) {

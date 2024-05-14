@@ -1,4 +1,4 @@
-#include "graph/generate_ADG.h"
+#include "graph/generate_graph.h"
 #include "util/Timer.h"
 
 bool same_locations(Location location1, Location location2) {
@@ -65,7 +65,7 @@ shared_ptr<Paths> parse_soln(const char* fileName) {
 }
 
 // duplication=true means allowing consecutive vertices in a path to be duplicate.
-shared_ptr<Graph> construct_ADG(const shared_ptr<Paths> &paths, bool duplication) {
+shared_ptr<Graph> construct_graph(const shared_ptr<Paths> &paths, bool duplication) {
   if (duplication) {
     std::cout<<"not supported duplication now"<<std::endl;
     exit(-1);
@@ -75,12 +75,12 @@ shared_ptr<Graph> construct_ADG(const shared_ptr<Paths> &paths, bool duplication
   return graph;
 }
 
-shared_ptr<Graph> construct_ADG(const char* fileName) {
+shared_ptr<Graph> construct_graph(const char* fileName) {
   auto paths = parse_soln(fileName);
-  return construct_ADG(paths, false);
+  return construct_graph(paths, false);
 }
 
-shared_ptr<Graph> construct_delayed_ADG(const shared_ptr<Graph> & graph, const vector<int> & delay_steps, const vector<int> & states) {
+shared_ptr<Graph> construct_delayed_graph(const shared_ptr<Graph> & graph, const vector<int> & delay_steps, const vector<int> & states) {
   auto new_paths=make_shared<Paths>();
 
   int delay_sum = 0;

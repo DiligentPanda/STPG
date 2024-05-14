@@ -4,7 +4,7 @@
 #include "nlohmann/json.hpp"
 #include "MILP/milp_solver.h"
 #include "solver.h"
-#include "graph/generate_ADG.h"
+#include "graph/generate_graph.h"
 #include "simulation/simulator.h"
 #include "define.h"
 
@@ -26,11 +26,11 @@ void simulate(
   const string & stat_ofp, 
   const string & new_path_ofp
 ) {
-  auto adg=construct_ADG(path_fp.c_str());
+  auto graph=construct_graph(path_fp.c_str());
   ifstream in(sit_fp);
   json data=json::parse(in);
 
-  size_t agent_num=adg->get_num_agents();
+  size_t agent_num=graph->get_num_agents();
 
   vector<int> states=data.at("states").get<vector<int> >();
   vector<int> delay_steps=data.at("delay_steps").get<vector<int> >();
@@ -41,18 +41,18 @@ void simulate(
     exit(50);
   }
 
-  // construct the delayed ADG by inserting dummy nodes
-  microseconds timer_constructADG(0);
+  // construct the delayed graph by inserting dummy nodes
+  microseconds timer_construct_graph(0);
   auto start = high_resolution_clock::now();
-  auto adg_delayed = construct_delayed_ADG(adg, delay_steps, states);
+  auto graph_delayed = construct_delayed_graph(graph, delay_steps, states);
   auto stop = high_resolution_clock::now();
-  timer_constructADG += duration_cast<microseconds>(stop - start);
+  timer_construct_graph += duration_cast<microseconds>(stop - start);
 
   // simulate without replanning
-  auto adg_delayed_copy = adg_delayed->copy();
-  adg_delayed_copy->fix_all_switchable_type2_edges();
+  auto graph_delayed_copy = graph_delayed->copy();
+  graph_delayed_copy->fix_all_switchable_type2_edges();
   // simulate from the current state
-  Simulator simulator_original(adg_delayed_copy, states);
+  Simulator simulator_original(graph_delayed_copy, states);
   int original_cost = simulator_original.print_soln();
 
   cout<<"original cost: "<<original_cost<<endl;
@@ -128,7 +128,7 @@ void simulate(
 
   microseconds timer(0);
   start = high_resolution_clock::now();
-  auto replanned_adg = solver->solve(adg_delayed, original_cost, states);
+  auto replanned_graph = solver->solve(graph_delayed, original_cost, states);
   stop = high_resolution_clock::now();
   timer += duration_cast<microseconds>(stop - start);
 
@@ -136,15 +136,15 @@ void simulate(
   solver->write_stats(stats);
 
   if (duration_cast<seconds>(timer).count() < time_limit) {
-    // simulate with the replanned ADG
-    Simulator simulator(replanned_adg, states);
+    // simulate with the replanned graph
+    Simulator simulator(replanned_graph, states);
     int cost= simulator.print_soln();
 
     cout<<"optimized cost: "<<cost<<endl;
 
     stats["status"]="Succ";
     // stats["search_time"]=timer.count();
-    stats["total_time"]=timer.count() + timer_constructADG.count();
+    stats["total_time"]=timer.count() + timer_construct_graph.count();
     stats["cost"]=cost;
   } else {
     stats["status"]="Timeout";
@@ -156,7 +156,7 @@ void simulate(
 
 
   std::cout<<"search time: "<<stats["search_time"].get<float>()/1000000.0<<", total time: "<<stats["total_time"].get<float>()/1000000.0<<std::endl;
-  std::cout<<"construct ADG time:"<<timer_constructADG.count()/1000000.0<<std::endl;
+  std::cout<<"construct graph time:"<<timer_construct_graph.count()/1000000.0<<std::endl;
 
   out.open(stat_ofp);
   out<<stats.dump(4)<<std::endl;
@@ -166,11 +166,11 @@ void simulate(
 int main(int argc, char** argv) {
 
   namespace po = boost::program_options;
-  po::options_description desc("Switch ADG Optimization");
+  po::options_description desc("Switch graph Optimization");
   desc.add_options()
     ("help", "show help message")
-    ("path_fp,p",po::value<std::string>()->required(),"path file to construct ADG")
-    ("sit_fp,s",po::value<std::string>()->required(),"situation file to construct delayed ADG")
+    ("path_fp,p",po::value<std::string>()->required(),"path file to construct graph")
+    ("sit_fp,s",po::value<std::string>()->required(),"situation file to construct delayed graph")
     ("time_limit,t",po::value<int>()->required(),"time limit in seconds. need to be an integer")
     ("algo,a",po::value<std::string>()->required(),"replaning algorithm to use, [search, milp]")
     ("stat_ofp,o",po::value<std::string>()->required(),"the output file path of statistics")

@@ -23,12 +23,12 @@
 // int ROW_SPACE = 200;
 // int NODE_SIZE = 15;
 
-// void sketch_Type1_Simplified_TPG(ADG &adg, std::vector<sf::CircleShape>*& agents_nodes, std::vector<sf::Text>*& labels, sf::Font& font, std::vector<int>& vis_agents){
+// void sketch_Type1_Simplified_TPG(ADG &graph, std::vector<sf::CircleShape>*& agents_nodes, std::vector<sf::Text>*& labels, sf::Font& font, std::vector<int>& vis_agents){
 //     sf::Color colors[] = {sf::Color::Red, sf::Color::Blue, sf::Color::Green, sf::Color::Magenta, sf::Color::Cyan};
 
-//     Paths & paths = *get<1>(adg);
-//     //int agent_num = get_agentCnt(adg);
-//     std::vector<int> & accum_stateCnts = *get<2>(adg);
+//     Paths & paths = *get<1>(graph);
+//     //int agent_num = get_agentCnt(graph);
+//     std::vector<int> & accum_stateCnts = *get<2>(graph);
 
 //     for (int i = 0; i < int(vis_agents.size()); ++i){
 //         int path_len;
@@ -61,8 +61,8 @@
 //     }
 // }
 
-// void sketch_Type2_NonSwitchable(ADG& adg, std::vector<sf::CircleShape>*& agents_nodes, std::vector<sf::Text>*& labels, std::vector<int>& agent_states_cnt, std::vector<int>& vis_agents){
-//     //int agent_num = get_agentCnt(adg);
+// void sketch_Type2_NonSwitchable(ADG& graph, std::vector<sf::CircleShape>*& agents_nodes, std::vector<sf::Text>*& labels, std::vector<int>& agent_states_cnt, std::vector<int>& vis_agents){
+//     //int agent_num = get_agentCnt(graph);
 
 //     auto maxIt = std::max_element(agent_states_cnt.begin(), agent_states_cnt.end());
 
@@ -71,7 +71,7 @@
 //             if (i >= agent_states_cnt[a])
 //                 continue;
 
-//             std::vector<std::pair<int, int>> outNeighbors_pair = get_nonSwitchable_outNeibPair(adg, vis_agents[a], i);
+//             std::vector<std::pair<int, int>> outNeighbors_pair = get_nonSwitchable_outNeibPair(graph, vis_agents[a], i);
 //             //std::cout << "Starting from node" << i << ", now find agent" << vis_agents[a] << "'s switchable edges..." << std::endl;
             
 //             float sketched_starting_pos = agents_nodes[a][i].getPosition().x;
@@ -99,8 +99,8 @@
 //     }
 // }
 
-// void sketch_Type2_Switchable(ADG& adg, std::vector<sf::CircleShape>*& agents_nodes, std::vector<sf::Text>*& labels, std::vector<int>& agent_states_cnt, std::vector<int>& vis_agents){
-//     //int agent_num = get_agentCnt(adg);
+// void sketch_Type2_Switchable(ADG& graph, std::vector<sf::CircleShape>*& agents_nodes, std::vector<sf::Text>*& labels, std::vector<int>& agent_states_cnt, std::vector<int>& vis_agents){
+//     //int agent_num = get_agentCnt(graph);
 
 //     auto maxIt = std::max_element(agent_states_cnt.begin(), agent_states_cnt.end());
 
@@ -109,7 +109,7 @@
 //             if (i >= agent_states_cnt[a])
 //                 continue;
 
-//             std::vector<std::pair<int, int>> outNeighbors_pair = get_switchable_outNeibPair(adg, vis_agents[a], i);
+//             std::vector<std::pair<int, int>> outNeighbors_pair = get_switchable_outNeibPair(graph, vis_agents[a], i);
             
 //             float sketched_starting_pos = COL_SPACE * i + 4;
 //             float sketched_ending_pos;
@@ -188,7 +188,7 @@
 //     window.draw(arrowhead);
 // }
 
-// void draw(sf::RenderWindow & window, ADG &adg, std::vector<int> &vis_agents, std::vector<int> &agent_states_cnt, std::vector<sf::CircleShape>* & agents_nodes, std::vector<sf::Text>* & labels) {
+// void draw(sf::RenderWindow & window, ADG &graph, std::vector<int> &vis_agents, std::vector<int> &agent_states_cnt, std::vector<sf::CircleShape>* & agents_nodes, std::vector<sf::Text>* & labels) {
 //     for (int i = 0; i < int(vis_agents.size()); ++i){
 //         // Draw nodes and labels
 //         for (sf::CircleShape node: agents_nodes[i]){
@@ -218,7 +218,7 @@
 
 //             std::vector<std::pair<int, int>> outNeighbors_pair;
 
-//             outNeighbors_pair = get_nonSwitchable_outNeibPair(adg, vis_agents[a], i);
+//             outNeighbors_pair = get_nonSwitchable_outNeibPair(graph, vis_agents[a], i);
 
 //             for (const std::pair<int, int>& out_pairs: outNeighbors_pair){
 //                 auto it = std::find(vis_agents.begin(), vis_agents.end(), out_pairs.first);
@@ -236,7 +236,7 @@
 
 //             //---------------------------------------------------
 //             // Draw Switchable Type 2
-//             outNeighbors_pair = get_switchable_outNeibPair(adg, vis_agents[a], i);
+//             outNeighbors_pair = get_switchable_outNeibPair(graph, vis_agents[a], i);
 
 //             for (const std::pair<int, int>& out_pairs: outNeighbors_pair){
 //                 auto it = std::find(vis_agents.begin(), vis_agents.end(), out_pairs.first);
@@ -253,12 +253,12 @@
 //     }
 // }
 
-// int visualize_ADG(ADG &adg, std::vector<int> &vis_agents) {
-//     int agent_num = get_agentCnt(adg);
+// int visualize_ADG(ADG &graph, std::vector<int> &vis_agents) {
+//     int agent_num = get_agentCnt(graph);
 //     std::cout << "Num of agents: " << agent_num << std::endl;
 //     std::vector<int> agent_states_cnt;
 //     for (int a: vis_agents){
-//         agent_states_cnt.push_back(get_stateCnt(adg, a));
+//         agent_states_cnt.push_back(get_stateCnt(graph, a));
 //     }
 
 //     sf::RenderWindow window(sf::VideoMode(500, 500), "Graph Visualization");
@@ -274,15 +274,15 @@
 //     std::vector<sf::Text>* labels = new std::vector<sf::Text>[int(vis_agents.size())];
 
 //     // Create nodes with labels for later drawing. Nodes are stored in `agent_nodes` with labels in `labels`
-//     sketch_Type1_Simplified_TPG(adg, agents_nodes, labels, font, vis_agents);
+//     sketch_Type1_Simplified_TPG(graph, agents_nodes, labels, font, vis_agents);
 //     // Move some nodes forward according to type-2 edges
-//     sketch_Type2_NonSwitchable(adg, agents_nodes, labels, agent_states_cnt, vis_agents);
-//     sketch_Type2_Switchable(adg, agents_nodes, labels, agent_states_cnt, vis_agents);
+//     sketch_Type2_NonSwitchable(graph, agents_nodes, labels, agent_states_cnt, vis_agents);
+//     sketch_Type2_Switchable(graph, agents_nodes, labels, agent_states_cnt, vis_agents);
 
 //     // sf::RenderTexture renderTexture;
 //     // renderTexture.create(2500, 2500);
 //     // renderTexture.clear(sf::Color::White);
-//     // draw(renderTexture, adg, vis_agents, agent_states_cnt, agents_nodes, labels);
+//     // draw(renderTexture, graph, vis_agents, agent_states_cnt, agents_nodes, labels);
 //     // renderTexture.setSmooth(true);
 //     // renderTexture.display();
 
@@ -384,7 +384,7 @@
 //         // const sf::Texture& texture = renderTexture.getTexture();
 //         // sf::Sprite sprite(texture);
 //         // window.draw(sprite);
-//         draw(window, adg, vis_agents, agent_states_cnt, agents_nodes, labels);
+//         draw(window, graph, vis_agents, agent_states_cnt, agents_nodes, labels);
 
 //         time ++;
 //         //std::cout << time << std::endl;
@@ -423,11 +423,11 @@
 //   string path_fp=vm.at("path_fp").as<string>();
 //   string sit_fp=vm.at("sit_fp").as<string>();
 
-//   ADG adg=construct_ADG(path_fp.c_str());
+//   ADG graph=construct_ADG(path_fp.c_str());
 //   ifstream in(sit_fp);
 //   json data=json::parse(in);
 
-//   int agent_num=get_agentCnt(adg);
+//   int agent_num=get_agentCnt(graph);
 
 //   vector<int> states=data.at("states").get<vector<int> >();
 //   vector<int> delay_steps=data.at("delay_steps").get<vector<int> >();
@@ -440,14 +440,14 @@
 
 //   int input_sw_cnt;
 //   // construct the delayed ADG by inserting dummy nodes
-//   ADG adg_delayed = construct_delayed_ADG(adg, delay_steps, states, input_sw_cnt);
+//   ADG graph_delayed = construct_delayed_ADG(graph, delay_steps, states, input_sw_cnt);
 
 //   std::vector<int> vis_agents;
 //   for (int i=0;i<agent_num;++i) {
 //     vis_agents.push_back(i);
 //   }
 
-//   visualize_ADG(adg, vis_agents);
+//   visualize_ADG(graph, vis_agents);
 
 
 //   return 0;

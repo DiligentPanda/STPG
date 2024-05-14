@@ -115,13 +115,13 @@
 //     l=Location(num1+num2+1,0);
 //     paths[1].emplace_back(l,num1+num2+1);
 
-//     ADG adg = construct_ADG(paths_ptr, false);
+//     ADG graph = construct_ADG(paths_ptr, false);
 
 //     // for each edge
 //     bool grouped=true;
 //     for (int i=1;i<=num1;++i) {
-//         ADG _adg = copy_ADG(adg);
-//         auto & graph = get<0>(_adg);
+//         ADG _graph = copy_ADG(graph);
+//         auto & graph = get<0>(_graph);
 //         int state_a1 = i+1;
 //         set<int> & out_neighbors = get_switchable_outNeib(graph, state_a1);
 //         // std::cout<<"sz: "<<out_neighbors.size()<<std::endl;

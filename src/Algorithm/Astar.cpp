@@ -1,6 +1,5 @@
 #include "Algorithm/Astar.h"
 #include <algorithm>
-#include <cfloat>
 #include "group/group.h"
 #include "Algorithm/graph.h"
 
@@ -76,15 +75,15 @@ Astar::Astar(
   this->heuristic_manager=std::make_shared<HeuristicManager>(heuristic);
 }
 
-tuple<int, int, COST_TYPE> Astar::branch(const shared_ptr<Graph> & adg, const shared_ptr<vector<COST_TYPE> > & values) {
+tuple<int, int, COST_TYPE> Astar::branch(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values) {
   COST_TYPE maxDiff = -1;
   int maxI = -1;
   int maxJ = -1;
 
   if (branch_order==BranchOrder::DEFAULT) {
-    for (int i = 0; i < adg->get_num_states(); ++i) {
+    for (int i = 0; i < graph->get_num_states(); ++i) {
       COST_TYPE iTime = values->at(i);
-      auto &outNeib = adg->switchable_type2_edges->get_out_neighbor_global_ids(i);
+      auto &outNeib = graph->switchable_type2_edges->get_out_neighbor_global_ids(i);
       for (auto it : outNeib) {
         int j = it;
         COST_TYPE jTime = values->at(j);
@@ -105,9 +104,9 @@ tuple<int, int, COST_TYPE> Astar::branch(const shared_ptr<Graph> & adg, const sh
       } 
     }
   } else if (branch_order==BranchOrder::LARGEST_DIFF) {
-    for (int i = 0; i < adg->get_num_states(); ++i) {
+    for (int i = 0; i < graph->get_num_states(); ++i) {
       COST_TYPE iTime = values->at(i);
-      auto &outNeib = adg->switchable_type2_edges->get_out_neighbor_global_ids(i);
+      auto &outNeib = graph->switchable_type2_edges->get_out_neighbor_global_ids(i);
       for (auto it : outNeib) {
         int j = it;
         COST_TYPE jTime = values->at(j);
@@ -120,10 +119,10 @@ tuple<int, int, COST_TYPE> Astar::branch(const shared_ptr<Graph> & adg, const sh
       }
     }
   } else if (branch_order==BranchOrder::EARLIEST) {
-    COST_TYPE earliest_t=DBL_MAX;
-    for (int i = 0; i < adg->get_num_states(); ++i) {
+    COST_TYPE earliest_t=COST_MAX;
+    for (int i = 0; i < graph->get_num_states(); ++i) {
       COST_TYPE iTime = values->at(i);
-      auto &outNeib = adg->switchable_type2_edges->get_out_neighbor_global_ids(i);
+      auto &outNeib = graph->switchable_type2_edges->get_out_neighbor_global_ids(i);
       for (auto it : outNeib) {
         int j = it;
         COST_TYPE jTime = values->at(j);
@@ -139,9 +138,9 @@ tuple<int, int, COST_TYPE> Astar::branch(const shared_ptr<Graph> & adg, const sh
   } else if (branch_order==BranchOrder::RANDOM) {
 
     std::vector<std::tuple<int,int,COST_TYPE> > tuples;
-    for (int i = 0; i < adg->get_num_states(); ++i) {
+    for (int i = 0; i < graph->get_num_states(); ++i) {
       COST_TYPE iTime = values->at(i);
-      auto &outNeib = adg->switchable_type2_edges->get_out_neighbor_global_ids(i);
+      auto &outNeib = graph->switchable_type2_edges->get_out_neighbor_global_ids(i);
       for (auto it : outNeib) {
         int j = it;
         COST_TYPE jTime = values->at(j);
@@ -164,13 +163,13 @@ tuple<int, int, COST_TYPE> Astar::branch(const shared_ptr<Graph> & adg, const sh
   return make_tuple(maxDiff, maxI, maxJ);
 }
 
-tuple<int, int, COST_TYPE> Astar::enhanced_branch(const shared_ptr<Graph> & adg, const shared_ptr<vector<COST_TYPE> > & values) {
+tuple<int, int, COST_TYPE> Astar::enhanced_branch(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values) {
   COST_TYPE maxDiff = -1;
   int maxI = -1;
   int maxJ = -1;
-  for (int i = 0; i < adg->get_num_states(); ++i) {
+  for (int i = 0; i < graph->get_num_states(); ++i) {
     COST_TYPE iTime = values->at(i);
-    auto &outNeib = adg->switchable_type2_edges->get_out_neighbor_global_ids(i);
+    auto &outNeib = graph->switchable_type2_edges->get_out_neighbor_global_ids(i);
     for (auto it : outNeib) {
       int j = it;
       int backI = j+1;
@@ -202,11 +201,11 @@ tuple<int, int, COST_TYPE> Astar::enhanced_branch(const shared_ptr<Graph> & adg,
   return make_tuple(maxDiff, maxI, maxJ);
 }
 
-bool Astar::terminated(const shared_ptr<Graph> & adg, const shared_ptr<vector<COST_TYPE> > & values) {
+bool Astar::terminated(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values) {
   if (early_termination) {
-    for (int i = 0; i < adg->get_num_states(); ++i) {
+    for (int i = 0; i < graph->get_num_states(); ++i) {
       COST_TYPE iTime = values->at(i);
-      auto &outNeib = adg->switchable_type2_edges->get_out_neighbor_global_ids(i);
+      auto &outNeib = graph->switchable_type2_edges->get_out_neighbor_global_ids(i);
       for (auto it : outNeib) {
         int j = it;
         int backI = j+1;
@@ -224,9 +223,9 @@ bool Astar::terminated(const shared_ptr<Graph> & adg, const shared_ptr<vector<CO
     }
     return true;
   } else {
-    for (int i = 0; i < adg->get_num_states(); ++i) {
+    for (int i = 0; i < graph->get_num_states(); ++i) {
       COST_TYPE iTime = values->at(i);
-      auto &outNeib = adg->switchable_type2_edges->get_out_neighbor_global_ids(i);
+      auto &outNeib = graph->switchable_type2_edges->get_out_neighbor_global_ids(i);
       for (auto it : outNeib) {
         int j = it;
         COST_TYPE jTime = values->at(j);
@@ -287,12 +286,12 @@ void Astar::write_stats(nlohmann::json & stats) {
   // stats["selected_edges"]=selected_edges;
 }
 
-int Astar::count_COST_TYPE_conflicting_edge_groups(const shared_ptr<Graph> & adg, const shared_ptr<vector<COST_TYPE> > & values) {
+int Astar::count_COST_TYPE_conflicting_edge_groups(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values) {
   set<int> COST_TYPE_conflicting_edge_groups;
   int cnt=0;
-  for (int i = 0; i < adg->get_num_states(); ++i) {
+  for (int i = 0; i < graph->get_num_states(); ++i) {
     int iTime = values->at(i);
-    auto & outNeib = adg->switchable_type2_edges->get_out_neighbor_global_ids(i);
+    auto & outNeib = graph->switchable_type2_edges->get_out_neighbor_global_ids(i);
     for (auto it : outNeib) {
       int j = it;
       int backI = j+1;
@@ -325,8 +324,8 @@ int Astar::count_COST_TYPE_conflicting_edge_groups(const shared_ptr<Graph> & adg
 }
 
 
-// adg in parent_node might be changed by forward node, so don't use it.
-void Astar::add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode> & parent_node, vector<std::pair<int,int> > & fixed_edges) {
+// graph in parent_node might be changed by forward node, so don't use it.
+void Astar::add_node(const shared_ptr<Graph> & graph, const shared_ptr<SearchNode> & parent_node, vector<std::pair<int,int> > & fixed_edges) {
 
   auto start_sort = high_resolution_clock::now();
   // shared_ptr<vector<int> > newts_tv_init;
@@ -334,7 +333,7 @@ void Astar::add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode>
   // sortResult newInitResult = make_pair(newts_tv_init, newts_vt_init);
   // shared_ptr<vector<int> > newts_tv;
   // shared_ptr<vector<int> > newts_vt;
-  // std::tie(newts_tv, newts_vt) = topologicalSort(*adg, newInitResult, currents, -1, -1);
+  // std::tie(newts_tv, newts_vt) = topologicalSort(*graph, newInitResult, currents, -1, -1);
 
   auto end_sort = high_resolution_clock::now();
   sortT += duration_cast<microseconds>(end_sort - start_sort);
@@ -343,16 +342,16 @@ void Astar::add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode>
   // initialize the array for longest path length from any current vertices to an agent's goal vertex.
   // auto node_values = make_shared<vector<int> >(parent_node->longest_path_lengths);
   // compute the longest path length from any current vertices to an agent's goal vertex.
-  // auto g = heuristic_graph(adg, newts_tv, node_values);
-  auto longest_path_lengths = compute_longest_paths(parent_node->longest_path_lengths, adg, fixed_edges, incremental);
+  // auto g = heuristic_graph(graph, newts_tv, node_values);
+  auto longest_path_lengths = compute_longest_paths(parent_node->longest_path_lengths, graph, fixed_edges, incremental);
 
-  // auto longest_path_lengths2 = compute_longest_paths(parent_node->longest_path_lengths, adg, fixed_edges, false);
+  // auto longest_path_lengths2 = compute_longest_paths(parent_node->longest_path_lengths, graph, fixed_edges, false);
 
   // std::cout<<"node explored: "<<explored_node_cnt<<std::endl;
   // bool err=false;
-  // for (int state=0;state<(int)adg->get_num_states();++state) {
+  // for (int state=0;state<(int)graph->get_num_states();++state) {
   //   if (longest_path_lengths->at(state)!=longest_path_lengths2->at(state)) {
-  //     auto p=adg->get_agent_state_id(state);
+  //     auto p=graph->get_agent_state_id(state);
   //     std::cout<<"error in longest path length computation. agent: "<<p.first<<" state: "<<p.second<<" length: "<<longest_path_lengths->at(state)<<" vs "<<longest_path_lengths2->at(state)<<std::endl;
   //     err=true;
   //   }
@@ -363,8 +362,8 @@ void Astar::add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode>
 
 
   COST_TYPE g = 0;
-  for (int agent_id=0;agent_id<adg->get_num_agents();++agent_id) {
-    int goal_state=adg->get_global_state_id(agent_id, adg->get_num_states(agent_id)-1);
+  for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
+    int goal_state=graph->get_global_state_id(agent_id, graph->get_num_states(agent_id)-1);
     g+=longest_path_lengths->at(goal_state);
   }
   auto end_heuristic = high_resolution_clock::now();
@@ -376,11 +375,12 @@ void Astar::add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode>
   COST_TYPE h;
   shared_ptr<vector<shared_ptr<map<int,COST_TYPE> > > > reverse_longest_path_lengths;
   if (heuristic_manager->type==HeuristicType::WCG_GREEDY) {
-    reverse_longest_path_lengths=compute_reverse_longest_paths(parent_node->reverse_longest_path_lengths, longest_path_lengths, adg, fixed_edges, incremental);
+    reverse_longest_path_lengths=compute_reverse_longest_paths(parent_node->reverse_longest_path_lengths, longest_path_lengths, graph, fixed_edges, incremental);
   }
-  h = heuristic_manager->computeInformedHeuristics(adg, longest_path_lengths, reverse_longest_path_lengths, 0, fast_approximate);
+  h = heuristic_manager->computeInformedHeuristics(graph, longest_path_lengths, reverse_longest_path_lengths, 0, fast_approximate);
 
   h=max(h,parent_node->g+parent_node->h-g);
+  
   auto end = high_resolution_clock::now();
   extraHeuristicT += duration_cast<microseconds>(end - start);
 
@@ -392,9 +392,9 @@ void Astar::add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode>
 
     shared_ptr<SearchNode> child_node;
     if (incremental) {
-      child_node = std::make_shared<SearchNode>(adg, g, h*w_astar, longest_path_lengths, reverse_longest_path_lengths, num_sw, parent_node);
+      child_node = std::make_shared<SearchNode>(graph, g, h*w_astar, longest_path_lengths, reverse_longest_path_lengths, num_sw, parent_node);
     } else {
-      child_node = std::make_shared<SearchNode>(adg, g, h*w_astar, longest_path_lengths, nullptr, num_sw, parent_node);
+      child_node = std::make_shared<SearchNode>(graph, g, h*w_astar, longest_path_lengths, nullptr, num_sw, parent_node);
     }
 
     auto start_pq_push = high_resolution_clock::now();
@@ -407,7 +407,7 @@ void Astar::add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode>
 }
 
 void Astar::reverse_nonSwitchable_edges_basedOn_LongestPathValues(
-  const shared_ptr<Graph> & adg, 
+  const shared_ptr<Graph> & graph, 
   const shared_ptr<vector<COST_TYPE> > & values
 ) {
   auto & times=*values;
@@ -415,8 +415,8 @@ void Astar::reverse_nonSwitchable_edges_basedOn_LongestPathValues(
   std::vector<std::pair<int,int> > need_to_reverse;
 
 
-  for (int i = 0; i < adg->get_num_states(); ++i) {
-    auto &outNeib = adg->switchable_type2_edges->get_out_neighbor_global_ids(i);
+  for (int i = 0; i < graph->get_num_states(); ++i) {
+    auto &outNeib = graph->switchable_type2_edges->get_out_neighbor_global_ids(i);
     for (auto it : outNeib) {
       int j = it;
       COST_TYPE time_i=times[i];
@@ -440,7 +440,7 @@ void Astar::reverse_nonSwitchable_edges_basedOn_LongestPathValues(
     }
   }
 
-  adg->fix_switchable_type2_edges(need_to_reverse, true);
+  graph->fix_switchable_type2_edges(need_to_reverse, true);
 
 }
 
@@ -462,22 +462,22 @@ shared_ptr<Graph> Astar::exploreNode() {
     auto end_pq_pop = high_resolution_clock::now();
     pqT += duration_cast<microseconds>(end_pq_pop - start_pq_pop);
     
-    auto & adg = node->adg;
+    auto & graph = node->graph;
     auto & values = node->longest_path_lengths;
 
     int maxDiff, maxI, maxJ;
     auto start_branch = high_resolution_clock::now();
     // maxI, maxJ returns a type 2 edge to branch (maxDiff is useless for now)
     if (branch_order==BranchOrder::CONFLICT) {
-      std::tie(maxDiff, maxI, maxJ) = enhanced_branch(adg, values);  
+      std::tie(maxDiff, maxI, maxJ) = enhanced_branch(graph, values);  
     } else {
-      std::tie(maxDiff, maxI, maxJ) = branch(adg, values);
+      std::tie(maxDiff, maxI, maxJ) = branch(graph, values);
     }
     selected_edges.emplace_back(maxI,maxJ,maxDiff);
     auto end_branch = high_resolution_clock::now();
     branchT += duration_cast<microseconds>(end_branch - start_branch);
 
-    bool terminate = terminated(adg, values);
+    bool terminate = terminated(graph, values);
 
     auto end_term = high_resolution_clock::now();
     termT += duration_cast<microseconds>(end_term - end_branch);
@@ -495,14 +495,14 @@ shared_ptr<Graph> Astar::exploreNode() {
         copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
       }
 
-      auto res=node->adg;
+      auto res=node->graph;
 
      // return the current ADG by fix switchable edges to non-switchable.
       if (terminate && early_termination) {
-        reverse_nonSwitchable_edges_basedOn_LongestPathValues(adg, values);
+        reverse_nonSwitchable_edges_basedOn_LongestPathValues(graph, values);
       }
 
-      adg->fix_all_switchable_type2_edges();
+      graph->fix_all_switchable_type2_edges();
 
       auto start_graph_free = high_resolution_clock::now();
       // we explicitly reset to count the time
@@ -513,14 +513,14 @@ shared_ptr<Graph> Astar::exploreNode() {
       return res;
     } else {
       auto start_graph_copy = high_resolution_clock::now();
-      int agent1 = adg->get_agent_id(maxI);
-      int agent2 = adg->get_agent_id(maxJ);
-      shared_ptr<Graph> copy1 = adg->copy(agent1, agent2);
-      shared_ptr<Graph> copy2 = adg->copy(agent1, agent2);
+      int agent1 = graph->get_agent_id(maxI);
+      int agent2 = graph->get_agent_id(maxJ);
+      shared_ptr<Graph> copy1 = graph->copy(agent1, agent2);
+      shared_ptr<Graph> copy2 = graph->copy(agent1, agent2);
       auto end_graph_copy = high_resolution_clock::now();
       copy_free_graphsT += duration_cast<microseconds>(end_graph_copy - start_graph_copy);
 
-      std::array<shared_ptr<Graph>, 2> branch_adgs { copy1,copy2 };
+      std::array<shared_ptr<Graph>, 2> branch_graphs { copy1,copy2 };
       // TODO(rivers): this order may affect the focal search, because we don't have rules to break tie if g,h,num_sw are all the same.
       // maybe we should break tie in the way that the edge should make less change (increase) to the longest distance of any nodes. In this way, the overall costs are less likely to increase.
       // Then since the edge to be branched voilates its original direction, the best one is to keep the reverse direction?
@@ -528,30 +528,30 @@ shared_ptr<Graph> Astar::exploreNode() {
 
       /* Following is the two branches. */
       for (int i=0;i<2;++i) {
-        auto & child_adg=branch_adgs[i];
+        auto & child_graph=branch_graphs[i];
         auto branch_reversing_flag=branch_reversing_flags[i];
 
         // Fix the edge
         bool pruned;
         vector<std::pair<int,int> > fixed_edges;
         if (!use_grouping) {
-          auto fixed_edge=child_adg->fix_switchable_type2_edge(maxI, maxJ, branch_reversing_flag, true);
+          auto fixed_edge=child_graph->fix_switchable_type2_edge(maxI, maxJ, branch_reversing_flag, true);
           fixed_edges.emplace_back(fixed_edge);
           auto start_dfs = high_resolution_clock::now();
-          pruned = check_cycle_dfs(*child_adg, fixed_edge.first);
+          pruned = check_cycle_dfs(*child_graph, fixed_edge.first);
           auto end_dfs = high_resolution_clock::now();
           dfsT += duration_cast<microseconds>(end_dfs - start_dfs);
         } else {
           // get the group of edges
           std::vector<std::pair<int,int> > edges= group_manager->get_groupable_edges(maxI, maxJ);
           // we cannot check here unless we find all groups
-          fixed_edges=child_adg->fix_switchable_type2_edges(edges, branch_reversing_flag, false);
+          fixed_edges=child_graph->fix_switchable_type2_edges(edges, branch_reversing_flag, false);
           auto start_dfs = high_resolution_clock::now();
           std::vector<int> out_states;
           std::for_each(std::begin(fixed_edges), std::end(fixed_edges), [&out_states](std::pair<int,int> & edge) {
               out_states.emplace_back(edge.first);
           });
-          pruned = check_cycle_dfs(*child_adg,out_states);
+          pruned = check_cycle_dfs(*child_graph,out_states);
           auto end_dfs = high_resolution_clock::now();
           dfsT += duration_cast<microseconds>(end_dfs - start_dfs);
         }
@@ -559,7 +559,7 @@ shared_ptr<Graph> Astar::exploreNode() {
         if (pruned) { // Prune node
           pruned_node_cnt += 1;
         } else {
-          add_node(child_adg, node, fixed_edges);
+          add_node(child_graph, node, fixed_edges);
         }
       }
 
@@ -573,16 +573,16 @@ shared_ptr<Graph> Astar::exploreNode() {
   }
 
   // if nothing found, return the initial ADG
-  return init_adg;
+  return init_graph;
   // throw invalid_argument("no solution found");
 }
 
-shared_ptr<Graph> Astar::solve(const shared_ptr<Graph> & adg, COST_TYPE cost, vector<int> & states) {
+shared_ptr<Graph> Astar::solve(const shared_ptr<Graph> & graph, COST_TYPE cost, vector<int> & states) {
   searchT = microseconds(timeout*1000000);
   auto start_search = high_resolution_clock::now();
 
   auto start_graph_free = high_resolution_clock::now();
-  init_adg=adg->copy();
+  init_graph=graph->copy();
   auto end_graph_free = high_resolution_clock::now();
   copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
   
@@ -590,16 +590,16 @@ shared_ptr<Graph> Astar::solve(const shared_ptr<Graph> & adg, COST_TYPE cost, ve
 
   open_list=std::make_shared<OpenList>(w_focal);
   
-  vertex_cnt = adg->get_num_states();
-  sw_edge_cnt = adg->get_num_switchable_edges();
-  agentCnt = adg->get_num_agents();
+  vertex_cnt = graph->get_num_states();
+  sw_edge_cnt = graph->get_num_switchable_edges();
+  agentCnt = graph->get_num_agents();
   std::cout << "vertex_cnt = " << vertex_cnt << ", sw_edge_cnt = " << sw_edge_cnt << "\n";
 
   // TODO(rivers): if use grouping
   if (use_grouping) {
     // std::cout<<"input_sw_cnt: "<<input_sw_cnt<<std::endl;
     auto start = high_resolution_clock::now();
-    group_manager=std::make_shared<GroupManager>(init_adg, states, grouping_method);
+    group_manager=std::make_shared<GroupManager>(init_graph, states, grouping_method);
     auto end = high_resolution_clock::now();
     groupingT += duration_cast<microseconds>(end - start);
     std::cout<<"group size: "<<group_manager->groups.size()<<std::endl;
@@ -610,7 +610,7 @@ shared_ptr<Graph> Astar::solve(const shared_ptr<Graph> & adg, COST_TYPE cost, ve
   // BUG(rivers): why we start current at 0, would it be a bug? shouldn't we start with current states?
   for (int agent = 0; agent < agentCnt; agent ++) {
     // get current global vertex idx
-    int global_state_id = adg->get_global_state_id(agent, 0);
+    int global_state_id = graph->get_global_state_id(agent, 0);
     currents.push_back(global_state_id);
   }
 
@@ -620,28 +620,22 @@ shared_ptr<Graph> Astar::solve(const shared_ptr<Graph> & adg, COST_TYPE cost, ve
   } else {
     fake_parent->num_sw=sw_edge_cnt;
   }
-  if (incremental) {
-    fake_parent->longest_path_lengths=make_shared<vector<COST_TYPE> >();
-    fake_parent->reverse_longest_path_lengths=make_shared<vector<shared_ptr<map<int,COST_TYPE> > > >();
-    for (int i=0;i<adg->get_num_states();++i) {
-      fake_parent->reverse_longest_path_lengths->emplace_back(make_shared<map<int,COST_TYPE> >());
-    }
-  } else {
-    fake_parent->longest_path_lengths=nullptr;
-    fake_parent->reverse_longest_path_lengths=nullptr;
-  }
+
+  fake_parent->longest_path_lengths=nullptr;
+  fake_parent->reverse_longest_path_lengths=nullptr;
+  
   fake_parent->num_sw=sw_edge_cnt;
   vector<pair<int,int> > fixed_edges;
-  add_node(adg, fake_parent, fixed_edges);
+  add_node(graph, fake_parent, fixed_edges);
 
   // expand the node
-  auto && res_adg = exploreNode();
+  auto && res_graph = exploreNode();
 
   auto end_search = high_resolution_clock::now();
   searchT=duration_cast<microseconds>(end_search - start_search);
 
   std::cout<<"search time: "<<searchT.count()/1000000.0<<std::endl;
 
-  return res_adg;
+  return res_graph;
 }
 

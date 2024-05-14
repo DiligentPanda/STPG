@@ -174,7 +174,7 @@ shared_ptr<vector<COST_TYPE> > compute_longest_paths(const shared_ptr<vector<COS
 
         return longest_path_lengths_ptr;
     } else {
-        auto longest_path_lengths_ptr=make_shared<vector<COST_TYPE> >(graph->get_num_states(), -1);
+        auto longest_path_lengths_ptr=make_shared<vector<COST_TYPE> >(graph->get_num_states(), 0);
         std::vector<size_t> in_degrees(graph->get_num_states(), 0);
         // TODO: we don't need visited here, because of in_degree=0 means all predecessors have been updated
         std::vector<bool> visited(graph->get_num_states(), false);

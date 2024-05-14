@@ -5,7 +5,7 @@
 
 struct SearchNode {
     SearchNode(
-        const shared_ptr<Graph> & adg, 
+        const shared_ptr<Graph> & graph, 
         const COST_TYPE g, 
         const COST_TYPE h, 
         const shared_ptr<vector<COST_TYPE> > & _longest_path_lengths,
@@ -13,7 +13,7 @@ struct SearchNode {
         int num_sw,
         const shared_ptr<SearchNode> & _parent
         ):
-        adg(adg), 
+        graph(graph), 
         g(g), 
         h(h), 
         longest_path_lengths(_longest_path_lengths), 
@@ -25,9 +25,19 @@ struct SearchNode {
 
     }
 
-    SearchNode(COST_TYPE f): f(f) {};
+    SearchNode(COST_TYPE g): 
+        graph(nullptr), 
+        g(g), 
+        h(0), 
+        longest_path_lengths(nullptr), 
+        reverse_longest_path_lengths(nullptr),
+        f(g+h), 
+        num_sw(0),
+        parent(nullptr)     
+        {    
+    };
 
-    shared_ptr<Graph> adg;
+    shared_ptr<Graph> graph;
     COST_TYPE g;
     COST_TYPE h;
     shared_ptr<vector<COST_TYPE> > longest_path_lengths;

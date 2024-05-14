@@ -41,18 +41,18 @@ class Astar: public Solver {
       COST_TYPE _w_focal=1.0,
       uint random_seed=0
     );
-    shared_ptr<Graph> solve(const shared_ptr<Graph> & adg, COST_TYPE cost, vector<int> & states);
+    shared_ptr<Graph> solve(const shared_ptr<Graph> & graph, COST_TYPE cost, vector<int> & states);
     void write_stats(nlohmann::json & stats);
 
   private:
     shared_ptr<Graph> exploreNode();
-    tuple<int, int, COST_TYPE> enhanced_branch(const shared_ptr<Graph> & adg, const shared_ptr<vector<COST_TYPE> > & values);
-    tuple<int, int, COST_TYPE> branch(const shared_ptr<Graph> & adg, const shared_ptr<vector<COST_TYPE> > & values);
-    bool terminated(const shared_ptr<Graph> & adg, const shared_ptr<vector<COST_TYPE> > & values);
-    int count_COST_TYPE_conflicting_edge_groups(const shared_ptr<Graph> & adg, const shared_ptr<vector<COST_TYPE> > & values);
-    void reverse_nonSwitchable_edges_basedOn_LongestPathValues(const shared_ptr<Graph> & adg, const shared_ptr<vector<COST_TYPE> > & values);
+    tuple<int, int, COST_TYPE> enhanced_branch(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values);
+    tuple<int, int, COST_TYPE> branch(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values);
+    bool terminated(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values);
+    int count_COST_TYPE_conflicting_edge_groups(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values);
+    void reverse_nonSwitchable_edges_basedOn_LongestPathValues(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values);
 
-    void add_node(const shared_ptr<Graph> & adg, const shared_ptr<SearchNode> & parent_node, vector<std::pair<int,int> > & fixed_edges);
+    void add_node(const shared_ptr<Graph> & graph, const shared_ptr<SearchNode> & parent_node, vector<std::pair<int,int> > & fixed_edges);
 
     microseconds extraHeuristicT = std::chrono::microseconds::zero();
     microseconds groupingT = std::chrono::microseconds::zero();
@@ -102,7 +102,7 @@ class Astar: public Solver {
     COST_TYPE w_astar = 1.0;
     COST_TYPE w_focal = 1.0;
 
-    shared_ptr<Graph> init_adg;
+    shared_ptr<Graph> init_graph;
     COST_TYPE init_cost;
 };
 #endif

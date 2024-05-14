@@ -28,9 +28,9 @@ public:
     Groups groups;
     unordered_map<long,int> edge_id2group_id;
 
-    // for simplicity, let's make a copy of adg here
+    // for simplicity, let's make a copy of graph here
     vector<int> states;
-    shared_ptr<Graph> adg;
+    shared_ptr<Graph> graph;
     int num_states; // used for encoding edge_id=out_state_idx*num_states+in_state_idx
 
     // we don't count any merge with size 1 group, which is just a single edge.
@@ -38,7 +38,7 @@ public:
 
     GroupingMethod grouping_method;
 
-    GroupManager(const shared_ptr<Graph> & _adg, vector<int> & _states, GroupingMethod _grouping_method): states(_states), adg(_adg), num_states(_adg->get_num_states()), grouping_method(_grouping_method) {
+    GroupManager(const shared_ptr<Graph> & _graph, vector<int> & _states, GroupingMethod _grouping_method): states(_states), graph(_graph), num_states(_graph->get_num_states()), grouping_method(_grouping_method) {
         if (grouping_method==GroupingMethod::SIMPLE) {
             build();
         } else if (grouping_method==GroupingMethod::SIMPLE_MERGE) {
@@ -65,7 +65,7 @@ public:
     }
 
     void build2() {
-        int num_agents=adg->get_num_agents();
+        int num_agents=graph->get_num_agents();
 
         // todo: this is not very efficient but fine.
         for (int i=0;i<num_agents;++i) {
@@ -88,8 +88,8 @@ public:
             exit(2024);
         }
 
-        auto & prev_accum_cnts=*(adg->accum_state_cnts_begin);
-        auto & state_cnts=*(adg->state_cnts);
+        auto & prev_accum_cnts=*(graph->accum_state_cnts_begin);
+        auto & state_cnts=*(graph->state_cnts);
 
         int out_start_state_local_idx=states[out_agent_idx];
         // excluded
@@ -103,7 +103,7 @@ public:
         // TODO: we should consider non-switchable edges in the future.
         for (int out_state_local_idx=out_start_state_local_idx;out_state_local_idx<out_end_state_local_idx;++out_state_local_idx) {
             int out_state_idx=out_state_local_idx+prev_accum_cnts[out_agent_idx];
-            auto & switchable_out_neighbors=adg->switchable_type2_edges->get_out_neighbor_global_ids(out_state_idx);
+            auto & switchable_out_neighbors=graph->switchable_type2_edges->get_out_neighbor_global_ids(out_state_idx);
             for (int in_state_idx:switchable_out_neighbors) {
                 int in_state_local_idx=in_state_idx-prev_accum_cnts[in_agent_idx];
                 if (in_state_local_idx>=in_start_state_local_idx && in_state_local_idx<in_end_state_local_idx) {
@@ -224,7 +224,7 @@ public:
     }
 
     void build() {
-        int num_agents=adg->get_num_agents();
+        int num_agents=graph->get_num_agents();
         // todo: this is not very efficient but fine.
         for (int i=0;i<num_agents;++i) {
             for (int j=0;j<num_agents;++j) {
@@ -242,19 +242,19 @@ public:
             exit(2024);
         }
 
-        auto & accum_cnts=*(adg->accum_state_cnts_end);
+        auto & accum_cnts=*(graph->accum_state_cnts_end);
 
-        int out_start_state_idx=adg->get_global_state_id(out_agent_idx,states[out_agent_idx]);
+        int out_start_state_idx=graph->get_global_state_id(out_agent_idx,states[out_agent_idx]);
         int out_end_state_idx=accum_cnts[out_agent_idx];
 
-        int in_start_state_idx=adg->get_global_state_id(in_agent_idx,states[in_agent_idx]);
+        int in_start_state_idx=graph->get_global_state_id(in_agent_idx,states[in_agent_idx]);
         int in_end_state_idx=accum_cnts[in_agent_idx];
 
         Groups unmerged_groups;
         unordered_set<long> crossing_searched;
         unordered_set<long> parallel_searched;
         for (int out_state_idx=out_start_state_idx;out_state_idx<out_end_state_idx;++out_state_idx) {
-            auto & switchable_out_neighbors=adg->switchable_type2_edges->get_out_neighbor_global_ids(out_state_idx);
+            auto & switchable_out_neighbors=graph->switchable_type2_edges->get_out_neighbor_global_ids(out_state_idx);
             for (int in_state_idx:switchable_out_neighbors) {
                 if (in_state_idx>=in_start_state_idx && in_state_idx<in_end_state_idx) {
                     // parallel and crossing patterns
@@ -286,7 +286,7 @@ public:
                     break;
                 }
 
-                if (!adg->switchable_type2_edges->has_edge(out_state_idx,in_state_idx)) {
+                if (!graph->switchable_type2_edges->has_edge(out_state_idx,in_state_idx)) {
                     // no more crossing edge
                     break;
                 }
@@ -312,7 +312,7 @@ public:
                     break;
                 }
 
-                if (!adg->switchable_type2_edges->has_edge(out_state_idx,in_state_idx)) {
+                if (!graph->switchable_type2_edges->has_edge(out_state_idx,in_state_idx)) {
                     // no more parallel edge
                     break;
                 }
@@ -430,12 +430,12 @@ public:
         bool found=get_equivalent_group(out_idx,in_idx,group);
         if (!found) {
             int agent_idx,state_idx;
-            tie(agent_idx,state_idx)=adg->get_agent_state_id(out_idx);
+            tie(agent_idx,state_idx)=graph->get_agent_state_id(out_idx);
             cout<<"out_idx: agent_idx="<<agent_idx<<",state_idx="<<state_idx<<",current states: "<<states[agent_idx]
-            <<". ("<<(*adg->paths)[agent_idx][state_idx].first.first<<","<<(*adg->paths)[agent_idx][state_idx].first.second<<")"<<","<<(*adg->paths)[agent_idx][state_idx].second<<endl;
-            tie(agent_idx,state_idx)=adg->get_agent_state_id(in_idx);
+            <<". ("<<(*graph->paths)[agent_idx][state_idx].first.first<<","<<(*graph->paths)[agent_idx][state_idx].first.second<<")"<<","<<(*graph->paths)[agent_idx][state_idx].second<<endl;
+            tie(agent_idx,state_idx)=graph->get_agent_state_id(in_idx);
             cout<<"in_idx: agent_idx="<<agent_idx<<",state_idx="<<state_idx<<",current states: "<<states[agent_idx]
-            <<". ("<<(*adg->paths)[agent_idx][state_idx].first.first<<","<<(*adg->paths)[agent_idx][state_idx].first.second<<")"<<","<<(*adg->paths)[agent_idx][state_idx].second<<endl;
+            <<". ("<<(*graph->paths)[agent_idx][state_idx].first.first<<","<<(*graph->paths)[agent_idx][state_idx].first.second<<")"<<","<<(*graph->paths)[agent_idx][state_idx].second<<endl;
             exit(1234);
         }
 
