@@ -41,7 +41,7 @@ class Astar: public Solver {
       COST_TYPE _w_focal=1.0,
       uint random_seed=0
     );
-    shared_ptr<Graph> solve(const shared_ptr<Graph> & graph, COST_TYPE cost, vector<int> & states);
+    shared_ptr<Graph> solve(const shared_ptr<Graph> & graph);
     void write_stats(nlohmann::json & stats);
 
   private:
@@ -49,10 +49,11 @@ class Astar: public Solver {
     tuple<int, int, COST_TYPE> enhanced_branch(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values);
     tuple<int, int, COST_TYPE> branch(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values);
     bool terminated(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values);
-    int count_COST_TYPE_conflicting_edge_groups(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values);
+    int count_double_conflicting_edge_groups(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values);
     void reverse_nonSwitchable_edges_basedOn_LongestPathValues(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values);
 
     void add_node(const shared_ptr<Graph> & graph, const shared_ptr<SearchNode> & parent_node, vector<std::pair<int,int> > & fixed_edges);
+    COST_TYPE compute_partial_execution_time(const shared_ptr<Graph> & graph);
 
     microseconds extraHeuristicT = std::chrono::microseconds::zero();
     microseconds groupingT = std::chrono::microseconds::zero();
@@ -78,7 +79,6 @@ class Astar: public Solver {
     
     int timeout = 300;
 
-    vector<int> currents;
     shared_ptr<OpenList> open_list;
     int agentCnt = 0;
 

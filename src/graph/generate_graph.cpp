@@ -114,11 +114,11 @@ shared_ptr<Graph> construct_delayed_graph(const shared_ptr<Graph> & graph, const
     }
   }
 
-  // g_timer.record_p("make_graph_s");
+  g_timer.record_p("make_graph_s");
   auto new_graph=make_shared<Graph>(new_paths, states);
-  // g_timer.record_d("make_graph_s","make_graph");
+  g_timer.record_d("make_graph_s","make_graph");
 
-  // g_timer.print_all_d();
+  g_timer.print_all_d();
 
   return new_graph;
 }

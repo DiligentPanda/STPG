@@ -22,7 +22,13 @@ public:
     }
 
     inline Edge & get_edge(int a, int b) {
-        return edges.at(std::make_pair(a,b));
+        auto iter=edges.find(std::make_pair(a,b));
+        if (iter==edges.end()) {
+            std::cout<<"edge not found: "<<a<<" "<<b<<std::endl;
+            exit(50);
+        }
+
+        return iter->second;
     }
 
 };

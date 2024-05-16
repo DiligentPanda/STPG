@@ -120,7 +120,7 @@ shared_ptr<vector<COST_TYPE> > compute_longest_paths(const shared_ptr<vector<COS
         if (fixed_edges.size() == 0) {
             return compute_longest_paths(old_longest_path_lengths_ptr, graph, fixed_edges, false);
         }
-
+  
         bool no_need_to_update=true;
         for (auto & p: fixed_edges) {
             COST_TYPE edge_cost=graph->edge_manager->get_edge(p.first, p.second).cost;
@@ -181,6 +181,7 @@ shared_ptr<vector<COST_TYPE> > compute_longest_paths(const shared_ptr<vector<COS
         std::queue<int> q;
 
         // count the indegrees of all nodes
+        // TODO(rivers): we can start from current states
         for (int i=0; i<graph->get_num_states(); i++) {
             in_degrees[i] = graph->get_in_degree(i);
             if (in_degrees[i] == 0) {

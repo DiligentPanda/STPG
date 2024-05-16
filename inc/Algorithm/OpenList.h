@@ -8,7 +8,7 @@
 
 class OpenList {
 public:
-    OpenList(COST_TYPE w_focal=1.0): w_focal(w_focal), focal(w_focal>1.0), f_lowerbound(0.0) {
+    OpenList(COST_TYPE w_focal=1): w_focal(w_focal), focal(w_focal>1), f_lowerbound(0.0) {
         if (focal) {
             std::cout<<"focal search with w="<<w_focal<<std::endl;
         } else {

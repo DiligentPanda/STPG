@@ -54,27 +54,35 @@ public:
         // python interpreter
         guard=make_shared<py::scoped_interpreter>();
 
-        py::module_ milp_solver=py::module_::import("MILP.solver");
+        py::module_ milp_solver=py::module_::import("py_milp.solver");
         solver=make_shared<py::object>(milp_solver.attr("MILPSolver")(time_limit, eps));
         solver->attr("test")();
     }
 
-    shared_ptr<Graph> solve(const shared_ptr<Graph> & init_graph, COST_TYPE init_cost, vector<int> & curr_states) {
+    shared_ptr<Graph> solve(const shared_ptr<Graph> & _graph) {
+        if (!_graph->is_fixed()) {
+            std::cout<<"Astar:: graph is not fixed"<<std::endl;
+            exit(100);
+        }
+
+        auto init_graph = _graph;
+        // since many operations are in-place, should never operate on the original graph. make a copy first.
+        auto graph = _graph->copy();
+
         searchT=microseconds((int64_t)(time_limit*1000000));
-        vertex_cnt = init_graph->get_num_states();
-        sw_edge_cnt = init_graph->get_num_switchable_edges();
+        vertex_cnt = graph->get_num_states();
+        sw_edge_cnt = graph->get_num_switchable_edges();
 
-        auto graph = init_graph->copy();
-
+        graph->make_switchable();
         // TODO(rivers): we should make grouping outside before the execution of an graph
         // TODO(rivers): make grouping method configurable
-        group_manager=make_shared<GroupManager>(graph, curr_states, grouping_method);
+        group_manager=make_shared<GroupManager>(graph, *(graph->curr_states), grouping_method);
         std::cout<<group_manager->groups.size()<<std::endl;
 
         if (use_grouping) {
             // std::cout<<"input_sw_cnt: "<<input_sw_cnt<<std::endl;
             auto start = high_resolution_clock::now();
-            group_manager=std::make_shared<GroupManager>(graph, curr_states, grouping_method);
+            group_manager=std::make_shared<GroupManager>(graph, *(graph->curr_states), grouping_method);
             auto end = high_resolution_clock::now();
             groupingT += duration_cast<microseconds>(end - start);
             std::cout<<"group size: "<<group_manager->groups.size()<<std::endl;
@@ -89,24 +97,28 @@ public:
         vector<vector<int> > paths;
         for (int agent_id=0; agent_id<num_agents; ++agent_id) {
             vector<int> path;
-            for (int state_id=curr_states[agent_id];state_id<graph->get_num_states(agent_id);++state_id) {
+            int num_states=graph->get_num_states(agent_id);
+            for (int state_id=graph->curr_states->at(agent_id);state_id<num_states;++state_id) {
                 path.push_back(state_id);
             }
             paths.push_back(path);
         }
 
         // non_switchable_edges
-        vector<tuple<int,int,int,int> > non_switchable_edges;
+        vector<tuple<int,int,int,int,COST_TYPE> > non_switchable_edges;
         for (int agent_id=0; agent_id<num_agents; ++agent_id) {
             for (int state_id=0; state_id<graph->get_num_states(agent_id); ++state_id) {
                 for (auto & p: graph->get_non_switchable_in_neighbor_pairs(agent_id, state_id)) {
-                    non_switchable_edges.emplace_back(p.first, p.second, agent_id, state_id);
+                    int in_global_state_id=graph->get_global_state_id(p.first, p.second);
+                    int global_state_id=graph->get_global_state_id(agent_id, state_id);
+                    COST_TYPE cost=graph->edge_manager->get_edge(in_global_state_id, global_state_id).cost;
+                    non_switchable_edges.emplace_back(p.first, p.second, agent_id, state_id, cost);
                 }
             }
         }
 
         // switchable_edge_groups
-        std::unordered_map<int, vector<tuple<int,int,int,int> > > switchable_edge_groups;
+        std::unordered_map<int, vector<tuple<int,int,int,int,COST_TYPE> > > switchable_edge_groups;
         std::unordered_set<int> group_ids;
 
         for (int agent_id=0; agent_id<num_agents; ++agent_id) {
@@ -125,18 +137,19 @@ public:
 
         for (int group_id: group_ids) {
             auto & group = group_manager->groups[group_id];
-            vector<tuple<int,int,int,int> > group_edges;
+            vector<tuple<int,int,int,int,COST_TYPE> > group_edges;
             for (long e: group) {
                 int out_idx=group_manager->get_out_idx(e);
                 int in_idx=group_manager->get_in_idx(e);
+                COST_TYPE cost=graph->edge_manager->get_edge(out_idx, in_idx).cost;
                 auto && out_pair=graph->get_agent_state_id(out_idx);
                 auto && in_pair=graph->get_agent_state_id(in_idx);
-                group_edges.emplace_back(out_pair.first, out_pair.second, in_pair.first, in_pair.second);
+                group_edges.emplace_back(out_pair.first, out_pair.second, in_pair.first, in_pair.second, cost);
             }
             switchable_edge_groups[group_id]=group_edges;
         }
 
-        py::object ret=solver->attr("solve")(paths, non_switchable_edges, switchable_edge_groups, init_cost);
+        py::object ret=solver->attr("solve")(paths, non_switchable_edges, switchable_edge_groups);
 
         auto && ret_tuple=ret.cast<py::tuple>();
         int status=ret_tuple[0].cast<int>();
@@ -147,19 +160,19 @@ public:
         searchT=microseconds((int64_t)(elapse*1000000));
         if (status==0) {
             // success
-            std::cout<<"Succeed. results: "<<status<<","<<elapse<<","<<objective_value<<std::endl;
+            std::cout<<"Succeed. results: "<<status<<", "<<elapse<<", "<<objective_value<<std::endl;
             // reverse the groups
             for (int group_id: group_ids_to_reverse) {
                 auto && edges = group_manager->get_groupable_edges(group_id);
                 graph->fix_switchable_type2_edges(edges, true, false);
             }
+            graph->fix_all_switchable_type2_edges();
+            return graph;
+
         } else {
             std::cout<<"Fail to find solution within "<<time_limit<<std::endl;
+            return init_graph;
         }
-
-        graph->fix_all_switchable_type2_edges();
-        
-        return graph;
     }
 
     void write_stats(nlohmann::json & stats) {

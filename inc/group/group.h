@@ -431,10 +431,10 @@ public:
         if (!found) {
             int agent_idx,state_idx;
             tie(agent_idx,state_idx)=graph->get_agent_state_id(out_idx);
-            cout<<"out_idx: agent_idx="<<agent_idx<<",state_idx="<<state_idx<<",current states: "<<states[agent_idx]
+            cout<<"out_idx: agent_idx="<<agent_idx<<",state_idx="<<state_idx<<",current states:"<<states[agent_idx]
             <<". ("<<(*graph->paths)[agent_idx][state_idx].first.first<<","<<(*graph->paths)[agent_idx][state_idx].first.second<<")"<<","<<(*graph->paths)[agent_idx][state_idx].second<<endl;
             tie(agent_idx,state_idx)=graph->get_agent_state_id(in_idx);
-            cout<<"in_idx: agent_idx="<<agent_idx<<",state_idx="<<state_idx<<",current states: "<<states[agent_idx]
+            cout<<"in_idx: agent_idx="<<agent_idx<<",state_idx="<<state_idx<<",current states:"<<states[agent_idx]
             <<". ("<<(*graph->paths)[agent_idx][state_idx].first.first<<","<<(*graph->paths)[agent_idx][state_idx].first.second<<")"<<","<<(*graph->paths)[agent_idx][state_idx].second<<endl;
             exit(1234);
         }

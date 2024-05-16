@@ -24,9 +24,8 @@ class MILPSolver:
     def solve(
         self, 
         paths: List[List[int]],
-        non_switchable_edges: List[Tuple[int,int,int,int]],
-        switchable_edge_groups: Dict[int, List[Tuple[int, int, int, int]]],
-        init_cost: float=-1.0,
+        non_switchable_edges: List[Tuple[int,int,int,int, float]],
+        switchable_edge_groups: Dict[int, List[Tuple[int, int, int, int, float]]]
     ) -> Tuple[int, float, float, List[int]]:
         curr_states=[path[0] for path in paths]
         
@@ -37,7 +36,10 @@ class MILPSolver:
         # a better way is to set M separately for each switchable edge, so that M=max over two agents' path length.
         # this is also one drawback of this algorithm.
         # sum is a worst estimation for now if we don't consider the future delay.
-        M = sum([len(path) for path in paths])
+        # we add the cost in the loop for non_switchable_edges
+        # TODO(rivers): M should be larger than optimal_cost+max_edge_cost?
+        M = 1000000 
+        raise NotImplementedError("We should set M to a better value before experiments.")
         
         # create MILP dictorary
         # TODO(rivers): we should try the commercial Gurobi solver later, which should be faster than CBC
@@ -53,7 +55,7 @@ class MILPSolver:
                 )
         
         for edge_id, edge in enumerate(non_switchable_edges):
-            head_agent_id, head_state_id, tail_agent_id, tail_state_id = edge
+            head_agent_id, head_state_id, tail_agent_id, tail_state_id, cost = edge
             
             if head_state_id==curr_states[head_agent_id] and tail_state_id==curr_states[tail_agent_id]:
                 print(edge)
@@ -62,10 +64,10 @@ class MILPSolver:
             var_2 = m_opt.var_by_name(f"state_{tail_agent_id}_{tail_state_id}")
             
             m_opt.add_constr(
-                lin_expr=var_2 - var_1 >= 1 + self.EPSILON,
+                lin_expr=var_2 - var_1 >= cost + self.EPSILON,
                 name=f"non_switchable_{edge_id}"
             )
-            
+        
         for group_id, group in switchable_edge_groups.items():
             
             b: Var = m_opt.add_var(
@@ -74,12 +76,12 @@ class MILPSolver:
             )
             
             for edge in group:
-                head_agent_id, head_state_id, tail_agent_id, tail_state_id = edge
+                head_agent_id, head_state_id, tail_agent_id, tail_state_id, cost = edge
                 var_1 = m_opt.var_by_name(f"state_{head_agent_id}_{head_state_id}")
                 var_2 = m_opt.var_by_name(f"state_{tail_agent_id}_{tail_state_id}")
                 
                 m_opt.add_constr(
-                    lin_expr=var_2 - var_1 >= 1 + self.EPSILON - b * M,
+                    lin_expr=var_2 - var_1 >= cost + self.EPSILON - b * M,
                     name=f"switchable_fwd_{group_id}_{edge}"
                 )
                 
@@ -92,7 +94,7 @@ class MILPSolver:
                 var_2 = m_opt.var_by_name(f"state_{reverse_tail_agent_id}_{reverse_tail_state_id}")
                 
                 m_opt.add_constr(
-                    lin_expr=var_2 - var_1 >= 1 + self.EPSILON - (1 - b) * M,
+                    lin_expr=var_2 - var_1 >= cost + self.EPSILON - (1 - b) * M,
                     name=f"switchable_rev_{group_id}_{edge}"
                 )
         

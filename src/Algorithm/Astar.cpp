@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "group/group.h"
 #include "Algorithm/graph.h"
+#include <iomanip>   
 
 Astar::Astar() {
 }
@@ -286,7 +287,8 @@ void Astar::write_stats(nlohmann::json & stats) {
   // stats["selected_edges"]=selected_edges;
 }
 
-int Astar::count_COST_TYPE_conflicting_edge_groups(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values) {
+  auto start_graph_free = high_resolution_clock::now();
+int Astar::count_double_conflicting_edge_groups(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values) {
   set<int> COST_TYPE_conflicting_edge_groups;
   int cnt=0;
   for (int i = 0; i < graph->get_num_states(); ++i) {
@@ -321,6 +323,22 @@ int Astar::count_COST_TYPE_conflicting_edge_groups(const shared_ptr<Graph> & gra
     cnt=COST_TYPE_conflicting_edge_groups.size();
   }
   return cnt;
+}
+
+// NOTE: this function don't consider switchable edges, that's why partial
+// if want get full execution time, please fixed all switchable edges first.
+COST_TYPE Astar::compute_partial_execution_time(const shared_ptr<Graph> & graph) {
+  shared_ptr<vector<COST_TYPE> > fake_ptr(nullptr);
+  vector<std::pair<int,int> > fake_edges;
+  auto longest_path_lengths = compute_longest_paths(fake_ptr, graph, fake_edges, false);
+
+  COST_TYPE g = 0;
+  for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
+    int goal_state=graph->get_global_state_id(agent_id, graph->get_num_states(agent_id)-1);
+    g+=longest_path_lengths->at(goal_state);
+  }
+
+  return g;
 }
 
 
@@ -384,7 +402,7 @@ void Astar::add_node(const shared_ptr<Graph> & graph, const shared_ptr<SearchNod
   if (parent_node->longest_path_lengths!=nullptr) {
     h=max(h,parent_node->g+parent_node->h-g);
   }
-  
+
   auto end = high_resolution_clock::now();
   extraHeuristicT += duration_cast<microseconds>(end - start);
 
@@ -499,14 +517,16 @@ shared_ptr<Graph> Astar::exploreNode() {
         copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
       }
 
+      std::cout<<"replanned graph's g-value: "<<(int)(node->g)<<std::endl;
+      
       auto res=node->graph;
 
      // return the current ADG by fix switchable edges to non-switchable.
       if (terminate && early_termination) {
-        reverse_nonSwitchable_edges_basedOn_LongestPathValues(graph, values);
+        reverse_nonSwitchable_edges_basedOn_LongestPathValues(res, values);
       }
 
-      graph->fix_all_switchable_type2_edges();
+      res->fix_all_switchable_type2_edges();
 
       auto start_graph_free = high_resolution_clock::now();
       // we explicitly reset to count the time
@@ -581,29 +601,39 @@ shared_ptr<Graph> Astar::exploreNode() {
   // throw invalid_argument("no solution found");
 }
 
-shared_ptr<Graph> Astar::solve(const shared_ptr<Graph> & graph, COST_TYPE cost, vector<int> & states) {
+shared_ptr<Graph> Astar::solve(const shared_ptr<Graph> & _graph) {
+  if (!_graph->is_fixed()) {
+    std::cout<<"Astar:: graph is not fixed"<<std::endl;
+    exit(100);
+  }
+
   searchT = microseconds(timeout*1000000);
   auto start_search = high_resolution_clock::now();
 
   auto start_graph_free = high_resolution_clock::now();
-  init_graph=graph->copy();
+  // since many operations are in-place, should never operate on the original graph. make a copy first.
+  auto graph=_graph->copy();
   auto end_graph_free = high_resolution_clock::now();
   copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
-  
-  init_cost=cost;
+  // make the graph switchable
+  graph->make_switchable();
 
+  // auto fixed_init_graph=init_graph->copy();
+  // fixed_init_graph->fix_all_switchable_type2_edges();
+  init_graph=_graph;
+  init_cost=compute_partial_execution_time(init_graph);
   open_list=std::make_shared<OpenList>(w_focal);
   
   vertex_cnt = graph->get_num_states();
   sw_edge_cnt = graph->get_num_switchable_edges();
   agentCnt = graph->get_num_agents();
-  std::cout << "vertex_cnt = " << vertex_cnt << ", sw_edge_cnt = " << sw_edge_cnt << "\n";
+  // std::cout << "vertex_cnt = " << vertex_cnt << ", sw_edge_cnt = " << sw_edge_cnt << "\n";
 
   // TODO(rivers): if use grouping
   if (use_grouping) {
     // std::cout<<"input_sw_cnt: "<<input_sw_cnt<<std::endl;
     auto start = high_resolution_clock::now();
-    group_manager=std::make_shared<GroupManager>(init_graph, states, grouping_method);
+    group_manager=std::make_shared<GroupManager>(graph, *(graph->curr_states), grouping_method);
     auto end = high_resolution_clock::now();
     groupingT += duration_cast<microseconds>(end - start);
     std::cout<<"group size: "<<group_manager->groups.size()<<std::endl;
@@ -611,13 +641,6 @@ shared_ptr<Graph> Astar::solve(const shared_ptr<Graph> & graph, COST_TYPE cost, 
   }
 
   /* Graph-Based Search */
-  // BUG(rivers): why we start current at 0, would it be a bug? shouldn't we start with current states?
-  for (int agent = 0; agent < agentCnt; agent ++) {
-    // get current global vertex idx
-    int global_state_id = graph->get_global_state_id(agent, 0);
-    currents.push_back(global_state_id);
-  }
-
   auto fake_parent=std::make_shared<SearchNode>(0);
   if (use_grouping) {
     fake_parent->num_sw=group_manager->groups.size();

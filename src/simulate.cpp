@@ -5,8 +5,8 @@
 #include "MILP/milp_solver.h"
 #include "solver.h"
 #include "graph/generate_graph.h"
-#include "simulation/simulator.h"
 #include "define.h"
+#include "simulation/new_simulator.h"
 
 using json=nlohmann::json;
 
@@ -34,6 +34,9 @@ void simulate(
 
   vector<int> states=data.at("states").get<vector<int> >();
   vector<int> delay_steps=data.at("delay_steps").get<vector<int> >();
+  vector<COST_TYPE> delay_steps_cost(delay_steps.begin(),delay_steps.end());
+  // NOTE: we must call this function to prune the edges before the current states
+  // otherwise search algorithm may consider edges before the current states and cause errors.
 
   // TODO(rivers): maybe check path_fp with the path_fp saved in sit_fp as well.
   if (states.size()!=agent_num || delay_steps.size()!=agent_num) {
@@ -41,20 +44,25 @@ void simulate(
     exit(50);
   }
 
-  // construct the delayed graph by inserting dummy nodes
+  int total_delays=0;
+  for (auto delay_step:delay_steps) {
+    total_delays+=delay_step;
+  }
+  std::cout<<"total delays: "<<total_delays<<std::endl;
+
+  // update states and set delays
   microseconds timer_construct_graph(0);
   auto start = high_resolution_clock::now();
-  auto graph_delayed = construct_delayed_graph(graph, delay_steps, states);
+  graph->update_curr_states(states);
+  graph->delay(delay_steps_cost);
+  std::cout<<"#sw: "<<graph->get_num_switchable_edges()<<", #nsw: "<<graph->get_num_non_switchable_edges()<<", #states: "<<graph->get_num_states()<<std::endl;
   auto stop = high_resolution_clock::now();
   timer_construct_graph += duration_cast<microseconds>(stop - start);
 
-  // simulate without replanning
-  auto graph_delayed_copy = graph_delayed->copy();
-  graph_delayed_copy->fix_all_switchable_type2_edges();
-  // simulate from the current state
-  Simulator simulator_original(graph_delayed_copy, states);
-  int original_cost = simulator_original.print_soln();
+  auto new_simulator=make_shared<NewSimulator>();
 
+  // simulate without replanning from current states
+  int original_cost = new_simulator->simulate(graph);
   cout<<"original cost: "<<original_cost<<endl;
 
   shared_ptr<Solver> solver;
@@ -128,18 +136,15 @@ void simulate(
 
   microseconds timer(0);
   start = high_resolution_clock::now();
-  auto replanned_graph = solver->solve(graph_delayed, original_cost, states);
+  auto replanned_graph = solver->solve(graph);
   stop = high_resolution_clock::now();
   timer += duration_cast<microseconds>(stop - start);
-
 
   solver->write_stats(stats);
 
   if (duration_cast<seconds>(timer).count() < time_limit) {
     // simulate with the replanned graph
-    Simulator simulator(replanned_graph, states);
-    int cost= simulator.print_soln();
-
+    int cost = new_simulator->simulate(replanned_graph);
     cout<<"optimized cost: "<<cost<<endl;
 
     stats["status"]="Succ";
@@ -156,7 +161,7 @@ void simulate(
 
 
   std::cout<<"search time: "<<stats["search_time"].get<float>()/1000000.0<<", total time: "<<stats["total_time"].get<float>()/1000000.0<<std::endl;
-  std::cout<<"construct graph time:"<<timer_construct_graph.count()/1000000.0<<std::endl;
+  std::cout<<"construct graph time: "<<timer_construct_graph.count()/1000000.0<<std::endl;
 
   out.open(stat_ofp);
   out<<stats.dump(4)<<std::endl;
