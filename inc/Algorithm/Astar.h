@@ -11,7 +11,7 @@ using namespace std::chrono;
 #include <vector>
 #include "Algorithm/heuristic.h"
 #include "Algorithm/SearchNode.h"
-#include "Algorithm/graph.h"
+#include "Algorithm/graph_algo.h"
 #include "OpenList.h"
 #include "solver.h"
 #include "define.h"

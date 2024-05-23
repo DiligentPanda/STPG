@@ -1,7 +1,7 @@
 #include "Algorithm/Astar.h"
 #include <algorithm>
 #include "group/group.h"
-#include "Algorithm/graph.h"
+#include "Algorithm/graph_algo.h"
 #include <iomanip>   
 
 Astar::Astar() {

@@ -310,6 +310,8 @@ struct Graph {
         fix_edges_to_last_states();
     }
 
+    void make_switchable(int window);
+
     /* In-Place Operations End */
 
 

@@ -1,5 +1,5 @@
 #include "simulation/simulator.h"
-#include "Algorithm/graph.h"
+#include "Algorithm/graph_algo.h"
 #include "graph/generate_graph.h"
 
 Simulator::Simulator(const shared_ptr<Graph> & graph): graph(graph) {
