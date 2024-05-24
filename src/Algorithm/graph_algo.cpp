@@ -47,6 +47,11 @@ bool check_cycle_dfs(Graph& graph, vector<int>& starts) {
   return false;
 }
 
+bool check_cycle_dfs(Graph & graph) {
+    return check_cycle_dfs(graph, *(graph.curr_states));
+}
+
+
 void build_time_arr(Graph & graph, vector<bool> & visited, shared_ptr<vector<int> > sorted_vertecies, shared_ptr<vector<int> > sorted_times, int current, int & time) {
     if(visited[current] == true){
         // revisit

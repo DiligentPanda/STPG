@@ -517,6 +517,11 @@ shared_ptr<Graph> Astar::exploreNode() {
         copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
       }
 
+      // timeout
+      if (!terminate) {
+        return init_graph;
+      }
+
       std::cout<<"replanned graph's g-value: "<<(int)(node->g)<<std::endl;
       
       auto res=node->graph;

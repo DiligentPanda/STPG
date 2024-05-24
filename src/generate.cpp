@@ -36,13 +36,13 @@ bool save_situation_file(const string & situation_fp, const string & path_fp, co
   return true;
 }
 
-void gen_random_situation(int idx, const string & path_fp, uint seed, int delay_prob, int delay_steps_low, int delay_steps_high, const string & situation_fp) {
+void gen_random_situation(int idx, const string & path_fp, uint seed, float delay_prob, int delay_steps_low, int delay_steps_high, const string & situation_fp) {
   auto graph=construct_graph(path_fp.c_str());
   Simulator simulator(graph);
   int num_agents=graph->get_num_agents();
 
   std::mt19937 rng(seed);
-  std::uniform_int_distribution<int> delay_distrib(1,1000);
+  std::uniform_real_distribution<float> delay_distrib(0,1);
   std::uniform_int_distribution<int> delay_steps_distrib(delay_steps_low,delay_steps_high);
 
   std::vector<int> delay_steps_vec(num_agents,0);
@@ -84,7 +84,7 @@ void gen_random_situation(int idx, const string & path_fp, uint seed, int delay_
   }
 }
 
-void gen_random_situations(const string & path_fp, int num, int delay_prob, int delay_steps_low, int delay_steps_high, const string & situation_fd) {
+void gen_random_situations(const string & path_fp, int num, float delay_prob, int delay_steps_low, int delay_steps_high, const string & situation_fd) {
   const uint default_seed=std::random_device()()%1000000;
   const uint seed_step=97;
 
@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
     ("path_fp,p",po::value<std::string>()->required(),"path file to construct TPG")
     ("sit_num,n",po::value<int>()->required(),"the number of random situations for this instance")
     ("sit_fd,o",po::value<std::string>()->required(),"output folder to store situation files")
-    ("delay_prob,d",po::value<int>()->default_value(10),"delay probability*1000. need to be an integer")
+    ("delay_prob,d",po::value<float>()->default_value(0.01),"delay probability (0<=p<=1)")
     ("delay_steps_low,l",po::value<int>()->default_value(10),"the lowerbound of delay steps")
     ("delay_steps_high,h",po::value<int>()->default_value(20),"the upperbound of delay steps")
   ;
@@ -130,7 +130,7 @@ int main(int argc, char** argv) {
   auto path_fp=vm.at("path_fp").as<string>();
   auto sit_num=vm.at("sit_num").as<int>();
   auto sit_fd=vm.at("sit_fd").as<string>();
-  auto delay_prob=vm.at("delay_prob").as<int>();
+  auto delay_prob=vm.at("delay_prob").as<float>();
   auto delay_steps_low=vm.at("delay_steps_low").as<int>();
   auto delya_steps_high=vm.at("delay_steps_high").as<int>();
 

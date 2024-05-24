@@ -6,6 +6,8 @@ bool check_cycle_dfs(Graph & graph, int start);
 
 bool check_cycle_dfs(Graph & graph, vector<int>& starts);
 
+bool check_cycle_dfs(Graph & graph);
+
 sortResult topologicalSort(Graph & graph, sortResult state, vector<int> & starts, int u, int v);
 
 shared_ptr<vector<COST_TYPE> > compute_longest_paths(

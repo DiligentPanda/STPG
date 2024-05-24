@@ -5,6 +5,7 @@
 #include "graph/graph.h"
 #include <random>
 #include "solver.h"
+#include "Algorithm/graph_algo.h"
 
 class AgentState {
 public:
@@ -70,11 +71,30 @@ public:
             delays.push_back(_delays[agent_id]);
         }
         
+        std::cout<<"state updated"<<std::endl;
+
         graph->update_curr_states(curr_states);
+
+        std::cout<<"graph state updated"<<std::endl;
+
         graph->delay(delays);
 
-        // call solver to udpate the graph
-        graph = solver->solve(graph);
+        std::cout<<"graph udpated"<<std::endl;
+
+        if (solver!=nullptr) {
+            // call solver to optimize the graph
+
+            if (check_cycle_dfs(*graph)) {
+                std::cout<<"cycle detected before solve"<<std::endl;
+                exit(10086);
+            }
+            graph = solver->solve(graph);
+            if (check_cycle_dfs(*graph)) {
+                std::cout<<"cycle detected after solve"<<std::endl;
+                exit(10086);
+            }
+        }
+
 
         // reset the dependencies
         for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
@@ -154,12 +174,73 @@ public:
 
         reset(_graph, curr_states);
 
+        std::cout<<"Start simulation."<<std::endl;
         int cost=0;
+        int step_ctr=0;
         while (!terminated()) {
+            step_ctr+=1;
             int step_cost=step();
+            if (step_ctr%100==0) {
+                std::cout<<"step "<<step_ctr<<": "<<get_remained_dists()<<" all delayed "<<all_delayed()<<" all stucked "<<all_stucked()<<" remained agents "<<get_remained_agents()<<std::endl;
+            }
+            if (all_stucked()) {
+                std::cout<<"bug: all stucked"<<std::endl;
+                break;
+            }
+
             cost+=step_cost;
         }
         return cost;
+    }
+
+    int get_remained_dists() {
+        int remained_dists=0;
+        for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
+            if (agent_states[agent_id].state_id<graph->get_num_states(agent_id)-1) {
+                remained_dists+=graph->get_num_states(agent_id)-1-agent_states[agent_id].state_id;
+            }
+        }
+        return remained_dists;
+    }
+
+    int get_remained_agents() {
+        int remained_agents=0;
+        for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
+            if (agent_states[agent_id].state_id<graph->get_num_states(agent_id)-1) {
+                remained_agents+=1;
+            }
+        }
+        return remained_agents;
+    }
+
+    bool all_delayed() {
+        if (terminated()) {
+            return false;
+        }
+
+        for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
+            if (agent_states[agent_id].state_id<graph->get_num_states(agent_id)-1) {
+                if (agent_states[agent_id].delay_steps==0) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    bool all_stucked() {
+        if (terminated()) {
+            return false;
+        }
+
+        for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
+            if (agent_states[agent_id].state_id<graph->get_num_states(agent_id)-1) {
+                if (agent_states[agent_id].dependencies.size()==0) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     bool simulate_delays(std::vector<int> & delays) {
@@ -167,8 +248,10 @@ public:
         for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
             if (agent_states[agent_id].state_id<graph->get_num_states(agent_id)-1) {
                 if (delay_distrib(rng)<delay_prob) {
+                    std::cout<<delay_steps_distrib(rng)<<std::endl;
                     int delay_steps=delay_steps_distrib(rng);
                     delays[agent_id]=delay_steps;
+                    std::cout<<"agent "<<agent_id<<" delay for "<<delay_steps<<" steps"<<std::endl;
                     delayed=true;
                     // NOTE: we change the system states here, but we also need to relect delays in the planning graph 
                     agent_states[agent_id].delay_steps+=delay_steps;
@@ -195,14 +278,20 @@ public:
 
             // if delayed, update the graph and dependencies
             if (delayed) {
+                std::cout<<"delayed"<<std::endl;
                 update_graph(delays);
             }
         }
 
         // execute
         for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
+            
             auto & agent_state = agent_states[agent_id];
-
+            
+            if (agent_state.state_id>=graph->get_num_states(agent_id)-1) {
+                continue;
+            }
+            
             if (agent_state.delay_steps==0 && agent_state.dependencies.size()==0) {
                 // execute the edge
                 agent_state.state_id+=1;

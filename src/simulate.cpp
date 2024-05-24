@@ -168,6 +168,70 @@ void simulate(
   out.close();
 }
 
+
+void full_simulate(
+  const string & path_fp,
+  float delay_prob,
+  int delay_steps_low,
+  int delay_steps_high,
+  int time_limit, 
+  const string & algo, 
+  const string & branch_order,
+  const string & grouping_method,
+  const string & heuristic,
+  bool early_termination,
+  bool incremental,
+  COST_TYPE w_astar,
+  COST_TYPE w_focal,
+  uint random_seed,
+  const string & stat_ofp, 
+  const string & new_path_ofp
+) {
+  auto graph=construct_graph(path_fp.c_str());
+  std::cout<<graph->paths->at(47).size()<<std::endl;
+  int s=graph->get_global_state_id(47,2);
+  int e=graph->get_global_state_id(26,310);
+  std::cout<<graph->switchable_type2_edges->has_edge(s,e)<<std::endl;
+
+  shared_ptr<Solver> solver;
+  
+  if (algo=="milp") {
+    solver=make_shared<MILPSolver>(grouping_method, time_limit, 0.0);
+  } else if (algo=="search") {
+    solver=make_shared<Astar>(
+      time_limit, 
+      true, 
+      branch_order,  
+      grouping_method, 
+      heuristic, 
+      early_termination, 
+      incremental,
+      w_astar,
+      w_focal,
+      random_seed
+    );
+  } else {
+    std::cout<<"Unsupported algorithm: "<<algo<<std::endl;
+    exit(-1);
+  }
+
+  auto no_delay_simulator=make_shared<NewSimulator>();
+  // simulate without replanning from current states
+  int original_cost = no_delay_simulator->simulate(graph);
+
+  // set
+
+  auto delay_simulator=make_shared<NewSimulator>(solver,delay_prob,delay_steps_low,delay_steps_high,random_seed);
+  // simulate without replanning from current states
+  int original_cost_after_delay = delay_simulator->simulate(graph);
+
+
+  std::cout<<"original cost: "<<original_cost<<std::endl;
+  std::cout<<"original cost after delay: "<<original_cost_after_delay<<std::endl;
+
+
+}
+
 int main(int argc, char** argv) {
 
   namespace po = boost::program_options;
@@ -175,7 +239,7 @@ int main(int argc, char** argv) {
   desc.add_options()
     ("help", "show help message")
     ("path_fp,p",po::value<std::string>()->required(),"path file to construct graph")
-    ("sit_fp,s",po::value<std::string>()->required(),"situation file to construct delayed graph")
+    ("sit_fp,s",po::value<std::string>()->default_value(""),"situation file to construct delayed graph")
     ("time_limit,t",po::value<int>()->required(),"time limit in seconds. need to be an integer")
     ("algo,a",po::value<std::string>()->required(),"replaning algorithm to use, [search, milp]")
     ("stat_ofp,o",po::value<std::string>()->required(),"the output file path of statistics")
@@ -187,7 +251,10 @@ int main(int argc, char** argv) {
     ("incremental,i",po::value<bool>()->required(),"whether to use incremental update")
     ("w_astar",po::value<COST_TYPE>()->default_value(1.0),"heuristic weight for weighted A Star")
     ("w_focal",po::value<COST_TYPE>()->default_value(1.0),"heuristic weight for focal search")
-    ("random_seed,r",po::value<uint>()->default_value(0),"random seed")
+    ("random_seed,r",po::value<uint>()->default_value(10),"random seed")
+    ("delay_prob",po::value<float>()->default_value(0.01),"delay probability (0<=p<=1)")
+    ("delay_steps_low",po::value<int>()->default_value(10),"the lowerbound of delay steps")
+    ("delay_steps_high",po::value<int>()->default_value(20),"the upperbound of delay steps")
   ;
 
   po::variables_map vm;
@@ -213,6 +280,13 @@ int main(int argc, char** argv) {
   COST_TYPE w_astar=vm.at("w_astar").as<COST_TYPE>();
   COST_TYPE w_focal=vm.at("w_focal").as<COST_TYPE>();
 
+
+  // used for full simulation
+  float delay_prob=vm.at("delay_prob").as<float>();
+  int delay_steps_low=vm.at("delay_steps_low").as<int>();
+  int delay_steps_high=vm.at("delay_steps_high").as<int>();
+
+
   if (w_astar>1.0 && w_focal>1.0) {
     std::cout<<"Using both weighted astar and focal search is not supported."<<std::endl;
     exit(-1);
@@ -221,22 +295,44 @@ int main(int argc, char** argv) {
   bool early_termination=vm.at("early_termination").as<bool>();
   bool incremental=vm.at("incremental").as<bool>();
 
-  simulate(
-    path_fp,
-    sit_fp,
-    time_limit,
-    algo,
-    branch_order,
-    grouping_method,
-    heuristic,
-    early_termination,
-    incremental,
-    w_astar,
-    w_focal,
-    random_seed,
-    stat_ofp,
-    new_path_ofp
-  );
+
+  if (sit_fp!="") {
+    simulate(
+      path_fp,
+      sit_fp,
+      time_limit,
+      algo,
+      branch_order,
+      grouping_method,
+      heuristic,
+      early_termination,
+      incremental,
+      w_astar,
+      w_focal,
+      random_seed,
+      stat_ofp,
+      new_path_ofp
+    );
+  } else {
+    full_simulate(
+      path_fp,
+      delay_prob,
+      delay_steps_low,
+      delay_steps_high,
+      time_limit,
+      algo,
+      branch_order,
+      grouping_method,
+      heuristic,
+      early_termination,
+      incremental,
+      w_astar,
+      w_focal,
+      random_seed,
+      stat_ofp,
+      new_path_ofp
+    );
+  }
 
   return 0;
 }
