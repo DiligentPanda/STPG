@@ -14,13 +14,13 @@ namespace py = pybind11;
 class MILPSolver: public Solver {
 public:
 
-    bool use_grouping = true;
-    GroupingMethod grouping_method = GroupingMethod::SIMPLE; // this is the default method used by the milp paper
     float time_limit=90.0;
+    bool use_grouping = true;
+    shared_ptr<GroupManager> group_manager;
     float eps=0.0;
     shared_ptr<py::scoped_interpreter> guard;
     shared_ptr<py::object> solver;
-    shared_ptr<GroupManager> group_manager;
+
 
     // stats
     int vertex_cnt = 0;
@@ -28,27 +28,15 @@ public:
     microseconds groupingT = std::chrono::microseconds::zero();
     microseconds searchT = std::chrono::microseconds::zero();
 
-    MILPSolver(const string & _grouping_method, float _time_limit, float _eps=0.0):
+    MILPSolver(float _time_limit, std::shared_ptr<GroupManager> _group_manager=nullptr, float _eps=0.0):
         time_limit(_time_limit), 
+        use_grouping(_group_manager.get()!=nullptr),
+        group_manager(_group_manager),
         eps(_eps) {
 
-        if (_grouping_method=="none") {
-            std::cout<<"no grouping is not supported in milp now"<<std::endl;
+        if (!use_grouping) {
+            std::cerr<<"MILPSolver must use grouping"<<std::endl;
             exit(-1);
-            use_grouping=false;
-            grouping_method=GroupingMethod::NONE;
-        } else if (_grouping_method=="simple") {
-            use_grouping=true;
-            grouping_method=GroupingMethod::SIMPLE;
-        } else if (_grouping_method=="simple_merge") {
-            use_grouping=true;
-            grouping_method=GroupingMethod::SIMPLE_MERGE;
-        } else if (_grouping_method=="all") {
-            use_grouping=true;
-            grouping_method=GroupingMethod::ALL;
-        } else {
-            std::cout<<"unknown grouping method: "<<_grouping_method<<std::endl;
-            exit(19);
         }
 
         // python interpreter
@@ -68,27 +56,11 @@ public:
         auto init_graph = _graph;
         // since many operations are in-place, should never operate on the original graph. make a copy first.
         auto graph = _graph->copy();
+        graph->make_switchable();
 
         searchT=microseconds((int64_t)(time_limit*1000000));
         vertex_cnt = graph->get_num_states();
         sw_edge_cnt = graph->get_num_switchable_edges();
-
-        graph->make_switchable();
-        // TODO(rivers): we should make grouping outside before the execution of an graph
-        // TODO(rivers): make grouping method configurable
-        group_manager=make_shared<GroupManager>(graph, *(graph->curr_states), grouping_method);
-        std::cout<<group_manager->groups.size()<<std::endl;
-
-        if (use_grouping) {
-            // std::cout<<"input_sw_cnt: "<<input_sw_cnt<<std::endl;
-            auto start = high_resolution_clock::now();
-            group_manager=std::make_shared<GroupManager>(graph, *(graph->curr_states), grouping_method);
-            auto end = high_resolution_clock::now();
-            groupingT += duration_cast<microseconds>(end - start);
-            std::cout<<"group size: "<<group_manager->groups.size()<<std::endl;
-            // group_manager->print_groups();
-        }
-
         // we need to pack graph into the format that python solver can understand
         int num_agents=graph->get_num_agents();
 

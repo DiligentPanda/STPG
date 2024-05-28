@@ -1,4 +1,5 @@
 #include "graph/graph.h"
+#include <set>
 
 // for receding horizon control
 void Graph::make_switchable(int window) {
@@ -7,11 +8,23 @@ void Graph::make_switchable(int window) {
         exit(-1);
     }
 
+    // we will use the first version window planning here.
+
+    
+
+
+
+
+
+
+
+
+
     // TODO(rivers): this is an implementation close to the algorithm 3 in the paper Receding Horizon Re-Ordering of Multi-Agent Execution Schedules
     // However, currently we still consider the overall cost, rather than only the cost within the window
 
     // add all states within the window
-    // std::vector<int> subgraph_states;
+    // std::set<int> subgraph_states;
     // int num_agents=get_num_agents();
     // for (int agent_id=0;agent_id<num_agents;++agent_id) {
     //     int curr_state=(*curr_states)[agent_id];
@@ -22,7 +35,7 @@ void Graph::make_switchable(int window) {
     //             break;
     //         }
     //         int global_state_id=get_global_state_id(agent_id,state);
-    //         subgraph_states.push_back(global_state_id);
+    //         subgraph_states.insert(global_state_id);
     //     }
     // }
 
@@ -33,9 +46,11 @@ void Graph::make_switchable(int window) {
     //     auto && in_neighbors=get_in_neighbor_global_ids(global_state_id);
     //     for (int in_neighbor:in_neighbors) {
     //         if (std::find(subgraph_states.begin(),subgraph_states.end(),in_neighbor)!=subgraph_states.end()) {
-    //             subgraph_edges.push_back(std::make_pair(in_neighbor,global_state_id));
+    //             subgraph_edges.emplace(in_neighbor,global_state_id);
     //         }
     //     }
+        
+
     // }
 
 

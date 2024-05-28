@@ -38,7 +38,21 @@ public:
 
     GroupingMethod grouping_method;
 
-    GroupManager(const shared_ptr<Graph> & _graph, vector<int> & _states, GroupingMethod _grouping_method): states(_states), graph(_graph), num_states(_graph->get_num_states()), grouping_method(_grouping_method) {
+    GroupManager(const shared_ptr<Graph> & _graph, vector<int> & _states, const string & _grouping_method): states(_states), graph(_graph), num_states(_graph->get_num_states()) {
+
+        if (_grouping_method=="none") {
+            grouping_method=GroupingMethod::NONE;
+        } else if (_grouping_method=="simple") {
+            grouping_method=GroupingMethod::SIMPLE;
+        } else if (_grouping_method=="simple_merge") {
+            grouping_method=GroupingMethod::SIMPLE_MERGE;
+        } else if (_grouping_method=="all") {
+            grouping_method=GroupingMethod::ALL;
+        } else {
+            std::cout<<"unknown grouping method: "<<_grouping_method<<std::endl;
+            exit(19);
+        }
+
         if (grouping_method==GroupingMethod::SIMPLE) {
             build();
         } else if (grouping_method==GroupingMethod::SIMPLE_MERGE) {
@@ -49,6 +63,7 @@ public:
             cout<<"unknown method for dependency grouping"<<endl;
             exit(1234);
         }
+
     };
 
     // BUG(rivers): don't use int to encode, would overflow in the future.

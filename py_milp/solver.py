@@ -38,8 +38,9 @@ class MILPSolver:
         # sum is a worst estimation for now if we don't consider the future delay.
         # we add the cost in the loop for non_switchable_edges
         # TODO(rivers): M should be larger than optimal_cost+max_edge_cost?
-        M = 1000000 
-        raise NotImplementedError("We should set M to a better value before experiments.")
+        #M = 1000000 
+        M = sum([len(path) for path in paths])+10000
+        #raise NotImplementedError("We should set M to a better value before experiments.")
         
         # create MILP dictorary
         # TODO(rivers): we should try the commercial Gurobi solver later, which should be faster than CBC

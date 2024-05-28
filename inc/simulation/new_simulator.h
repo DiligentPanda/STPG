@@ -71,15 +71,15 @@ public:
             delays.push_back(_delays[agent_id]);
         }
         
-        std::cout<<"state updated"<<std::endl;
+        // std::cout<<"state updated"<<std::endl;
 
         graph->update_curr_states(curr_states);
 
-        std::cout<<"graph state updated"<<std::endl;
+        // std::cout<<"graph state updated"<<std::endl;
 
         graph->delay(delays);
 
-        std::cout<<"graph udpated"<<std::endl;
+        // std::cout<<"graph udpated"<<std::endl;
 
         if (solver!=nullptr) {
             // call solver to optimize the graph
@@ -174,19 +174,20 @@ public:
 
         reset(_graph, curr_states);
 
-        std::cout<<"Start simulation."<<std::endl;
+        // std::cout<<"Start simulation."<<std::endl;
         int cost=0;
         int step_ctr=0;
         while (!terminated()) {
-            step_ctr+=1;
-            int step_cost=step();
-            if (step_ctr%100==0) {
-                std::cout<<"step "<<step_ctr<<": "<<get_remained_dists()<<" all delayed "<<all_delayed()<<" all stucked "<<all_stucked()<<" remained agents "<<get_remained_agents()<<std::endl;
-            }
             if (all_stucked()) {
                 std::cout<<"bug: all stucked"<<std::endl;
                 break;
             }
+
+            step_ctr+=1;
+            int step_cost=step();
+            // if (step_ctr%100==0) {
+            //     std::cout<<"step "<<step_ctr<<": "<<get_remained_dists()<<" all delayed "<<all_delayed()<<" all stucked "<<all_stucked()<<" remained agents "<<get_remained_agents()<<std::endl;
+            // }
 
             cost+=step_cost;
         }
@@ -251,7 +252,7 @@ public:
                     std::cout<<delay_steps_distrib(rng)<<std::endl;
                     int delay_steps=delay_steps_distrib(rng);
                     delays[agent_id]=delay_steps;
-                    std::cout<<"agent "<<agent_id<<" delay for "<<delay_steps<<" steps"<<std::endl;
+                    // std::cout<<"agent "<<agent_id<<" delay for "<<delay_steps<<" steps"<<std::endl;
                     delayed=true;
                     // NOTE: we change the system states here, but we also need to relect delays in the planning graph 
                     agent_states[agent_id].delay_steps+=delay_steps;

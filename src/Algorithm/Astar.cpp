@@ -15,14 +15,14 @@ Astar::Astar(
     int input_timeout, 
     bool input_fast_version, 
     const string & _branch_order, 
-    const string & _grouping_method, 
     const string & _heuristic, 
     bool early_termination,
     bool incremental, 
     COST_TYPE _w_astar,
     COST_TYPE _w_focal,
+    std::shared_ptr<GroupManager> _group_manager,
     uint random_seed
-  ): rng(random_seed), incremental(incremental), w_astar(_w_astar), w_focal(_w_focal) {
+  ): rng(random_seed), incremental(incremental), w_astar(_w_astar), w_focal(_w_focal), use_grouping(group_manager.get()!=nullptr), group_manager(_group_manager) {
   timeout = input_timeout;
   fast_version = input_fast_version;
   if (_branch_order=="default") {
@@ -53,24 +53,6 @@ Astar::Astar(
     std::cout<<"unknown heuristic: "<<_heuristic<<std::endl;
     exit(18);
   }
-
-  if (_grouping_method=="none") {
-    use_grouping=false;
-    grouping_method=GroupingMethod::NONE;
-  } else if (_grouping_method=="simple") {
-    use_grouping=true;
-    grouping_method=GroupingMethod::SIMPLE;
-  } else if (_grouping_method=="simple_merge") {
-    use_grouping=true;
-    grouping_method=GroupingMethod::SIMPLE_MERGE;
-  } else if (_grouping_method=="all") {
-    use_grouping=true;
-    grouping_method=GroupingMethod::ALL;
-  } else {
-    std::cout<<"unknown grouping method: "<<_grouping_method<<std::endl;
-    exit(19);
-  }
-
 
   this->early_termination=early_termination;
   this->heuristic_manager=std::make_shared<HeuristicManager>(heuristic);
@@ -254,7 +236,6 @@ void Astar::write_stats(nlohmann::json & stats) {
   stats["copy_free_graphs_time"]=copy_free_graphsT.count();
   stats["termination_time"]=termT.count();
   stats["dfs_time"]=dfsT.count();
-  stats["grouping_time"]=groupingT.count();
   stats["search_time"]=searchT.count();
   if (use_grouping) {
     auto & groups=group_manager->groups;
@@ -633,17 +614,6 @@ shared_ptr<Graph> Astar::solve(const shared_ptr<Graph> & _graph) {
   sw_edge_cnt = graph->get_num_switchable_edges();
   agentCnt = graph->get_num_agents();
   // std::cout << "vertex_cnt = " << vertex_cnt << ", sw_edge_cnt = " << sw_edge_cnt << "\n";
-
-  // TODO(rivers): if use grouping
-  if (use_grouping) {
-    // std::cout<<"input_sw_cnt: "<<input_sw_cnt<<std::endl;
-    auto start = high_resolution_clock::now();
-    group_manager=std::make_shared<GroupManager>(graph, *(graph->curr_states), grouping_method);
-    auto end = high_resolution_clock::now();
-    groupingT += duration_cast<microseconds>(end - start);
-    std::cout<<"group size: "<<group_manager->groups.size()<<std::endl;
-   // group_manager->print_groups();
-  }
 
   /* Graph-Based Search */
   auto fake_parent=std::make_shared<SearchNode>(0);

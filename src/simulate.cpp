@@ -44,6 +44,21 @@ void simulate(
     exit(50);
   }
 
+  std::shared_ptr<GroupManager> group_manager(nullptr);
+  std::chrono::microseconds grouping_time(0);
+    std::cout<<grouping_method<<std::endl;
+  if (grouping_method!="none") {
+    auto switchable_graph = graph->copy();
+    switchable_graph->make_switchable();
+    // std::cout<<"input_sw_cnt: "<<input_sw_cnt<<std::endl;
+    auto start = high_resolution_clock::now();
+    group_manager=std::make_shared<GroupManager>(switchable_graph, *(graph->curr_states), grouping_method);
+    auto end = high_resolution_clock::now();
+    grouping_time = duration_cast<microseconds>(end - start);
+    std::cout<<"group size: "<<group_manager->groups.size()<<std::endl;
+   // group_manager->print_groups();
+  }
+
   int total_delays=0;
   for (auto delay_step:delay_steps) {
     total_delays+=delay_step;
@@ -68,18 +83,18 @@ void simulate(
   shared_ptr<Solver> solver;
   
   if (algo=="milp") {
-    solver=make_shared<MILPSolver>(grouping_method, time_limit, 0.0);
+    solver=make_shared<MILPSolver>(time_limit, group_manager, 0.0);
   } else if (algo=="search") {
     solver=make_shared<Astar>(
       time_limit, 
       true, 
       branch_order,  
-      grouping_method, 
       heuristic, 
       early_termination, 
       incremental,
       w_astar,
       w_focal,
+      group_manager,
       random_seed
     );
   } else {
@@ -123,7 +138,7 @@ void simulate(
   stats["copy_free_graphs_time"]=nullptr;
   stats["termination_time"]=nullptr;
   stats["dfs_time"]=nullptr;
-  stats["grouping_time"]=nullptr;
+  stats["grouping_time"]=grouping_time.count();
   stats["group"]=nullptr;
   stats["group_merge_edge"]=nullptr;
   stats["group_size_max"]=nullptr;
@@ -193,21 +208,33 @@ void full_simulate(
   int e=graph->get_global_state_id(26,310);
   std::cout<<graph->switchable_type2_edges->has_edge(s,e)<<std::endl;
 
+  std::shared_ptr<GroupManager> group_manager(nullptr);
+  std::chrono::microseconds grouping_time(0);
+  if (grouping_method!="none") {
+    // std::cout<<"input_sw_cnt: "<<input_sw_cnt<<std::endl;
+    auto start = high_resolution_clock::now();
+    group_manager=std::make_shared<GroupManager>(graph, *(graph->curr_states), grouping_method);
+    auto end = high_resolution_clock::now();
+    grouping_time = duration_cast<microseconds>(end - start);
+    std::cout<<"group size: "<<group_manager->groups.size()<<std::endl;
+   // group_manager->print_groups();
+  }
+
   shared_ptr<Solver> solver;
   
   if (algo=="milp") {
-    solver=make_shared<MILPSolver>(grouping_method, time_limit, 0.0);
+    solver=make_shared<MILPSolver>(time_limit, group_manager, 0.0);
   } else if (algo=="search") {
     solver=make_shared<Astar>(
       time_limit, 
       true, 
       branch_order,  
-      grouping_method, 
       heuristic, 
       early_termination, 
       incremental,
       w_astar,
       w_focal,
+      group_manager,
       random_seed
     );
   } else {
@@ -297,6 +324,7 @@ int main(int argc, char** argv) {
 
 
   if (sit_fp!="") {
+    std::cout<<"single scenario simulation"<<std::endl;
     simulate(
       path_fp,
       sit_fp,
@@ -314,6 +342,7 @@ int main(int argc, char** argv) {
       new_path_ofp
     );
   } else {
+    std::cout<<"full simulation"<<std::endl;
     full_simulate(
       path_fp,
       delay_prob,

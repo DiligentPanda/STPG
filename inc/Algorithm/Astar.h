@@ -33,12 +33,12 @@ class Astar: public Solver {
       int input_timeout, 
       bool input_fast_version,
       const string & _branch_order="default", 
-      const string & _grouping_method="none", 
       const string & _heuristic="zero", 
       bool early_termination=false,
       bool incremental=false,
       COST_TYPE _w_astar=1.0,
       COST_TYPE _w_focal=1.0,
+      std::shared_ptr<GroupManager> _group_manager=nullptr,
       uint random_seed=0
     );
     shared_ptr<Graph> solve(const shared_ptr<Graph> & graph);
@@ -56,7 +56,6 @@ class Astar: public Solver {
     COST_TYPE compute_partial_execution_time(const shared_ptr<Graph> & graph);
 
     microseconds extraHeuristicT = std::chrono::microseconds::zero();
-    microseconds groupingT = std::chrono::microseconds::zero();
     microseconds heuristicT = std::chrono::microseconds::zero();
     microseconds branchT = std::chrono::microseconds::zero();
     microseconds sortT = std::chrono::microseconds::zero();
@@ -88,19 +87,18 @@ class Astar: public Solver {
     BranchOrder branch_order=BranchOrder::DEFAULT;  
     mt19937 rng;
 
+    // for heuristic computation
+    bool incremental = false;
+
+    COST_TYPE w_astar = 1.0;
+    COST_TYPE w_focal = 1.0;
+
     bool use_grouping=false;
     GroupingMethod grouping_method=GroupingMethod::NONE;
     shared_ptr<GroupManager> group_manager;
     shared_ptr<HeuristicManager> heuristic_manager;
 
     bool early_termination = false;
-
-    // for heuristic computation
-
-    bool incremental = false;
-
-    COST_TYPE w_astar = 1.0;
-    COST_TYPE w_focal = 1.0;
 
     shared_ptr<Graph> init_graph;
     COST_TYPE init_cost;
