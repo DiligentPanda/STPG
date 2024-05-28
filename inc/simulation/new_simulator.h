@@ -264,6 +264,13 @@ public:
 
     // return cost
     int step() {
+        std::vector<Location> old_locations;
+        for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
+            auto & path=(*graph->paths)[agent_id];
+            auto & loc=path[agent_states[agent_id].state_id].first;
+            old_locations.emplace_back(loc.first, loc.second);
+        }
+
         int cost=0;
         for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
             // For those agents haven't reached their goals, this step will take 1 cost anyway.
@@ -318,6 +325,33 @@ public:
                 }
             }
         }
+
+        std::vector<Location> new_locations;
+        for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
+            auto & path=(*graph->paths)[agent_id];
+            auto & loc=path[agent_states[agent_id].state_id].first;
+            new_locations.emplace_back(loc.first, loc.second);
+        }
+
+        // check
+        for (int i=0;i<graph->get_num_agents();++i) {
+            for (int j=i+1;j<graph->get_num_agents();++j) {
+                if (new_locations[i]==new_locations[j]) {
+                    std::cout<<"vertex collision detected"<<std::endl;
+                    exit(10086);
+                }
+            }
+        }
+
+        for (int i=0;i<graph->get_num_agents();++i) {
+            for (int j=0;j<graph->get_num_agents();++j) {
+                if (i!=j && new_locations[i]==old_locations[j]) {
+                    std::cout<<"following collision detected"<<std::endl;
+                    exit(10087);
+                }
+            }
+        }
+
 
         return cost;
     }

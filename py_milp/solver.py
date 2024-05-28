@@ -38,8 +38,12 @@ class MILPSolver:
         # sum is a worst estimation for now if we don't consider the future delay.
         # we add the cost in the loop for non_switchable_edges
         # TODO(rivers): M should be larger than optimal_cost+max_edge_cost?
+<<<<<<< Updated upstream
         #M = 1000000 
         M = sum([len(path) for path in paths])+10000
+=======
+        M = sum([len(path) for path in paths]) * 10+1
+>>>>>>> Stashed changes
         #raise NotImplementedError("We should set M to a better value before experiments.")
         
         # create MILP dictorary

@@ -613,7 +613,7 @@ shared_ptr<Graph> Astar::solve(const shared_ptr<Graph> & _graph) {
   vertex_cnt = graph->get_num_states();
   sw_edge_cnt = graph->get_num_switchable_edges();
   agentCnt = graph->get_num_agents();
-  // std::cout << "vertex_cnt = " << vertex_cnt << ", sw_edge_cnt = " << sw_edge_cnt << "\n";
+  std::cout << "vertex_cnt = " << vertex_cnt << ", sw_edge_cnt = " << sw_edge_cnt << "\n";
 
   /* Graph-Based Search */
   auto fake_parent=std::make_shared<SearchNode>(0);

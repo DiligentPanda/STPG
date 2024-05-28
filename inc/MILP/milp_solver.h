@@ -56,11 +56,13 @@ public:
         auto init_graph = _graph;
         // since many operations are in-place, should never operate on the original graph. make a copy first.
         auto graph = _graph->copy();
-        graph->make_switchable();
 
+        graph->make_switchable();
+        
         searchT=microseconds((int64_t)(time_limit*1000000));
         vertex_cnt = graph->get_num_states();
         sw_edge_cnt = graph->get_num_switchable_edges();
+
         // we need to pack graph into the format that python solver can understand
         int num_agents=graph->get_num_agents();
 
@@ -79,7 +81,7 @@ public:
         // non_switchable_edges
         vector<tuple<int,int,int,int,COST_TYPE> > non_switchable_edges;
         for (int agent_id=0; agent_id<num_agents; ++agent_id) {
-            for (int state_id=0; state_id<graph->get_num_states(agent_id); ++state_id) {
+            for (int state_id=graph->curr_states->at(agent_id); state_id<graph->get_num_states(agent_id); ++state_id) {
                 for (auto & p: graph->get_non_switchable_in_neighbor_pairs(agent_id, state_id)) {
                     int in_global_state_id=graph->get_global_state_id(p.first, p.second);
                     int global_state_id=graph->get_global_state_id(agent_id, state_id);
@@ -94,7 +96,7 @@ public:
         std::unordered_set<int> group_ids;
 
         for (int agent_id=0; agent_id<num_agents; ++agent_id) {
-            for (int state_id=0; state_id<graph->get_num_states(agent_id); ++state_id) {
+            for (int state_id=graph->curr_states->at(agent_id); state_id<graph->get_num_states(agent_id); ++state_id) {
                 int global_state_id=graph->switchable_type2_edges->get_global_state_id(agent_id, state_id);
                 for (int in_neighbor: graph->switchable_type2_edges->get_in_neighbor_global_ids(global_state_id)) {
                     int group_id = group_manager->get_group_id(in_neighbor, global_state_id);
@@ -113,6 +115,9 @@ public:
             for (long e: group) {
                 int out_idx=group_manager->get_out_idx(e);
                 int in_idx=group_manager->get_in_idx(e);
+                if (!(graph->switchable_type2_edges->has_edge(out_idx, in_idx))) {
+                    continue;
+                }
                 COST_TYPE cost=graph->edge_manager->get_edge(out_idx, in_idx).cost;
                 auto && out_pair=graph->get_agent_state_id(out_idx);
                 auto && in_pair=graph->get_agent_state_id(in_idx);
