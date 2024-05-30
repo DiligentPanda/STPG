@@ -22,6 +22,7 @@ void simulate(
   bool incremental,
   COST_TYPE w_astar,
   COST_TYPE w_focal,
+  int horizon,
   uint random_seed,
   const string & stat_ofp, 
   const string & new_path_ofp
@@ -52,7 +53,7 @@ void simulate(
     switchable_graph->make_switchable();
     // std::cout<<"input_sw_cnt: "<<input_sw_cnt<<std::endl;
     auto start = high_resolution_clock::now();
-    group_manager=std::make_shared<GroupManager>(switchable_graph, *(graph->curr_states), grouping_method);
+    group_manager=std::make_shared<GroupManager>(switchable_graph, *(switchable_graph->curr_states), grouping_method);
     auto end = high_resolution_clock::now();
     grouping_time = duration_cast<microseconds>(end - start);
     std::cout<<"group size: "<<group_manager->groups.size()<<std::endl;
@@ -83,7 +84,7 @@ void simulate(
   shared_ptr<Solver> solver;
   
   if (algo=="milp") {
-    solver=make_shared<MILPSolver>(time_limit, group_manager, 0.0);
+    solver=make_shared<MILPSolver>(time_limit, horizon, group_manager, 0.0);
   } else if (algo=="search") {
     solver=make_shared<Astar>(
       time_limit, 
@@ -94,6 +95,7 @@ void simulate(
       incremental,
       w_astar,
       w_focal,
+      horizon,
       group_manager,
       random_seed
     );
@@ -113,6 +115,7 @@ void simulate(
   stats["incremental"]=incremental;
   stats["w_astar"]=w_astar;
   stats["w_focal"]=w_focal;
+  stats["horizon"]=horizon;
   stats["random_seed"]=random_seed;
   stats["time_limit"]=time_limit*1000000; // in micro-seconds
   stats["path_fp"]=path_fp;
@@ -198,32 +201,30 @@ void full_simulate(
   bool incremental,
   COST_TYPE w_astar,
   COST_TYPE w_focal,
+  int horizon,
   uint random_seed,
   const string & stat_ofp, 
   const string & new_path_ofp
 ) {
   auto graph=construct_graph(path_fp.c_str());
-  std::cout<<graph->paths->at(47).size()<<std::endl;
-  int s=graph->get_global_state_id(47,2);
-  int e=graph->get_global_state_id(26,310);
-  std::cout<<graph->switchable_type2_edges->has_edge(s,e)<<std::endl;
 
   std::shared_ptr<GroupManager> group_manager(nullptr);
   std::chrono::microseconds grouping_time(0);
   if (grouping_method!="none") {
+    auto switchable_graph = graph->copy();
+    switchable_graph->make_switchable();
     // std::cout<<"input_sw_cnt: "<<input_sw_cnt<<std::endl;
     auto start = high_resolution_clock::now();
-    group_manager=std::make_shared<GroupManager>(graph, *(graph->curr_states), grouping_method);
+    group_manager=std::make_shared<GroupManager>(switchable_graph, *(switchable_graph->curr_states), grouping_method);
     auto end = high_resolution_clock::now();
     grouping_time = duration_cast<microseconds>(end - start);
     std::cout<<"group size: "<<group_manager->groups.size()<<std::endl;
-   // group_manager->print_groups();
   }
 
   shared_ptr<Solver> solver;
   
   if (algo=="milp") {
-    solver=make_shared<MILPSolver>(time_limit, group_manager, 0.0);
+    solver=make_shared<MILPSolver>(time_limit, horizon, group_manager, 0.0);
   } else if (algo=="search") {
     solver=make_shared<Astar>(
       time_limit, 
@@ -234,9 +235,12 @@ void full_simulate(
       incremental,
       w_astar,
       w_focal,
+      horizon,
       group_manager,
       random_seed
     );
+  } else if (algo=="none") {
+
   } else {
     std::cout<<"Unsupported algorithm: "<<algo<<std::endl;
     exit(-1);
@@ -246,17 +250,28 @@ void full_simulate(
   // simulate without replanning from current states
   int original_cost = no_delay_simulator->simulate(graph);
 
-  // set
-
-  auto delay_simulator=make_shared<NewSimulator>(solver,delay_prob,delay_steps_low,delay_steps_high,random_seed);
-  // simulate without replanning from current states
-  int original_cost_after_delay = delay_simulator->simulate(graph);
-
-
   std::cout<<"original cost: "<<original_cost<<std::endl;
-  std::cout<<"original cost after delay: "<<original_cost_after_delay<<std::endl;
 
+  // when we fix the random seed and use the uniform state delay, the simulated delays will be the same
+  auto delay_simulator=make_shared<NewSimulator>(solver,delay_prob,delay_steps_low,delay_steps_high,random_seed,1);
+  // simulate without replanning from current states
+  int cost_after_delay_with_stpg = delay_simulator->simulate(graph);
+  int ideal_cost_after_delay=original_cost+delay_simulator->get_total_delays();
 
+  auto delay_simulator2=make_shared<NewSimulator>(nullptr,delay_prob,delay_steps_low,delay_steps_high,random_seed,1);
+  int cost_after_delay = delay_simulator2->simulate(graph);
+  if (delay_simulator2->get_total_delays()!=delay_simulator->get_total_delays()) {
+    std::cout<<"total delays mismatch: "<<delay_simulator2->get_total_delays()<<" "<<delay_simulator->get_total_delays()<<std::endl;
+    exit(-1);
+  }
+
+  std::cout<<"cost after delay with stpg: "<<cost_after_delay_with_stpg<<std::endl;
+  std::cout<<"cost after delay: "<<cost_after_delay<<std::endl;
+  std::cout<<"ideal cost after delay: "<<ideal_cost_after_delay<<std::endl;
+
+  float improvement=(float)(cost_after_delay-cost_after_delay_with_stpg)/(float)(cost_after_delay);
+
+  std::cout<<"improvement: "<<improvement<<std::endl;
 }
 
 int main(int argc, char** argv) {
@@ -268,7 +283,7 @@ int main(int argc, char** argv) {
     ("path_fp,p",po::value<std::string>()->required(),"path file to construct graph")
     ("sit_fp,s",po::value<std::string>()->default_value(""),"situation file to construct delayed graph")
     ("time_limit,t",po::value<int>()->required(),"time limit in seconds. need to be an integer")
-    ("algo,a",po::value<std::string>()->required(),"replaning algorithm to use, [search, milp]")
+    ("algo,a",po::value<std::string>()->required(),"replaning algorithm to use, [search, milp, none]")
     ("stat_ofp,o",po::value<std::string>()->required(),"the output file path of statistics")
     ("new_path_ofp,n",po::value<std::string>()->required(),"the output file path of new paths")
     ("branch_order,b",po::value<std::string>()->required(),"the branch order to use, [default, conflict, largest_diff, random, earliest]")
@@ -279,9 +294,10 @@ int main(int argc, char** argv) {
     ("w_astar",po::value<COST_TYPE>()->default_value(1.0),"heuristic weight for weighted A Star")
     ("w_focal",po::value<COST_TYPE>()->default_value(1.0),"heuristic weight for focal search")
     ("random_seed,r",po::value<uint>()->default_value(10),"random seed")
-    ("delay_prob",po::value<float>()->default_value(0.01),"delay probability (0<=p<=1)")
+    ("delay_prob",po::value<float>()->default_value(0.03),"delay probability (0<=p<=1)")
     ("delay_steps_low",po::value<int>()->default_value(10),"the lowerbound of delay steps")
-    ("delay_steps_high",po::value<int>()->default_value(20),"the upperbound of delay steps")
+    ("delay_steps_high",po::value<int>()->default_value(30),"the upperbound of delay steps")
+    ("horizon",po::value<int>()->default_value(-1),"the horizon for swtichable TPG optimization, -1 means no limit")
   ;
 
   po::variables_map vm;
@@ -306,6 +322,7 @@ int main(int argc, char** argv) {
   string heuristic=vm.at("heuristic").as<string>();
   COST_TYPE w_astar=vm.at("w_astar").as<COST_TYPE>();
   COST_TYPE w_focal=vm.at("w_focal").as<COST_TYPE>();
+  int horizon=vm.at("horizon").as<int>();
 
 
   // used for full simulation
@@ -337,6 +354,7 @@ int main(int argc, char** argv) {
       incremental,
       w_astar,
       w_focal,
+      horizon,
       random_seed,
       stat_ofp,
       new_path_ofp
@@ -357,6 +375,7 @@ int main(int argc, char** argv) {
       incremental,
       w_astar,
       w_focal,
+      horizon,
       random_seed,
       stat_ofp,
       new_path_ofp

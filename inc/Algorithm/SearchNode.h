@@ -47,6 +47,8 @@ struct SearchNode {
 
     shared_ptr<SearchNode> parent;
 
+    int selected_group_id;
+
     struct CompareOpenSet {
         public:
             bool operator() (const shared_ptr<SearchNode> & s1, const shared_ptr<SearchNode> & s2) const

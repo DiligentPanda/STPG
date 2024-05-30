@@ -38,6 +38,7 @@ class Astar: public Solver {
       bool incremental=false,
       COST_TYPE _w_astar=1.0,
       COST_TYPE _w_focal=1.0,
+      int horizon=-1,
       std::shared_ptr<GroupManager> _group_manager=nullptr,
       uint random_seed=0
     );
@@ -50,7 +51,11 @@ class Astar: public Solver {
     tuple<int, int, COST_TYPE> branch(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values);
     bool terminated(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values);
     int count_double_conflicting_edge_groups(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values);
+    int count_switchable_edge_groups(const shared_ptr<Graph> & graph, const shared_ptr<GroupManager> & group_manager);
     void reverse_nonSwitchable_edges_basedOn_LongestPathValues(const shared_ptr<Graph> & graph, const shared_ptr<vector<COST_TYPE> > & values);
+    shared_ptr<GroupManager> & get_group_manager() {
+      return this->group_manager;
+    }
 
     void add_node(const shared_ptr<Graph> & graph, const shared_ptr<SearchNode> & parent_node, vector<std::pair<int,int> > & fixed_edges);
     COST_TYPE compute_partial_execution_time(const shared_ptr<Graph> & graph);
@@ -92,6 +97,8 @@ class Astar: public Solver {
 
     COST_TYPE w_astar = 1.0;
     COST_TYPE w_focal = 1.0;
+    
+    int horizon = -1;
 
     bool use_grouping=false;
     GroupingMethod grouping_method=GroupingMethod::NONE;

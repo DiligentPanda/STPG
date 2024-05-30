@@ -20,9 +20,10 @@ Astar::Astar(
     bool incremental, 
     COST_TYPE _w_astar,
     COST_TYPE _w_focal,
+    int _horizon,
     std::shared_ptr<GroupManager> _group_manager,
     uint random_seed
-  ): rng(random_seed), incremental(incremental), w_astar(_w_astar), w_focal(_w_focal), use_grouping(group_manager.get()!=nullptr), group_manager(_group_manager) {
+  ): rng(random_seed), incremental(incremental), w_astar(_w_astar), w_focal(_w_focal), horizon(_horizon), use_grouping(group_manager.get()!=nullptr), group_manager(_group_manager) {
   timeout = input_timeout;
   fast_version = input_fast_version;
   if (_branch_order=="default") {
@@ -306,6 +307,28 @@ int Astar::count_double_conflicting_edge_groups(const shared_ptr<Graph> & graph,
   return cnt;
 }
 
+
+int Astar::count_switchable_edge_groups(const shared_ptr<Graph> & graph, const shared_ptr<GroupManager> & group_manager) {
+  if (group_manager==nullptr) {
+    return graph->get_num_switchable_edges();
+  } else {
+    set<int> group_ids;
+    for (int i = 0; i < graph->get_num_states(); ++i) {
+      auto & outNeib = graph->switchable_type2_edges->get_out_neighbor_global_ids(i);
+      for (auto it : outNeib) {
+        int j = it;
+        int group_id=group_manager->get_group_id(i,j);
+        if (group_id<0) {
+          std::cout<<"edge doesn't have a group"<<std::endl;
+          exit(19);
+        }
+        group_ids.insert(group_id);
+      }
+    }
+    return group_ids.size();
+  }
+}
+
 // NOTE: this function don't consider switchable edges, that's why partial
 // if want get full execution time, please fixed all switchable edges first.
 COST_TYPE Astar::compute_partial_execution_time(const shared_ptr<Graph> & graph) {
@@ -389,7 +412,8 @@ void Astar::add_node(const shared_ptr<Graph> & graph, const shared_ptr<SearchNod
 
   // TODO(rivers): we could also select the next edge to branch here.
 
-  if (g+h<init_cost) {
+  if (g+h<init_cost)
+   {
     int num_sw=parent_node->num_sw-1;
     // int num_sw=count_COST_TYPE_conflicting_edge_groups(graph, node_values);
 
@@ -486,6 +510,8 @@ shared_ptr<Graph> Astar::exploreNode() {
     termT += duration_cast<microseconds>(end_term - end_branch);
 
     if (terminate || ((duration_cast<seconds>(end_branch - start)).count() >= timeout)) {
+
+      // std::cout<<"actual search time:"<<(duration_cast<seconds>(end_branch - start)).count()<<std::endl;
 
       // free all the search node in the priority queue.
       while (open_list->size() > 0) {
@@ -602,7 +628,11 @@ shared_ptr<Graph> Astar::solve(const shared_ptr<Graph> & _graph) {
   auto end_graph_free = high_resolution_clock::now();
   copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
   // make the graph switchable
-  graph->make_switchable();
+  if (horizon!=-1) {
+    graph->make_switchable(horizon, group_manager);
+  } else {
+    graph->make_switchable();
+  }
 
   // auto fixed_init_graph=init_graph->copy();
   // fixed_init_graph->fix_all_switchable_type2_edges();
@@ -613,7 +643,7 @@ shared_ptr<Graph> Astar::solve(const shared_ptr<Graph> & _graph) {
   vertex_cnt = graph->get_num_states();
   sw_edge_cnt = graph->get_num_switchable_edges();
   agentCnt = graph->get_num_agents();
-  std::cout << "vertex_cnt = " << vertex_cnt << ", sw_edge_cnt = " << sw_edge_cnt << "\n";
+  std::cout << "vertex_cnt = " << vertex_cnt << ", sw_edge_cnt = " << sw_edge_cnt<<", sw_edge_groups_cnt = "<< count_switchable_edge_groups(graph, group_manager) << "\n";
 
   /* Graph-Based Search */
   auto fake_parent=std::make_shared<SearchNode>(0);
@@ -637,6 +667,13 @@ shared_ptr<Graph> Astar::solve(const shared_ptr<Graph> & _graph) {
   searchT=duration_cast<microseconds>(end_search - start_search);
 
   std::cout<<"search time: "<<searchT.count()/1000000.0<<std::endl;
+
+  COST_TYPE final_cost=compute_partial_execution_time(res_graph);
+
+  std::cout<<"init cost: "<<init_cost<<std::endl;
+  std::cout<<"final cost: "<<final_cost<<std::endl;
+  std::cout<<"add node count: "<<added_node_cnt<<std::endl;
+  std::cout<<"expanded node count: "<<explored_node_cnt<<std::endl;
 
   return res_graph;
 }

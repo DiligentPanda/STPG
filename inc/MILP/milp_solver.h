@@ -16,6 +16,7 @@ public:
 
     float time_limit=90.0;
     bool use_grouping = true;
+    int horizon=-1;
     shared_ptr<GroupManager> group_manager;
     float eps=0.0;
     shared_ptr<py::scoped_interpreter> guard;
@@ -28,9 +29,10 @@ public:
     microseconds groupingT = std::chrono::microseconds::zero();
     microseconds searchT = std::chrono::microseconds::zero();
 
-    MILPSolver(float _time_limit, std::shared_ptr<GroupManager> _group_manager=nullptr, float _eps=0.0):
+    MILPSolver(float _time_limit, int _horizon=-1, std::shared_ptr<GroupManager> _group_manager=nullptr, float _eps=0.0):
         time_limit(_time_limit), 
         use_grouping(_group_manager.get()!=nullptr),
+        horizon(_horizon),
         group_manager(_group_manager),
         eps(_eps) {
 
@@ -47,6 +49,10 @@ public:
         solver->attr("test")();
     }
 
+    shared_ptr<GroupManager> & get_group_manager() {
+      return this->group_manager;
+    }
+
     shared_ptr<Graph> solve(const shared_ptr<Graph> & _graph) {
         if (!_graph->is_fixed()) {
             std::cout<<"Astar:: graph is not fixed"<<std::endl;
@@ -57,7 +63,11 @@ public:
         // since many operations are in-place, should never operate on the original graph. make a copy first.
         auto graph = _graph->copy();
 
-        graph->make_switchable();
+        if (horizon!=-1) {
+            graph->make_switchable(horizon, group_manager);
+        } else {
+            graph->make_switchable();
+        }
         
         searchT=microseconds((int64_t)(time_limit*1000000));
         vertex_cnt = graph->get_num_states();
@@ -108,6 +118,8 @@ public:
                 }
             }
         }
+
+        std::cout << "vertex_cnt = " << vertex_cnt << ", sw_edge_cnt = " << sw_edge_cnt<<", sw_edge_groups_cnt = "<< group_ids.size() << "\n";
 
         for (int group_id: group_ids) {
             auto & group = group_manager->groups[group_id];

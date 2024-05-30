@@ -17,6 +17,16 @@ public:
     AgentState(): state_id(0), delay_steps(0) {}
 };
 
+
+enum DelayType {
+    NO_DELAY,
+    UNIFORM_TEMPORAL_DELAY,
+    UNIFORM_STATE_DELAY,
+    DURATION_SUBSET_DELAY
+};
+
+
+
 // NOTE: this is not a realistic simulator but only for the purpose of study in this project
 // For simplicity, we only support integer time step here, but the planner is based one COST_TYPE, which can be float/double.
 class NewSimulator {
@@ -29,12 +39,22 @@ public:
     std::uniform_int_distribution<int> delay_steps_distrib;
     int delay_steps_low;
     int delay_steps_high;
-    size_t _seed;
+    int delay_duration;
+    float delay_subset_portion; // x percent
+    size_t seed;
     std::mt19937 rng;
+    int verbose;
+
+    DelayType delay_type=DelayType::UNIFORM_STATE_DELAY;
 
     std::vector<AgentState> agent_states;
     // graph is actually the control policy
     std::shared_ptr<Graph> graph;
+
+    std::shared_ptr<std::vector<std::vector<int> > > spatial_delays;
+
+    int step_ctr;
+    int total_delays;
 
     // we can use the same seed, but the execution would be dffereent anyway
     // we can only try more different seeds
@@ -44,7 +64,8 @@ public:
         float delay_prob=-1,
         int delay_steps_low=0,
         int delay_steps_high=0,
-        size_t seed=0
+        size_t _seed=0,
+        int _verbose=0
         ): 
         solver(solver), 
         delay_prob(delay_prob),
@@ -52,12 +73,15 @@ public:
         delay_steps_distrib(delay_steps_low, delay_steps_high),
         delay_steps_low(delay_steps_low),
         delay_steps_high(delay_steps_high),
-        _seed(seed), 
-        rng(seed) {
+        delay_duration(20),
+        delay_subset_portion(0.5),
+        seed(_seed), 
+        rng(seed),
+        verbose(_verbose) {
     }
 
-    void seed(size_t seed) {
-        _seed = seed;
+    void set_seed(size_t _seed) {
+        seed = _seed;
         rng.seed(_seed);
     }
 
@@ -79,6 +103,24 @@ public:
 
         graph->delay(delays);
 
+
+        // auto switchable_graph = graph->copy();
+        // switchable_graph->make_switchable(2, solver->get_group_manager());
+
+        // auto new_simulator=std::make_shared<NewSimulator>();
+        // auto fixed_switchable_graph=switchable_graph->get_fixed_version();
+        // int cost =new_simulator->simulate(fixed_switchable_graph, curr_states);
+        // std::cout<<"debug cost: "<<cost<<std::endl;
+
+        // int state_from = graph->get_global_state_id(19, 2);
+        // int state_to = graph->get_global_state_id(35, 1);
+        // switchable_graph->fix_switchable_type2_edge(state_from,state_to,true,true);
+        // auto fixed_switchable_graph2=switchable_graph->get_fixed_version();
+        // int cost2 =new_simulator->simulate(fixed_switchable_graph2, curr_states);
+        // std::cout<<"debug cost2: "<<cost2<<std::endl;
+
+      
+
         // std::cout<<"graph udpated"<<std::endl;
 
         if (solver!=nullptr) {
@@ -94,6 +136,8 @@ public:
                 exit(10086);
             }
         }
+
+        // exit(-1);
 
 
         // reset the dependencies
@@ -124,7 +168,8 @@ public:
         const std::vector<int> & curr_states
     ) {
         // since many operations are in-place, should never operate on the original graph. make a copy first.
-        graph=_graph->copy();
+        // note we need to deep copy here, because we need to call update curr states() and delay()
+        graph=_graph->deep_copy();
 
         // reset states
         agent_states.clear();
@@ -143,6 +188,24 @@ public:
         // reset the dependencies
         for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
             reset_dependencies(agent_id);
+        }
+
+        // if spatial delay
+        if (delay_type==DelayType::UNIFORM_STATE_DELAY) {
+            spatial_delays = std::make_shared<std::vector<std::vector<int> > >();
+            for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
+                spatial_delays->push_back({});
+                for (int state_id=0;state_id<graph->get_num_states(agent_id);++state_id) {
+                    if (state_id<graph->get_num_states(agent_id)-1) {
+                        if (delay_distrib(rng)<delay_prob) {
+                            int delay_steps=delay_steps_distrib(rng);
+                            spatial_delays->back().push_back(delay_steps);
+                        } else {
+                            spatial_delays->back().push_back(0);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -174,20 +237,22 @@ public:
 
         reset(_graph, curr_states);
 
-        // std::cout<<"Start simulation."<<std::endl;
+        std::cout<<"Start simulation."<<std::endl;
         int cost=0;
-        int step_ctr=0;
+        step_ctr=0;
+        total_delays=0;
         while (!terminated()) {
             if (all_stucked()) {
                 std::cout<<"bug: all stucked"<<std::endl;
                 break;
             }
 
-            step_ctr+=1;
             int step_cost=step();
-            // if (step_ctr%100==0) {
-            //     std::cout<<"step "<<step_ctr<<": "<<get_remained_dists()<<" all delayed "<<all_delayed()<<" all stucked "<<all_stucked()<<" remained agents "<<get_remained_agents()<<std::endl;
-            // }
+            
+            step_ctr+=1;
+            if (verbose>0 && step_ctr%100==0) {
+                std::cout<<"step "<<step_ctr<<": "<<get_remained_dists()<<" all delayed "<<all_delayed()<<" all stucked "<<all_stucked()<<" remained agents "<<get_remained_agents()<<std::endl;
+            }
 
             cost+=step_cost;
         }
@@ -248,14 +313,43 @@ public:
         bool delayed=false;
         for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
             if (agent_states[agent_id].state_id<graph->get_num_states(agent_id)-1) {
-                if (delay_distrib(rng)<delay_prob) {
-                    std::cout<<delay_steps_distrib(rng)<<std::endl;
-                    int delay_steps=delay_steps_distrib(rng);
-                    delays[agent_id]=delay_steps;
-                    // std::cout<<"agent "<<agent_id<<" delay for "<<delay_steps<<" steps"<<std::endl;
-                    delayed=true;
-                    // NOTE: we change the system states here, but we also need to relect delays in the planning graph 
-                    agent_states[agent_id].delay_steps+=delay_steps;
+
+                if (delay_type==DelayType::UNIFORM_STATE_DELAY) {
+                    if (spatial_delays->at(agent_id)[agent_states[agent_id].state_id]>0) {
+                        delays[agent_id]=spatial_delays->at(agent_id)[agent_states[agent_id].state_id];
+                        if (verbose>0) {
+                            std::cout<<"step "<<step_ctr<<": agent "<<agent_id<<" delay for "<<delays[agent_id]<<" steps"<<std::endl;
+                        }
+                        delayed=true;
+                        // NOTE: we change the system states here, but we also need to relect delays in the planning graph 
+                        agent_states[agent_id].delay_steps+=delays[agent_id];
+                        // only use once
+                        spatial_delays->at(agent_id)[agent_states[agent_id].state_id]=0;
+                    }
+                } else if (delay_type==DelayType::UNIFORM_TEMPORAL_DELAY) {
+                    if (delay_distrib(rng)<delay_prob) {
+                        int delay_steps=delay_steps_distrib(rng);
+                        delays[agent_id]=delay_steps;
+                        if (verbose>0) {
+                            std::cout<<"step "<<step_ctr<<": agent "<<agent_id<<" delay for "<<delay_steps<<" steps"<<std::endl;
+                        }
+                        delayed=true;
+                        // NOTE: we change the system states here, but we also need to relect delays in the planning graph 
+                        agent_states[agent_id].delay_steps+=delay_steps;
+                    }
+                } else if (delay_type==DelayType::DURATION_SUBSET_DELAY) {
+                    if (step_ctr%delay_duration==0) {
+                        if (delay_distrib(rng)<delay_subset_portion) {
+                            int delay_steps=delay_steps_distrib(rng);
+                            delays[agent_id]=delay_steps;
+                            if (verbose>0) {
+                                std::cout<<"step "<<step_ctr<<": agent "<<agent_id<<" delay for "<<delay_steps<<" steps"<<std::endl;
+                            }
+                            delayed=true;
+                            // NOTE: we change the system states here, but we also need to relect delays in the planning graph 
+                            agent_states[agent_id].delay_steps+=delay_steps;
+                        }
+                    }
                 }
             }
         }
@@ -279,14 +373,30 @@ public:
             }
         }
 
+
         // simulate delays
         if (delay_prob>0) {
             std::vector<int> delays(graph->get_num_agents(),0);
             bool delayed = simulate_delays(delays);
 
+                    // debug dependencies
+        // for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
+        //     auto & agent_state = agent_states[agent_id];
+        //     std::cout<<"agent "<<agent_id<<" state "<<agent_state.state_id<<" delay "<<agent_state.delay_steps<<" dependencies: ";
+        //     for (auto & p: agent_state.dependencies) {
+        //         std::cout<<"("<<p.first<<", "<<p.second<<") ";
+        //     }
+        //     std::cout<<std::endl;
+        // }
+        // // exit(-1);
+
             // if delayed, update the graph and dependencies
             if (delayed) {
-                std::cout<<"delayed"<<std::endl;
+                for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
+                    total_delays+=delays[agent_id];
+                }
+
+                // std::cout<<"delayed"<<std::endl;
                 update_graph(delays);
             }
         }
@@ -363,6 +473,10 @@ public:
             }
         }
         return true;
+    }
+
+    int get_total_delays() {
+        return total_delays;
     }
 
 };

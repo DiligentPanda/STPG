@@ -12,6 +12,8 @@
 #include "graph/edge_manager.h"
 #include "define.h"
 
+class GroupManager;
+
 // TODO(rivers): bad habit. fix this.
 using namespace std;
 
@@ -310,7 +312,7 @@ struct Graph {
         fix_edges_to_last_states();
     }
 
-    void make_switchable(int window);
+    void make_switchable(int window, std::shared_ptr<GroupManager> group_manager);
 
     /* In-Place Operations End */
 
@@ -333,6 +335,41 @@ struct Graph {
         new_graph->switchable_type2_edges->in_neighbors[agent]=make_shared<vector<set<int> > >(
             *(switchable_type2_edges->in_neighbors[agent])
         );
+    }
+
+    void _copy_type1_edges(const shared_ptr<Graph> & new_graph, int agent) {
+        new_graph->type1_edges->out_neighbors[agent]=make_shared<vector<set<int> > >(
+            *(type1_edges->out_neighbors[agent])
+        );
+
+        new_graph->type1_edges->in_neighbors[agent]=make_shared<vector<set<int> > >(
+            *(type1_edges->in_neighbors[agent])
+        );
+    }
+
+    // NOTE(rivers): we always need to be aware of the semantics of copy and deep copy
+    // deepcopy copies anything but paths and states
+    // if you will not call update_curr_states() and delay(), you generally don't need this.
+    // basically it is used for the simulator
+    shared_ptr<Graph> deep_copy() {
+        // copy the graph: used in the search
+        auto new_graph=make_shared<Graph>(*this);
+       
+        // the type2 edges need to be copied carefully
+        new_graph->type1_edges=make_shared<Subgraph>(*type1_edges);
+        new_graph->non_switchable_type2_edges=make_shared<Subgraph>(*non_switchable_type2_edges);
+        new_graph->switchable_type2_edges=make_shared<Subgraph>(*switchable_type2_edges);
+
+        new_graph->curr_states=make_shared<vector<int> >(*curr_states);
+        new_graph->edge_manager=make_shared<EdgeManager>(*edge_manager);
+
+       
+       for (int agent=0; agent<get_num_agents();++agent) {
+            _copy_type1_edges(new_graph, agent);
+            _copy_type2_edges(new_graph, agent);
+       }
+
+        return new_graph;
     }
 
     shared_ptr<Graph> copy() {
@@ -781,8 +818,8 @@ struct Graph {
 
     std::shared_ptr<Graph> get_fixed_version() {
         auto new_graph=copy();
-        if (!is_fixed()) {
-            fix_all_switchable_type2_edges();
+        if (!(new_graph->is_fixed())) {
+            new_graph->fix_all_switchable_type2_edges();
         }
 
         return new_graph;

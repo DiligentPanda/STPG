@@ -9,7 +9,7 @@ import multiprocessing
 import pandas as pd
 import numpy as np
 
-root_folder="data/benchmark/test_PBS2"
+root_folder="data/benchmark/test_PBS2_sadg"
 path_folder=os.path.join(root_folder,"path")
 file_names_ofp=os.path.join(root_folder,"path_file_names.csv")
 stats_ofp=os.path.join(root_folder,"path_stats.csv")
@@ -44,7 +44,7 @@ for stat in stats:
     if map_name not in map_agent_nums:
         map_agent_nums[map_name]=[]
         for instance in range(0,25):
-            with open("data/scen/scen-even/"+map_name+"-even-"+str(instance+1)+".scen") as f:
+            with open("data/scen/sadg_scen/"+map_name+"-"+str(instance+1)+".scen") as f:
                 map_agent_nums[map_name].append(len(f.readlines())-1)
         map_agent_nums[map_name]=np.array(map_agent_nums[map_name])
 

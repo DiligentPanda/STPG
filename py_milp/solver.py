@@ -3,7 +3,23 @@ from mip import BINARY, CONTINUOUS, INF, MINIMIZE, minimize, xsum
 from mip.entities import Var
 import time
 from typing import Dict, List, Tuple
+import signal
+from contextlib import contextmanager
+import math
 
+class TimeoutException(Exception): pass
+
+@contextmanager
+def time_limit(seconds):
+    def signal_handler(signum, frame):
+        raise TimeoutException("Timed out!")
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        signal.alarm(0)
+        
 class MILPSolver:
     def __init__(self, time_limit=90, eps=0, verbose=False) -> None:
         self.time_limit=time_limit  # time limit in seconds
@@ -38,12 +54,8 @@ class MILPSolver:
         # sum is a worst estimation for now if we don't consider the future delay.
         # we add the cost in the loop for non_switchable_edges
         # TODO(rivers): M should be larger than optimal_cost+max_edge_cost?
-<<<<<<< Updated upstream
-        #M = 1000000 
-        M = sum([len(path) for path in paths])+10000
-=======
-        M = sum([len(path) for path in paths]) * 10+1
->>>>>>> Stashed changes
+        M = 10000
+        
         #raise NotImplementedError("We should set M to a better value before experiments.")
         
         # create MILP dictorary
@@ -139,12 +151,24 @@ class MILPSolver:
             self.print(constr)
 
         # Run the optimization
-        s_time = time.time()
-        opt_status = m_opt.optimize(max_seconds=self.time_limit)
-        elapse = time.time()-s_time
+        # the time limit still doesn't work!
+        try:
+            with time_limit(math.ceil(self.time_limit)):
+                s_time = time.time()
+                opt_status = m_opt.optimize(max_seconds=self.time_limit)
+                elapse = time.time()-s_time
+        except TimeoutException as e:
+            print("Timed out!")
+            opt_status = mip.OptimizationStatus.CUTOFF
+            elapse = time.time()-s_time
         
+        # we should compare more fairly, milp often takes too long even when we set the time limit.
+        # we restrict the time limit to 1.0s more than the given time limit.
+        # if elapse>=self.time_limit+1.0:
+        #     opt_status = mip.OptimizationStatus.CUTOFF
+
         # TODO, we should allow feasible but not optimal solution later, which can be compared with focal.
-        print(opt_status)
+        print(opt_status, elapse, "/",self.time_limit)
         
         objective_value=-1
         if opt_status == mip.OptimizationStatus.OPTIMAL:
@@ -169,7 +193,7 @@ class MILPSolver:
         
         group_ids_to_reverse=[]
         # if no solution found, just return empty list
-        if opt_status in [mip.OptimizationStatus.OPTIMAL, mip.OptimizationStatus.FEASIBLE]:
+        if opt_status in [mip.OptimizationStatus.OPTIMAL]: #, mip.OptimizationStatus.FEASIBLE]:
             for var in m_opt.vars:
                 if var.name.startswith("switchable"):
                     group_id=int(var.name.split("_")[1])

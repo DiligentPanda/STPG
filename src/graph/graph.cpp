@@ -1,24 +1,60 @@
 #include "graph/graph.h"
 #include <set>
+#include "group/group.h"
 
 // for receding horizon control
-void Graph::make_switchable(int window) {
+void Graph::make_switchable(int window, std::shared_ptr<GroupManager> group_manager) {
     if (!is_fixed()) {
         std::cout<<"Graph::make_switchable() should be called when the graph is fixed"<<std::endl;
         exit(-1);
     }
 
+    if (group_manager==nullptr) {
+        std::cout<<"Graph::make_switchable() in the window version should be called with a group manager"<<std::endl;
+        exit(-1);
+    }
+
     // we will use the first version window planning here.
+    make_switchable();
 
-    
+    // get valid edge group ids
+    std::set<int> valid_group_ids;
+    for (int agent_id=0;agent_id<get_num_agents();++agent_id) {
+        int curr_state=(*curr_states)[agent_id];
+        int num_states=get_num_states(agent_id);
+        for (int j=0;j<window;++j) {
+            int state=curr_state+j;
+            if (state>=num_states) {
+                break;
+            }
+            int global_state_id=get_global_state_id(agent_id,state);
+            auto & in_neighbors=switchable_type2_edges->get_in_neighbor_global_ids(global_state_id);
+            for (int in_neighbor:in_neighbors) {
+                valid_group_ids.insert(group_manager->get_group_id(in_neighbor,global_state_id));
+            }
+            auto & out_neighbors=switchable_type2_edges->get_out_neighbor_global_ids(global_state_id);
+            for (int out_neighbor:out_neighbors) {
+                valid_group_ids.insert(group_manager->get_group_id(global_state_id,out_neighbor));
+            }
+        }
+    }
 
-
-
-
-
-
-
-
+    // fix edges beyond window
+    for (int agent_id=0;agent_id<get_num_agents();++agent_id) {
+        int curr_state=(*curr_states)[agent_id];
+        int num_states=get_num_states(agent_id);
+        for (int state_id=curr_state;state_id<num_states;++state_id) {
+            int global_state_id=get_global_state_id(agent_id,state_id);
+            auto in_neighbors=switchable_type2_edges->get_in_neighbor_global_ids(global_state_id);
+            // we need make a copy here, because it is changing ?
+            for (int in_neighbor:in_neighbors) {
+                // if not in the valid group: fix it
+                if (valid_group_ids.find(group_manager->get_group_id(in_neighbor,global_state_id))==valid_group_ids.end()) {
+                    fix_switchable_type2_edge(in_neighbor,global_state_id);
+                }
+            }
+        }
+    }
 
     // TODO(rivers): this is an implementation close to the algorithm 3 in the paper Receding Horizon Re-Ordering of Multi-Agent Execution Schedules
     // However, currently we still consider the overall cost, rather than only the cost within the window
