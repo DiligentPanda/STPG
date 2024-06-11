@@ -47,7 +47,7 @@ void simulate(
 
   std::shared_ptr<GroupManager> group_manager(nullptr);
   std::chrono::microseconds grouping_time(0);
-    std::cout<<grouping_method<<std::endl;
+  std::cout<<"grouping method: "<<grouping_method<<std::endl;
   if (grouping_method!="none") {
     auto switchable_graph = graph->copy();
     switchable_graph->make_switchable();
@@ -210,6 +210,7 @@ void full_simulate(
 
   std::shared_ptr<GroupManager> group_manager(nullptr);
   std::chrono::microseconds grouping_time(0);
+  std::cout<<"grouping method: "<<grouping_method<<std::endl;
   if (grouping_method!="none") {
     auto switchable_graph = graph->copy();
     switchable_graph->make_switchable();

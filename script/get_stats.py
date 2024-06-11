@@ -3,14 +3,25 @@ import os
 import numpy as np
 import json
 import argparse
+import subprocess
 
 arg_parser=argparse.ArgumentParser()
 arg_parser.add_argument("-f","--folder",type=str,default="")
 arg_parser.add_argument("-c","--check_missing",action="store_true")
 arg_parser.add_argument("-s","--only_all_solved",action="store_true")
 arg_parser.add_argument("-g","--group_agent_num",action="store_true")
+arg_parser.add_argument("-a","--all",action="store_true")
 
 args=arg_parser.parse_args()
+
+if args.all:
+    output_folder=args.folder
+    subprocess.check_output(f"python script/get_stats.py -f {output_folder}", shell=True) 
+    subprocess.check_output(f"python script/get_stats.py -f {output_folder} -s", shell=True) 
+    subprocess.check_output(f"python script/get_stats.py -f {output_folder} -g", shell=True) 
+    subprocess.check_output(f"python script/get_stats.py -f {output_folder} -s -g", shell=True) 
+    exit(0)
+
 
 check_missing=args.check_missing
 only_all_solved=args.only_all_solved
@@ -33,26 +44,26 @@ stat_summary_ofp=os.path.join(
     )
 )
 path_list_fp=os.path.join(result_folder,"path_file_names.csv")
-time_limit=90
 num_sits=6
 
-algos=["search","milp"] # [searchh"]
-branch_orders=["largest_diff", "default"] #,"random","earliest"]
-grouping_methods=["simple","all"]
-heuristics=["zero","wcg_greedy"]
-early_terminations=["true"]
-incrementals=["true"]
-w_focals=[1.0,1.1]
+# algos=["search"] # ["search"]
+# branch_orders=["largest_diff","default"] #,"random","earliest"]
+# grouping_methods=["simple","all"]
+# heuristics=["wcg_greedy","zero"]
+# early_terminations=["true"]
+# incrementals=["true"]
+# w_focals=[1.0]
 
-settings=[]
-for algo in algos:
-    for branch_order in branch_orders:
-        for use_grouping in grouping_methods:
-            for heuristic in heuristics:
-                for early_termination in early_terminations:
-                    for incremental in incrementals:
-                        for w_focal in w_focals:
-                            settings.append([algo,branch_order,use_grouping,heuristic,early_termination,incremental,w_focal])   
+# settings=[]
+# for algo in algos:
+#     for branch_order in branch_orders:
+#         for use_grouping in grouping_methods:
+#             for heuristic in heuristics:
+#                 for early_termination in early_terminations:
+#                     for incremental in incrementals:
+#                         for w_focal in w_focals:
+#                             settings.append([algo,branch_order,use_grouping,heuristic,early_termination,incremental,w_focal])   
+
 
 exp_headers=["map_name","agent_num","instance_idx","sit_idx"]
 result_headers=["algo","branch_order","grouping_method","heuristic","w_focal","w_astar","early_termination","incremental","random_seed","status","search_time","total_time","original_cost","cost",
@@ -69,7 +80,16 @@ old_setting=["search","default","simple","zero","true","true",1.0]
 new_setting=["search","largest_diff","all","wcg_greedy","true","true",1.0]
         
 settings=[old_setting,new_setting,milp_setting1,milp_setting2]
-
+# settings=[]
+# for algo in algos:
+#     for branch_order in branch_orders:
+#         for grouping_method in grouping_methods:
+#             for heuristic in heuristics:
+#                 for early_termination in early_terminations:
+#                     for incremental in incrementals:
+#                         for w_focal in w_focals:
+#                             settings.append([algo,branch_order,grouping_method,heuristic,early_termination,incremental,w_focal])   
+                            
 data=[]
 for idx in range(len(path_list)):
     map_name=path_list.iloc[idx]["map_name"]
@@ -117,6 +137,7 @@ df["status"]=df["status"].apply(lambda x: 1 if x=="Succ" else 0)
         
 if only_all_solved:
     d=df.groupby(by=["map_name","agent_num","instance_idx","sit_idx"])
+    print(only_all_solved,d["status"].sum())
     selected=(d["status"].sum()==len(settings)).reset_index(name='selected')
     df=df.merge(selected,on=["map_name","agent_num","instance_idx","sit_idx"],how="inner")
     df = df[df["selected"]].drop("selected",axis=1)

@@ -23,7 +23,7 @@ Astar::Astar(
     int _horizon,
     std::shared_ptr<GroupManager> _group_manager,
     uint random_seed
-  ): rng(random_seed), incremental(incremental), w_astar(_w_astar), w_focal(_w_focal), horizon(_horizon), use_grouping(group_manager.get()!=nullptr), group_manager(_group_manager) {
+  ): rng(random_seed), incremental(incremental), w_astar(_w_astar), w_focal(_w_focal), horizon(_horizon), use_grouping(_group_manager.get()!=nullptr), group_manager(_group_manager) {
   timeout = input_timeout;
   fast_version = input_fast_version;
   if (_branch_order=="default") {
@@ -309,7 +309,7 @@ int Astar::count_double_conflicting_edge_groups(const shared_ptr<Graph> & graph,
 
 
 int Astar::count_switchable_edge_groups(const shared_ptr<Graph> & graph, const shared_ptr<GroupManager> & group_manager) {
-  if (group_manager==nullptr) {
+  if (!use_grouping) {
     return graph->get_num_switchable_edges();
   } else {
     set<int> group_ids;

@@ -131,6 +131,10 @@ int main(int argc, char** argv) {
   auto sit_num=vm.at("sit_num").as<int>();
   auto sit_fd=vm.at("sit_fd").as<string>();
   auto delay_prob=vm.at("delay_prob").as<float>();
+  if (delay_prob<0 || delay_prob>1) {
+    cout<<"delay_prob should be in [0,1]."<<std::endl;
+    exit(1);
+  }
   auto delay_steps_low=vm.at("delay_steps_low").as<int>();
   auto delya_steps_high=vm.at("delay_steps_high").as<int>();
 

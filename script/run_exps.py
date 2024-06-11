@@ -5,28 +5,29 @@ import pandas as pd
 import subprocess
 
 exe_path="./build/simulate"
-root_folder="data/benchmark/test_PBS2"
+root_folder="data/benchmark/test_PBS2_delay_p03"
 path_folder=os.path.join(root_folder,"path")
 sit_folder=os.path.join(root_folder,"sit")
 file_names_fp=os.path.join(root_folder,"path_file_names.csv")
-exp_desc="exp" # describe the experiments
+exp_desc="exp_comparison_p03" # describe the experiments
 
 timestamp=time.strftime("%Y_%m_%d_%H_%M_%S")
 exp_name="{}_{}".format(timestamp,exp_desc)
 # TODO(rivers): merge output into one or separate them somehow?
 output_folder="output/{}".format(exp_name)
 path_list_ofp=os.path.join(output_folder,"path_file_names.csv")
-delay_prob=10
-delay_steps_low=10
-delay_steps_high=20
-time_limit=90
-algos=["search"] # ["search"]
-branch_orders=["largest_diff","default"] #,"random","earliest"]
-grouping_methods=["simple","simple_merge","all"]
-heuristics=["wcg_greedy","zero"]
-early_terminations=["true"]
-incrementals=["true"]
-w_focals=[1.1,1.0]
+# the folllowing three are actually useless, because we will generate delay scenarios separately
+# delay_prob=10
+# delay_steps_low=10
+# delay_steps_high=20
+time_limit=16
+# algos=["search"] # ["search"]
+# branch_orders=["largest_diff","default"] #,"random","earliest"]
+# grouping_methods=["simple","all"]
+# heuristics=["wcg_greedy","zero"]
+# early_terminations=["true"]
+# incrementals=["true","false"]
+# w_focals=[1.0]
 MAX_VIRTUAL_MEMORY = 16 * 1024 * 1024 # 8 GB
 skip=False
 
@@ -37,11 +38,11 @@ subprocess.check_output("./compile.sh", shell=True)
 
 # setting: [agent_num_start, agent_num_end, agent_num_step, max_process_num]
 maps = {
-        "random-32-32-10":[70,100,10,8],
-        "warehouse-10-20-10-2-1":[150,200,10,8],
-        "Paris_1_256": [150,190,20,8],
-        # "lak303d": [41,73,16,8]
-       }
+        "random-32-32-10": [60,100,10,8],
+        "warehouse-10-20-10-2-1": [110,150,10,8],
+        "Paris_1_256": [120,200,20,8],
+        "lak303d": [41,73,8,8]
+}
 
 stat_output_folder=os.path.join(output_folder,"stat")
 fail_output_folder=os.path.join(output_folder,"fail")
@@ -112,7 +113,7 @@ milp_setting1=["milp","default","all","zero","true","true",1.0]
 old_setting=["search","default","simple","zero","true","true",1.0]
 new_setting=["search","largest_diff","all","wcg_greedy","true","true",1.0]
         
-settings=[old_setting,new_setting]
+settings=[old_setting,new_setting,milp_setting1,milp_setting2]
 # settings=[]
 # for algo in algos:
 #     for branch_order in branch_orders:

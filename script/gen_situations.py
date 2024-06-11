@@ -5,12 +5,12 @@ import pandas as pd
 import subprocess
 
 exe_path="./build/generate"
-root_folder="data/benchmark/test_PBS2_sadg"
+root_folder="data/benchmark/test_PBS2_delay_p002"
 path_folder=os.path.join(root_folder,"path")
 file_names_fp=os.path.join(root_folder,"path_file_names.csv")
 output_folder=root_folder
 
-delay_prob=10
+delay_prob=0.002
 delay_steps_low=10
 delay_steps_high=20
 time_limit=90
@@ -24,12 +24,11 @@ subprocess.check_output("./compile.sh", shell=True)
 
 # setting: [agent_num_start, agent_num_end, agent_num_step, max_process_num]
 maps = {
-        "sadg_warehouse": [40,70,10,8],
-        # "random-32-32-10":[65,110,5,32],
-        # "warehouse-10-20-10-2-1":[120,300,10,32],
-        # "Paris_1_256": [70,300,10,32],
-        # "lak303d": [49,169,4,32]
-       }
+        "random-32-32-10": [60,100,10,8],
+        "warehouse-10-20-10-2-1": [110,150,10,8],
+        "Paris_1_256": [120,200,20,8],
+        "lak303d": [41,73,8,8]
+}
 
 sit_output_folder=os.path.join(output_folder,"sit")
 fail_output_folder=os.path.join(output_folder,"sit_fail")
