@@ -12,7 +12,8 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 # TODO(rivers)：need to compare/test -Ofast and -O3 here, I don't use -Ofast much, it is more aggressive than -O3 and may have less restritions and unexpected behaviors.
 # if no big difference, let us use -O3 for better ensurance.
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Werror -O3 -fvisibility=hidden")
+# add -Werror to make warnings errors.
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3 -fvisibility=hidden")
 
 find_package(Boost)
 if(Boost_FOUND)
