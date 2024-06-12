@@ -675,8 +675,8 @@ void MDDTable::clear()
 	lookupTable.clear();
 }
 
-unordered_map<int, MDDNode*> collectMDDlevel(MDD* mdd, int i){
-  unordered_map<int, MDDNode*> loc2mdd;
+boost::unordered_map<int, MDDNode*> collectMDDlevel(MDD* mdd, int i){
+  boost::unordered_map<int, MDDNode*> loc2mdd;
   for (MDDNode* it_0 : mdd->levels[i]){
     int loc = it_0->loc.location;
     loc2mdd[loc] = it_0;

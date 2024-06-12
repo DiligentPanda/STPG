@@ -120,7 +120,7 @@ struct HTableEntry // look-up table entry
 
 // <h value, num of CT nodes, 0> for CBS
 // <h value, a1 f at root, a2 f at root> for ECBS
-typedef unordered_map<HTableEntry, tuple<int, int, int>, HTableEntry::Hasher, HTableEntry::EqNode> HTable;
+typedef boost::unordered_map<HTableEntry, tuple<int, int, int>, HTableEntry::Hasher, HTableEntry::EqNode> HTable;
 
 
 class CBSHeuristic

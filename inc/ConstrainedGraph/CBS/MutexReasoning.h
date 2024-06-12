@@ -20,8 +20,8 @@ private:
 
   // (cons_hasher_0, cons_hasher_1) -> Constraint
   // Invariant: cons_hasher_0.a < cons_hasher_1.a
-  unordered_map<ConstraintsHasher,
-                unordered_map<ConstraintsHasher, shared_ptr<Conflict>, ConstraintsHasher::Hasher, ConstraintsHasher::EqNode>,
+  boost::unordered_map<ConstraintsHasher,
+                boost::unordered_map<ConstraintsHasher, shared_ptr<Conflict>, ConstraintsHasher::Hasher, ConstraintsHasher::EqNode>,
                 ConstraintsHasher::Hasher, ConstraintsHasher::EqNode
                 > lookupTable;
 

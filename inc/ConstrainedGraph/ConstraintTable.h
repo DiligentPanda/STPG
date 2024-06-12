@@ -53,7 +53,7 @@ public:
 
 protected:
     friend class ReservationTable;
-    typedef unordered_map<size_t, list< pair<int, int> > > CT; // constraint table
+    typedef boost::unordered_map<size_t, list< pair<int, int> > > CT; // constraint table
 	CT ct; // location -> time range, or edge -> time range
 	int ct_max_timestep = 0;
     // typedef unordered_map<size_t, set< pair<int, int> > > CAT; // conflict avoidance table // location -> time range, or edge -> time range

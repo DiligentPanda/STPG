@@ -126,7 +126,7 @@ public:
 // private:
 	int max_num_of_mdds = 10000; // per agent
 
-	vector<unordered_map<ConstraintsHasher, MDD*, 
+	vector<boost::unordered_map<ConstraintsHasher, MDD*, 
 		ConstraintsHasher::Hasher, ConstraintsHasher::EqNode> >lookupTable;
 
 	const vector<ConstraintTable>& initial_constraints;
@@ -134,6 +134,6 @@ public:
 	void releaseMDDMemory(int id);
 };
 
-unordered_map<int, MDDNode*> collectMDDlevel(MDD* mdd, int i);
+boost::unordered_map<int, MDDNode*> collectMDDlevel(MDD* mdd, int i);
 
 };

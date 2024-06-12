@@ -171,7 +171,7 @@ bool RectangleReasoning::ExtractBarriers(const MDD& mdd, int loc, int timestep,
 	vector<int> extent_L(num_barrier, MAX_TIMESTEP);
 	vector<int> extent_U(num_barrier, -1);
 
-	unordered_map<MDDNode*, vector<bool>> blocking;
+	boost::unordered_map<MDDNode*, vector<bool>> blocking;
 
 	auto n = mdd.levels[0].front();
 	vector<bool> block(num_barrier, false);

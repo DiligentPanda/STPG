@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <random>
 #include "ConstrainedGraph/common.h"
+#include "graph/graph.h"
 
 namespace ConstrainedGraph {
 
@@ -18,6 +19,18 @@ public:
         int num_of_cols = 0, 
 		int num_of_obstacles = 0, 
         int warehouse_width = 0);
+
+    DelayInstance(
+        const shared_ptr<Graph> & graph,
+        const string& map_fp, 
+        const std::string & scen_fp,
+        const std::string & path_fp,
+        const std::vector<int> & states,
+        const std::vector<int> & delay_steps
+    );
+    Path parse_path(string line);
+    std::vector<Path> parse_paths(const string & path_fp);
+
 	~DelayInstance() {};
 	bool foundDelay()
 	{
@@ -63,8 +76,8 @@ private:
     bool collidingPaths_;
 	vector<Location> rep_points_;
 	// std::vector<bool> isRepPoint;
-	vector<unordered_map<Location, list<Location>, hash<Location>>> cgGraphMaps;
-	vector<unordered_map<Location, list<Location>, hash<Location>>> icgGraphMaps;
+	vector<boost::unordered_map<Location, list<Location>, hash<Location>>> cgGraphMaps;
+	vector<boost::unordered_map<Location, list<Location>, hash<Location>>> icgGraphMaps;
 };
 
 };

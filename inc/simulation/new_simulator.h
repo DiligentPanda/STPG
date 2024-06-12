@@ -53,6 +53,9 @@ public:
 
     std::shared_ptr<std::vector<std::vector<int> > > spatial_delays;
 
+    std::vector<bool> arrived;
+    std::vector<std::vector<Location> > paths;
+
     int step_ctr;
     int total_delays;
 
@@ -182,6 +185,21 @@ public:
                 int global_state_id = graph->get_global_state_id(agent_id, state_id);
                 // we need to remove the basic 1-step cost
                 agent_states[agent_id].delay_steps = graph->edge_manager->get_edge(global_state_id, global_state_id+1).cost - 1;
+            }
+        }
+
+        // reset paths
+        arrived.resize(graph->get_num_agents(), false);
+        paths.resize(graph->get_num_agents(),{});
+        for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
+            auto & path=(*graph->paths)[agent_id];
+            auto & loc=path[agent_states[agent_id].state_id].first;
+            paths[agent_id].push_back(loc);
+
+            if (agent_states[agent_id].state_id<graph->get_num_states(agent_id)-1) {
+                arrived[agent_id]=false;
+            } else {
+                arrived[agent_id]=true;
             }
         }
 
@@ -462,6 +480,20 @@ public:
             }
         }
 
+        // update paths
+        for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
+            if (!arrived[agent_id]) {
+                auto & path=(*graph->paths)[agent_id];
+                auto & loc=path[agent_states[agent_id].state_id].first;
+                paths[agent_id].push_back(loc);
+            }
+
+            if (agent_states[agent_id].state_id<graph->get_num_states(agent_id)-1) {
+                arrived[agent_id]=false;
+            } else {
+                arrived[agent_id]=true;
+            }
+        }
 
         return cost;
     }

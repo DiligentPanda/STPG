@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include <vector>
+#include "graph/generate_graph.h"
 
 namespace ConstrainedGraph {
 
@@ -68,6 +69,117 @@ DelayInstance::DelayInstance(const string& map_fname, const string& agent_fname,
 	fillcgGraphMap();
 }
 
+// Return path and stateCnt of an agent
+Path DelayInstance::parse_path(string line) {
+  int i, j;
+  int time = 0;
+  size_t comma_pos, leftPar_pos, rightPar_pos;
+  Path path;
+
+  while ((leftPar_pos = line.find("(")) != string::npos) {
+    // Process an index pair
+    comma_pos = line.find(",");
+    i = stoi(line.substr(leftPar_pos + 1, comma_pos));
+    rightPar_pos = line.find(")");
+    j = stoi(line.substr(comma_pos + 1, rightPar_pos));
+    line.erase(0, rightPar_pos + 1);
+
+    // Create a location tuple and add it to the path
+    int location=i*num_of_cols+j;
+	Location loc(location, time);
+	PathEntry entry(loc);
+	path.push_back(entry);
+    time++;
+  }
+  return path;
+}
+
+// Return all paths, accumulated counts of states, and States
+std::vector<Path> DelayInstance::parse_paths(const string & path_fp) {
+	std::vector<Path> paths;
+	std::ifstream file(path_fp);
+	if (file.is_open()) {
+	string line;
+	while (getline(file, line)) {
+		// Sanity check that the line is a path
+		if (line[0] == 'A') {
+			Path path = parse_path(line);
+			// Done with the agent
+			paths.push_back(path);
+		}
+	}
+	file.close();
+	} else {
+		std::cout << "exit\n";
+		exit(0);
+	}
+	return paths;
+}
+
+
+
+DelayInstance::DelayInstance(
+    const shared_ptr<Graph> & graph,
+	const string& map_fp, 
+	const std::string & scen_fp,
+	const std::string & path_fp,
+	const std::vector<int> & states,
+	const std::vector<int> & delay_steps
+):
+Instance(map_fp, scen_fp, (int) states.size(), 0, 0,
+		0, 0), improvements_(0), collidingPaths_(false)
+{
+
+	num_of_delays_=-1;
+
+	// read init paths
+	// auto full_paths = parse_paths(path_fp);
+
+	// move to starts and add delays
+	auto compressed_paths_ptr = ::parse_soln(path_fp.c_str());
+
+	originalPlan.resize(states.size(), {});
+
+	for (int i = 0; i < states.size(); i++)
+	{
+
+		// move to start
+		int start = states[i];
+		int delay_step = delay_steps[i];
+
+		auto & compressed_path=compressed_paths_ptr->at(i);
+		
+		int idx=0;
+		for (int k=0;k<delay_step;k++)
+		{
+			int location=compressed_path[start].first.first*num_of_cols+compressed_path[start].first.second;
+			Location loc(location, idx);
+			originalPlan[i].emplace_back(loc);
+			++idx;
+		}
+
+		for (int j = start; j < compressed_path.size(); j++)
+		{
+			int location=compressed_path[j].first.first*num_of_cols+compressed_path[j].first.second;
+			Location loc(location, idx);
+			originalPlan[i].emplace_back(loc);
+			++idx;
+		}
+
+		start_locations[i] = originalPlan[i][0].Loc;
+		goal_locations[i] = originalPlan[i].back().Loc;
+
+	}
+
+	postDelayPlan=originalPlan;
+
+	cgGraphMaps.resize(num_of_agents, {});
+	icgGraphMaps.resize(num_of_agents, {});
+
+	// fill cg graphs
+	fillcgGraphMap();
+}
+
 void DelayInstance::fillcgGraphMap()
 {
 	// give every location in original_plan a list of neighbors, 
@@ -77,10 +189,11 @@ void DelayInstance::fillcgGraphMap()
 		for (int k = 0; k < postDelayPlan[a].size(); k++)
 		{
 			Location curr = postDelayPlan[a][k].Loc;
-			if ( postDelayPlan[a].back().Loc.index > (curr.index ) )
+			if ( postDelayPlan[a].back().Loc.index > (curr.index ) ) {
                 cgGraphMaps[a].insert({curr, {postDelayPlan[a][curr.index + 1].Loc, curr}});
-			else
+			} else {
 				cgGraphMaps[a].insert({curr, {curr}});
+			}
 		}
 	}
 } 

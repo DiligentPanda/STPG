@@ -432,7 +432,7 @@ void CBS::removeLowPriorityConflicts(list<shared_ptr<Conflict>>& conflicts) cons
 {
 	if (conflicts.empty())
 		return;
-	unordered_map<int, shared_ptr<Conflict> > keep;
+	boost::unordered_map<int, shared_ptr<Conflict> > keep;
 	list<shared_ptr<Conflict>> to_delete;
 	for (const auto& conflict : conflicts)
 	{

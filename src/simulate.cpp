@@ -7,10 +7,13 @@
 #include "graph/generate_graph.h"
 #include "define.h"
 #include "simulation/new_simulator.h"
+#include "ConstrainedGraph/constrained_graph_solver.h"
 
 using json=nlohmann::json;
 
 void simulate(
+  const string & map_fp,
+  const string & scen_fp,
   const string & path_fp, 
   const string & sit_fp, 
   int time_limit, 
@@ -30,6 +33,8 @@ void simulate(
   auto graph=construct_graph(path_fp.c_str());
   ifstream in(sit_fp);
   json data=json::parse(in);
+
+ std::cout<<"map_fp: "<<map_fp<<std::endl;
 
   size_t agent_num=graph->get_num_agents();
 
@@ -80,6 +85,7 @@ void simulate(
   // simulate without replanning from current states
   int original_cost = new_simulator->simulate(graph);
   cout<<"original cost: "<<original_cost<<endl;
+  auto & original_paths = new_simulator->paths;
 
   shared_ptr<Solver> solver;
   
@@ -99,6 +105,8 @@ void simulate(
       group_manager,
       random_seed
     );
+  } else if (algo=="cg") {
+    solver=make_shared<ConstrainedGraph::ConstrainedGraphSolver>(time_limit);
   } else {
     std::cout<<"Unsupported algorithm: "<<algo<<std::endl;
     exit(-1);
@@ -154,7 +162,15 @@ void simulate(
 
   microseconds timer(0);
   start = high_resolution_clock::now();
-  auto replanned_graph = solver->solve(graph);
+
+  shared_ptr<Graph> replanned_graph(graph);
+  if (algo=="cg") {
+    auto solver_cg=dynamic_pointer_cast<ConstrainedGraph::ConstrainedGraphSolver>(solver);
+    solver_cg->solve_cg(graph, map_fp, scen_fp, path_fp, states, delay_steps);
+  } else {
+    replanned_graph = solver->solve(graph);
+  }
+
   stop = high_resolution_clock::now();
   timer += duration_cast<microseconds>(stop - start);
 
@@ -284,7 +300,7 @@ int main(int argc, char** argv) {
     ("path_fp,p",po::value<std::string>()->required(),"path file to construct graph")
     ("sit_fp,s",po::value<std::string>()->default_value(""),"situation file to construct delayed graph")
     ("time_limit,t",po::value<int>()->required(),"time limit in seconds. need to be an integer")
-    ("algo,a",po::value<std::string>()->required(),"replaning algorithm to use, [search, milp, none]")
+    ("algo,a",po::value<std::string>()->required(),"replaning algorithm to use, [search, milp, cg, none]")
     ("stat_ofp,o",po::value<std::string>()->required(),"the output file path of statistics")
     ("new_path_ofp,n",po::value<std::string>()->required(),"the output file path of new paths")
     ("branch_order,b",po::value<std::string>()->required(),"the branch order to use, [default, conflict, largest_diff, random, earliest]")
@@ -299,6 +315,8 @@ int main(int argc, char** argv) {
     ("delay_steps_low",po::value<int>()->default_value(10),"the lowerbound of delay steps")
     ("delay_steps_high",po::value<int>()->default_value(30),"the upperbound of delay steps")
     ("horizon",po::value<int>()->default_value(-1),"the horizon for swtichable TPG optimization, -1 means no limit")
+    ("map_fp,m",po::value<std::string>()->default_value(""),"path file to map, only required in the constrained-graph formulation")
+    ("scen_fp,c",po::value<std::string>()->default_value(""),"path file to scen, only required in the constrained-graph formulation")
   ;
 
   po::variables_map vm;
@@ -311,6 +329,8 @@ int main(int argc, char** argv) {
   
 	po::notify(vm);
 
+  string map_fp=vm.at("map_fp").as<string>();
+  string scen_fp=vm.at("scen_fp").as<string>();
   string path_fp=vm.at("path_fp").as<string>();
   string sit_fp=vm.at("sit_fp").as<string>();
   int time_limit=vm.at("time_limit").as<int>();
@@ -344,6 +364,8 @@ int main(int argc, char** argv) {
   if (sit_fp!="") {
     std::cout<<"single scenario simulation"<<std::endl;
     simulate(
+      map_fp,
+      scen_fp,
       path_fp,
       sit_fp,
       time_limit,

@@ -109,8 +109,8 @@ void ConstraintPropagation::init_mutex(){
   }
   // edge mutex
 
-  unordered_map<int, MDDNode*> loc2mddThisLvl;
-  unordered_map<int, MDDNode*> loc2mddNextLvl = collectMDDlevel(mdd1, 0);
+  boost::unordered_map<int, MDDNode*> loc2mddThisLvl;
+  boost::unordered_map<int, MDDNode*> loc2mddNextLvl = collectMDDlevel(mdd1, 0);
 
   for (int i = 0; i < num_level - 1; i++){
     loc2mddThisLvl = loc2mddNextLvl;
