@@ -11,7 +11,7 @@
 
 #include "LLNode.h"
 #include "map_loader.h"
-#include "flat_map_loader.h"
+// #include "flat_map_loader.h"
 #include "ReservationTable.h"
 #include "ConstraintTable.h"
 #include "compute_heuristic.h"
@@ -35,8 +35,8 @@ public:
 	LLNode* deleted_node = NULL;
 
 	int agent_id;
-	int start_location;
-	int goal_location;
+	Location start_location;
+	Location goal_location;
 	int start_heading;
 	int min_end_time = 0;
 	int departure_time = 0;
@@ -93,11 +93,11 @@ public:
 		ConstraintTable& constraints, ReservationTable* res_table,
 		size_t max_plan_len, double lowerbound,
 		std::clock_t start = 0, int time_limit = 0, bool train = false);
-    bool getOccupations(list<int>& next_locs,int next_id, LLNode* curr);
+    bool getOccupations(list<Location> & next_locs, Location next_id, LLNode* curr);
 
 	inline void releaseClosedListNodes(hashtable_t* allNodes_table);
 
-	SingleAgentICBS(int start_location, int goal_location, Map* ml, int agent_id, options cbs_option, int start_heading = -1, int kRobust = 0, int min_end = 0);
+	SingleAgentICBS(Location start_location, Location goal_location, Map* ml, int agent_id, options cbs_option, int start_heading = -1, int kRobust = 0, int min_end = 0);
 	~SingleAgentICBS();
 
 };

@@ -93,7 +93,7 @@ AgentsLoader::AgentsLoader(string fname, const MapLoader &ml,int max_k,bool diff
       curr_pair.first = atoi ( (*c_beg).c_str() );
       c_beg++;
       curr_pair.second = atoi ( (*c_beg).c_str() );
-      //      cout << "AGENT" << i << ":   START[" << curr_pair.first << "," << curr_pair.second << "] ; ";
+       cout << "AGENT" << i << ":   START[" << curr_pair.first << "," << curr_pair.second << "] ; ";
       this->initial_locations.push_back(curr_pair);
       // read goal [row,col] for agent i
       c_beg++;
@@ -102,7 +102,7 @@ AgentsLoader::AgentsLoader(string fname, const MapLoader &ml,int max_k,bool diff
       curr_pair.second = atoi ( (*c_beg).c_str() );
 
 
-      //      cout << "GOAL[" << curr_pair.first << "," << curr_pair.second << "]" << endl;
+            cout << "GOAL[" << curr_pair.first << "," << curr_pair.second << "]" << endl;
       this->goal_locations.push_back(curr_pair);
       if (diff_k)
           this->k.push_back(this->max_k - i%(this->max_k+1));
@@ -147,14 +147,14 @@ AgentsLoader::AgentsLoader(string fname, const MapLoader &ml,int max_k,bool diff
           curr_pair.second = atoi ( (*c_beg).c_str() );
           c_beg++;
           curr_pair.first = atoi ( (*c_beg).c_str() );
-          //      cout << "AGENT" << i << ":   START[" << curr_pair.first << "," << curr_pair.second << "] ; ";
+             cout << "AGENT" << i << ":   START[" << curr_pair.first << "," << curr_pair.second << "] ; ";
           this->initial_locations.push_back(curr_pair);
           // read goal [row,col] for agent i
           c_beg++;
           curr_pair.second = atoi ( (*c_beg).c_str() );
           c_beg++;
           curr_pair.first = atoi ( (*c_beg).c_str() );
-          //      cout << "GOAL[" << curr_pair.first << "," << curr_pair.second << "]" << endl;
+               cout << "GOAL[" << curr_pair.first << "," << curr_pair.second << "]" << endl;
           this->goal_locations.push_back(curr_pair);
           this->headings.push_back(-1);
           this->min_end_time.push_back(0);

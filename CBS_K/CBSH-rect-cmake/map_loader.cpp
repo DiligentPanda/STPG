@@ -15,17 +15,17 @@ MapLoader::MapLoader(){}
 
 
 
-vector<pair<int, int>> MapLoader::get_transitions(int loc, int heading, int noWait) const {
-    vector<pair<int, int>> transitions;
+vector<pair<Location, int>> MapLoader::get_transitions(Location loc, int heading, int noWait) const {
+    vector<pair<Location, int>> transitions;
     int moveRange = 5;
 
     for (int direction = 0; direction < moveRange; direction++)
     {
-        pair<int, int> move;
-        int next_loc = loc + moves_offset[direction];
-        move.first = next_loc;
+        pair<Location, int> move;
+        int next_loc = loc.location + moves_offset[direction];
+        move.first = Location(next_loc, -1);
         move.second = -1; //-1 means no heading
-        if (validMove(loc, next_loc) && !my_map[next_loc])
+        if (validMove(loc.location, next_loc) && !my_map[next_loc])
         {
             transitions.push_back(move);
 

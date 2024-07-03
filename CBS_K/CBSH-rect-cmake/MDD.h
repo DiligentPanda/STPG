@@ -4,7 +4,6 @@
 #include <set>
 #include "SingleAgentICBS.h"
 #include "ICBSNode.h"
-#include "flat_map_loader.h"
 #include "ConstraintTable.h"
 #include <iostream>
 #include <fstream>
@@ -24,16 +23,9 @@ public:
 		return std::abs(loc1_x - loc2_x) + std::abs(loc1_y - loc2_y);
 	}
 	virtual bool buildMDD( ConstraintTable& constraint_table,
-		int numOfLevels, SingleAgentICBS<MapLoader>& solver, bool train) {};
-    virtual bool getOccupations(list<int>& next_locs, int next_id, MDDNode* curr, int k){};
-
-    //	virtual bool buildMDD( ConstraintTable& constraint_table,
-//		int numOfLevels, SingleAgentICBS<FlatlandLoader>& solver) {};
-//	virtual bool buildMDD( ConstraintTable& constraint_table, int numOfLevels,
-//		SingleAgentICBS<MapLoader>& solver, int start, int start_time, int start_heading = -1) {};
-//	virtual bool buildMDD( ConstraintTable& constraint_table, int numOfLevels,
-//		SingleAgentICBS<FlatlandLoader>& solver, int start, int start_time, int start_heading = -1) {};
-
+		int numOfLevels, SingleAgentICBS<MapLoader>& solver, bool train) {return true;};
+    virtual bool getOccupations(list<Location>& next_locs, int next_id, MDDNode* curr, int k){ return true;};
+	
 	virtual MDDNode* find(list<int> locs, int level) {};
 	virtual void deleteNode(MDDNode* node) {};
 	virtual void clear() {};
@@ -47,7 +39,7 @@ class MDD: public MDDEmpty
 public:
 	bool buildMDD( ConstraintTable& constraints,
 		int numOfLevels,  SingleAgentICBS<Map> &solver, bool train, bool shrink);
-    bool getOccupations(list<int>& next_locs, int next_id, MDDNode* curr, int k);
+    bool getOccupations(list<Location> & next_locs, Location next_id, MDDNode* curr, int k);
 //	bool buildMDD( ConstraintTable& constraints, int numOfLevels, SingleAgentICBS<Map> & solver, int start, int start_time,int start_heading=-1);
 //	bool buildMDD(ConstraintTable& constraints, int numOfLevels, SingleAgentICBS<Map> & solver, int start, int start_time,int goal, int start_heading = -1);
 
@@ -82,7 +74,7 @@ public:
                 else
                     out<<",";
 
-                out << node->locs.front();
+                out << node->locs.front().location;
             }
             out << "]" << endl;
         }

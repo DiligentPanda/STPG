@@ -20,34 +20,34 @@ void ReservationTable::addPath(int agent_id, std::vector<PathEntry>* path) {
 	AgentStep* preStep = NULL;
 	for (int t = 0; t < path->size(); t++) {
 	    bool head = true; //first location is head.
-	    bool cell = 0;
-	    for (int loc : path->at(t).occupations) {
-	        if (loc == -1)
+	    int cell = 0;
+	    for (Location & loc : path->at(t).occupations) {
+	        if (loc.location == -1)
 	            continue;
 
-            if (!res_table.count(loc)) {
-                res_table[loc] = timeline();
+            if (!res_table.count(loc.location)) {
+                res_table[loc.location] = timeline();
             }
-            if (!res_table[loc].count(t)) {
-                res_table[loc][t] = agentList();
+            if (!res_table[loc.location].count(t)) {
+                res_table[loc.location][t] = agentList();
             }
 
-            if (!res_table[loc][t].count(agent_id))
-                res_table[loc][t][agent_id] = AgentStep(agent_id, loc, t, head, cell);
+            if (!res_table[loc.location][t].count(agent_id))
+                res_table[loc.location][t][agent_id] = AgentStep(agent_id, loc.location, t, head, cell);
                 
             if(head) {
                 if (preStep != NULL) {
-                    preStep->nextStep = &(res_table[loc][t][agent_id]);
+                    preStep->nextStep = &(res_table[loc.location][t][agent_id]);
                 }
-                res_table[loc][t][agent_id].preStep = preStep;
-                preStep = &(res_table[loc][t][agent_id]);
+                res_table[loc.location][t][agent_id].preStep = preStep;
+                preStep = &(res_table[loc.location][t][agent_id]);
             }
             if (t == path->size() - 1) {
                 if(head){
-                    goalTable[loc][agent_id] = t;
+                    goalTable[loc.location][agent_id] = t;
                 }
                 else{
-                    goalTable[loc][-agent_id -1] = t; //Non-head occupation
+                    goalTable[loc.location][-agent_id -1] = t; //Non-head occupation
                 }
             }
 
@@ -67,16 +67,16 @@ void ReservationTable::addPaths(vector<vector<PathEntry>*>* paths,int exclude) {
 
 void ReservationTable::deletePath(int agent_id, std::vector<PathEntry>* path) {
 	for (int t = 0; t < path->size(); t++) {
-        for (int loc : path->at(t).occupations) {
+        for (Location & loc : path->at(t).occupations) {
 
-            if (res_table.count(loc)) {
-                if (res_table[loc].count(t)) {
-                    res_table[loc][t].erase(agent_id);
+            if (res_table.count(loc.location)) {
+                if (res_table[loc.location].count(t)) {
+                    res_table[loc.location][t].erase(agent_id);
                 }
             }
             if (t == path->size() - 1) {
-                if (goalTable[loc].count(agent_id)) {
-                    goalTable[loc].erase(agent_id);
+                if (goalTable[loc.location].count(agent_id)) {
+                    goalTable[loc.location].erase(agent_id);
                 }
             }
         }

@@ -9,7 +9,7 @@ set (CMAKE_CXX_STANDARD 14)
 
 # Include sub-projects.
 add_subdirectory ("CBSH-rect-cmake")
-add_subdirectory ("PythonCBS")
+# add_subdirectory ("PythonCBS")
 
 
 

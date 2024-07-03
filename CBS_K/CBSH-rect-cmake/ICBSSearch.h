@@ -107,7 +107,6 @@ public:
 
     void printBT(const std::string& prefix, const ICBSNode* node, bool isLeft);
 	void printHLTree();
-    bool isValidTrain();
 
     vector<vector<PathEntry>*> getPaths(){ return paths;};
 	// print

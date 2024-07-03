@@ -111,6 +111,28 @@ struct three_tuple_hash {
 	}
 };
 
+class Location
+{
+public:
+    int location;
+    int index;
+    Location():location(-1), index(-1){}
+    // Location(const Location& Loc): location(Loc.location), index(Loc.index){}
+    Location(int loc, int idx): location(loc), index(idx){}
+
+    bool operator== (const Location& other) const
+    {
+        return ((this->location == other.location) &&
+                (this->index == other.index));
+    }
+
+    bool operator!= (const Location& other) const
+    {
+        return ((this->location != other.location) ||
+                (this->index != other.index));
+    }
+};
+
 
 int getMahattanDistance(int loc1_x, int loc1_y, int loc2_x, int loc2_y);
 int getArea(int loc1_x, int loc1_y, int loc2_x, int loc2_y);

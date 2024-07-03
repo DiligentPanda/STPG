@@ -4,6 +4,7 @@
 #include <functional>  // for std::hash (c++11 and above)
 #include <memory>
 #include "common.h"
+#include "Path.h"
 using boost::heap::fibonacci_heap;
 using boost::heap::compare;
 
@@ -14,7 +15,7 @@ class LLNode
 {
 public:
 
-	list<int> locs;
+	list<Location> locs;
 	int g_val;
 	int h_val = 0;
 	int heading;
@@ -127,7 +128,7 @@ public:
 
 	LLNode();
 	LLNode(const LLNode& other);
-	LLNode(list<int> locs, int g_val, int h_val, LLNode* parent, int timestep,
+	LLNode(list<Location> locs, int g_val, int h_val, LLNode* parent, int timestep,
 		int num_internal_conf = 0, bool in_openlist = false, bool train_mode = false);
 	inline double getFVal() const { return g_val + h_val; }
 	~LLNode(){
@@ -169,17 +170,18 @@ public:
 	// The following is used by googledensehash for generating the hash value of a nodes
 	struct NodeHasher 
 	{
+		// TODO(rivers): check hash
 		std::size_t operator()(const LLNode* n) const 
 		{
             int loc_multi = 1;
 
             if (n->train_mode) {
-                for (int loc : n->locs) {
-                    loc_multi = loc_multi * loc;
+                for (const Location & loc : n->locs) {
+                    loc_multi = loc_multi * loc.location;
                 }
             }
 		    else{
-		        loc_multi = n->locs.front();
+		        loc_multi = n->locs.front().location;
 		    }
 			size_t loc_hash = std::hash<int>()(loc_multi);
 			size_t timestep_hash = std::hash<int>()(n->timestep);

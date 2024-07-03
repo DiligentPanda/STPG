@@ -170,7 +170,7 @@ bool addGeneralKVerticalBarrierConstraint( int y,
             if (t2 + i < kMDD->size()){
                 bool find = false;
                 for (auto node : kMDD->at(t2 + i)){
-                    if (node->locs.front() == loc){
+                    if (node->locs.front().location == loc){
                         find = true;
                         break;
                     }
@@ -202,7 +202,7 @@ bool addGeneralKVerticalBarrierConstraint( int y,
             if (t_left + i < kMDD->size()){
                 bool find = false;
                 for (auto node : kMDD->at(t_left + i)){
-                    if (node->locs.front() == loc_left){
+                    if (node->locs.front().location == loc_left){
                         find = true;
                         break;
                     }
@@ -216,7 +216,7 @@ bool addGeneralKVerticalBarrierConstraint( int y,
             if (t_right + i < kMDD->size()){
                 bool find = false;
                 for (auto node : kMDD->at(t_right + i)){
-                    if (node->locs.front() == loc_right){
+                    if (node->locs.front().location == loc_right){
                         find = true;
                         break;
                     }
@@ -258,7 +258,7 @@ bool addGeneralKHorizontalBarrierConstraint( int x,
             if (t2 + i < kMDD->size()){
                 bool find = false;
                 for (auto node : kMDD->at(t2 + i)){
-                    if (node->locs.front() == loc){
+                    if (node->locs.front().location == loc){
                         find = true;
                         break;
                     }
@@ -290,7 +290,7 @@ bool addGeneralKHorizontalBarrierConstraint( int x,
             if (t_left + i < kMDD->size()){
                 bool find = false;
                 for (auto node : kMDD->at(t_left + i)){
-                    if (node->locs.front() == loc_left){
+                    if (node->locs.front().location == loc_left){
                         find = true;
                         break;
                     }
@@ -304,7 +304,7 @@ bool addGeneralKHorizontalBarrierConstraint( int x,
             if (t_right + i < kMDD->size()){
                 bool find = false;
                 for (auto node : kMDD->at(t_right + i)){
-                    if (node->locs.front() == loc_right){
+                    if (node->locs.front().location == loc_right){
                         find = true;
                         break;
                     }

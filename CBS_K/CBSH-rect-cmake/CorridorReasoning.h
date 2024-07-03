@@ -3,7 +3,6 @@
 #include "ConstraintTable.h"
 #include "LLNode.h"
 #include "map_loader.h"
-#include "flat_map_loader.h"
 #include "compute_heuristic.h"
 #include "Path.h"
 #include "SingleAgentICBS.h"
@@ -34,7 +33,7 @@ public:
 	int getExitTime(const std::vector<PathEntry>& path, const std::vector<PathEntry>& path2, int t,
 		Map* map);
 	int getBypassLength(int start, int end, std::pair<int, int> blocked, Map* my_map, int num_col, int map_size, ConstraintTable& constraint_table, int upper_bound,SingleAgentICBS<Map>* solver, int start_heading = -1, int end_heading = -1, int k=0);
-    bool getOccupations(list<int>& next_locs, int next_id, LLNode* curr, int k);
+    bool getOccupations(list<Location> & next_locs, Location next_id, LLNode* curr, int k);
 };
 
 

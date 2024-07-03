@@ -336,12 +336,12 @@ void ICBSSearch::conflict_between_2(ICBSNode& curr, int a1, int a2)// TODO: fina
     size_t min_path_length = paths[a1]->size() < paths[a2]->size() ? paths[a1]->size() : paths[a2]->size();
     for (size_t timestep = 0; timestep < min_path_length; timestep++)
     {
-        int loc1 = paths[a1]->at(timestep).location;
+        int loc1 = paths[a1]->at(timestep).Loc.location;
         for (int k =0; k<=al.k[a1];k++){
             int  t = timestep+k;
             if (t<0 || t >= paths[a2]->size())
                 continue;
-            int loc2 = paths[a2]->at(t).location;
+            int loc2 = paths[a2]->at(t).Loc.location;
             if (loc1 == loc2)
             {
                 cout<<"Find "<<k<<" delay conflict between "<< a1 <<" and "<<a2<<endl;
@@ -349,12 +349,12 @@ void ICBSSearch::conflict_between_2(ICBSNode& curr, int a1, int a2)// TODO: fina
             }
 
         }
-        loc1 = paths[a2]->at(timestep).location;
+        loc1 = paths[a2]->at(timestep).Loc.location;
         for (int k =0; k<=al.k[a2];k++){
             int  t = timestep+k;
             if (t<0 || t >= paths[a1]->size())
                 continue;
-            int loc2 = paths[a1]->at(t).location;
+            int loc2 = paths[a1]->at(t).Loc.location;
             if (loc1 == loc2)
             {
                 cout<<"Find "<<k<<" delay conflict between "<< a2 <<" and "<<a1<<endl;
@@ -365,8 +365,8 @@ void ICBSSearch::conflict_between_2(ICBSNode& curr, int a1, int a2)// TODO: fina
 
         if (al.k[a1]==0 && al.k[a2] ==0 && timestep < min_path_length - 1)
         {
-            int loc2 = paths[a2]->at(timestep).location;
-            if( loc1 == paths[a2]->at(timestep + 1).location && loc2 == paths[a1]->at(timestep + 1).location) {
+            int loc2 = paths[a2]->at(timestep).Loc.location;
+            if( loc1 == paths[a2]->at(timestep + 1).Loc.location && loc2 == paths[a1]->at(timestep + 1).Loc.location) {
                 cout << "Find edge conflict between " << a1 << " and " << a2 << endl;
             }
 
@@ -377,10 +377,10 @@ void ICBSSearch::conflict_between_2(ICBSNode& curr, int a1, int a2)// TODO: fina
     {
         int a1_ = paths[a1]->size() < paths[a2]->size() ? a1 : a2;
         int a2_ = paths[a1]->size() < paths[a2]->size() ? a2 : a1;
-        int loc1 = paths[a1_]->back().location;
+        int loc1 = paths[a1_]->back().Loc.location;
         for (size_t timestep = min_path_length; timestep < paths[a2_]->size(); timestep++)
         {
-            int loc2 = paths[a2_]->at(timestep).location;
+            int loc2 = paths[a2_]->at(timestep).Loc.location;
             if (loc1 == loc2)
             {
                 cout<<"Find target conflict between "<< a1_ <<" and "<<a2_<<endl;
@@ -609,7 +609,7 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
 
     int u[2];//get entering location
 	for (int i = 0; i < 2; i++)
-		u[i] = paths[a[i]]->at(t[i]).location;
+		u[i] = paths[a[i]]->at(t[i]).Loc.location;
 
 	if (u[0] != u[1]){
 	    //Trains moving towards each other
@@ -622,7 +622,7 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
 	        bool found = false;
 	        for (int time = t[i]; time < paths[a[i]]->size() && !found; time++)
 	        {
-	            if (paths[a[i]]->at(time).location == u[1 - i])
+	            if (paths[a[i]]->at(time).Loc.location == u[1 - i])
 	                found = true;
 	        }
 	        if (!found){
@@ -644,16 +644,16 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
 	        std::pair<int, int> edge_empty = make_pair(-1, -1);
 	        updateConstraintTable(node, a[0]);
 	        if (screen>=4)
-	            cout << "start: " << search_engines[a[0]]->start_location/num_col<<","<< search_engines[a[0]]->start_location % num_col << " end:" << u[1]/num_col<<"," << u[1]%num_col << " heading:" << paths[a[0]]->front().actionToHere << endl;
-	        int t3 = cp.getBypassLength(search_engines[a[0]]->start_location, u[1], edge_empty, ml, num_col, map_size, constraintTable, INT_MAX, search_engines[a[0]],search_engines[a[0]]->start_heading,paths[a[0]]->at(e[0]).heading,search_engines[a[0]]->kRobust);
-	        int t3_ = cp.getBypassLength(search_engines[a[0]]->start_location, u[1], edge, ml, num_col, map_size, constraintTable, t3 + 2 * k  + 1,search_engines[a[0]], search_engines[a[0]]->start_heading, paths[a[0]]->at(e[0]).heading,search_engines[a[0]]->kRobust);
+	            cout << "start: " << search_engines[a[0]]->start_location.location/num_col<<","<< search_engines[a[0]]->start_location.location % num_col << " end:" << u[1]/num_col<<"," << u[1]%num_col << " heading:" << paths[a[0]]->front().actionToHere << endl;
+	        int t3 = cp.getBypassLength(search_engines[a[0]]->start_location.location, u[1], edge_empty, ml, num_col, map_size, constraintTable, INT_MAX, search_engines[a[0]],search_engines[a[0]]->start_heading,paths[a[0]]->at(e[0]).heading,search_engines[a[0]]->kRobust);
+	        int t3_ = cp.getBypassLength(search_engines[a[0]]->start_location.location, u[1], edge, ml, num_col, map_size, constraintTable, t3 + 2 * k  + 1,search_engines[a[0]], search_engines[a[0]]->start_heading, paths[a[0]]->at(e[0]).heading,search_engines[a[0]]->kRobust);
 
 
 	        updateConstraintTable(node, a[1]);
 	        if (screen >= 4)
-	            cout << "start: " << search_engines[a[1]]->start_location / num_col << "," << search_engines[a[1]]->start_location % num_col << " end:" << u[0] / num_col << "," << u[0] % num_col << " heading:" << paths[a[1]]->front().actionToHere << endl;
-	        int t4 = cp.getBypassLength(search_engines[a[1]]->start_location, u[0], edge_empty, ml, num_col, map_size, constraintTable, INT_MAX,search_engines[a[1]], search_engines[a[1]]->start_heading, paths[a[1]]->at(e[1]).heading,search_engines[a[1]]->kRobust);
-	        int t4_ = cp.getBypassLength(search_engines[a[1]]->start_location, u[0], edge, ml, num_col, map_size, constraintTable, t4 + 2*k + 1, search_engines[a[1]], search_engines[a[1]]->start_heading, paths[a[1]]->at(e[1]).heading,search_engines[a[1]]->kRobust);
+	            cout << "start: " << search_engines[a[1]]->start_location.location / num_col << "," << search_engines[a[1]]->start_location.location % num_col << " end:" << u[0] / num_col << "," << u[0] % num_col << " heading:" << paths[a[1]]->front().actionToHere << endl;
+	        int t4 = cp.getBypassLength(search_engines[a[1]]->start_location.location, u[0], edge_empty, ml, num_col, map_size, constraintTable, INT_MAX,search_engines[a[1]], search_engines[a[1]]->start_heading, paths[a[1]]->at(e[1]).heading,search_engines[a[1]]->kRobust);
+	        int t4_ = cp.getBypassLength(search_engines[a[1]]->start_location.location, u[0], edge, ml, num_col, map_size, constraintTable, t4 + 2*k + 1, search_engines[a[1]], search_engines[a[1]]->start_heading, paths[a[1]]->at(e[1]).heading,search_engines[a[1]]->kRobust);
 	        if (screen >= 4) {
 	            cout << ",t3: " << t3 << "," << "t3_: " << t3_ << "," << "t4: " << t4 << "," << "t4_: " << t4_ << endl;
 	            cout << "corridor length: " << k << endl;
@@ -749,11 +749,11 @@ void ICBSSearch::removeLowPriorityConflicts(std::list<std::shared_ptr<Conflict>>
 bool ICBSSearch::traverse(const Path& path, int loc, int t) const
 {
 	if (t >= path.size())
-		if (loc == path.back().location)
+		if (loc == path.back().Loc.location)
 			return true;
 		else
 			return false;
-	else if (t >= 0 && path[t].location == loc) {
+	else if (t >= 0 && path[t].Loc.location == loc) {
 		//cout << "t: " << t << " loc: " << loc << " path: " << path[t].location << endl;
 		return true;
 
@@ -897,7 +897,7 @@ bool ICBSSearch::generateChild(ICBSNode*  node, ICBSNode* curr)
 
 			bool replan = false;
 			for (int tg = t_ag; tg < paths[ag]->size(); tg++) {
-				if (paths[ag]->at(tg).location == x) {
+				if (paths[ag]->at(tg).Loc.location == x) {
 					replan = true;
 					break;
 				}
@@ -927,7 +927,7 @@ bool ICBSSearch::generateChild(ICBSNode*  node, ICBSNode* curr)
 	        bool replan = false;
 	        for (int tg = t_ag; tg < paths[ag]->size(); tg++) {
 	            for(auto loc : paths[ag]->at(tg).occupations){
-	                if (loc == x){
+	                if (loc.location == x){
 	                    replan = true;
 	                    break;
 	                }
@@ -1009,7 +1009,7 @@ void ICBSSearch::printPaths() const
 		std::cout << "Agent " << i << " (" << paths_found_initially[i].size() - 1 << " -->" <<
 			paths[i]->size() - 1 << "): ";
 		for (int t = 0; t < paths[i]->size(); t++)
-			std::cout <<"(" << paths[i]->at(t).location / num_col << "," << paths[i]->at(t).location % num_col << ")->";
+			std::cout <<"(" << paths[i]->at(t).Loc.location / num_col << "," << paths[i]->at(t).Loc.location % num_col << ")->";
 		std::cout << std::endl;
 	}
 }
@@ -1027,64 +1027,19 @@ void ICBSSearch::writePaths(const string & file_path) const
 	{
 		out << "Agent " << i <<": ";
 		for (int t = 0; t < paths[i]->size(); t++)
-			out <<"(" << paths[i]->at(t).location / num_col << "," << paths[i]->at(t).location % num_col << ")->";
+			out <<"(" << paths[i]->at(t).Loc.location / num_col << "," << paths[i]->at(t).Loc.location % num_col << ")->";
 		out << std::endl;
 	}
 
     out.close();
 }
 
-
-
-
-bool ICBSSearch::isValidTrain()
-{
-    bool valid = true;
-    unordered_map<int,unordered_map<int,int>> rt;
-    for (int i = 0; i < num_of_agents; i++)
-    {
-
-        for (int t = 0; t < paths[i]->size(); t++){
-
-            int pre_loc = -1;
-            for (int loc : (*paths[i])[t].occupations) {
-                if (loc == -1)
-                    continue;
-                if (loc == pre_loc){
-                    continue;
-                }
-                pre_loc = loc;
-                if (!rt.count(loc))
-                    rt[loc] = unordered_map<int,int>();
-
-                if (!rt[loc].count(t))
-                    rt[loc][t]=i;
-                else {
-                    if(debug_mode) {
-                        cout << i << " body conflict t " << t << " with " << rt[loc][t] << endl;
-                    }
-                    if (i == rt[loc][t]) {
-
-                        num_self_conflict++;
-                    }
-                    num_body_conflict++;
-                    valid = false;
-                }
-
-            }
-
-        }
-
-    }
-    return valid;
-}
-
 void ICBSSearch::printPaths(Path& path) const
 {
 
 		for (int t = 0; t < path.size(); t++){
-            for (int loc: path[t].occupations){
-                std::cout <<"(" << loc / num_col << "," << loc % num_col << ")";
+            for (Location & loc: path[t].occupations){
+                std::cout <<"(" << loc.location / num_col << "," << loc.location % num_col << ")";
             }
             std::cout <<"->";
         }
@@ -1146,9 +1101,9 @@ void ICBSSearch::updateReservationTable(bool* res_table, int exclude_agent, cons
 			{
 				int id;
 				if (timestep >= paths[ag]->size())
-					id = paths[ag]->at(paths[ag]->size() - 1).location;
+					id = paths[ag]->at(paths[ag]->size() - 1).Loc.location;
 				else// otherwise, return its location for that timestep
-					id = paths[ag]->at(timestep).location;
+					id = paths[ag]->at(timestep).Loc.location;
 				res_table[timestep * map_size + id] = true;
 			}
 		}
@@ -1440,10 +1395,10 @@ bool MultiMapICBSSearch<Map>::search(){
         {
             if(ml->flatland &&
             curr->conflict->t-1>=0 &&
-            paths[curr->conflict->a1] ->at(curr->conflict->t-1).occupations.front() == -1 &&
-            paths[curr->conflict->a1] ->at(curr->conflict->t).occupations.front() != -1 &&
-            paths[curr->conflict->a2] ->at(curr->conflict->t-1).occupations.front() == -1 &&
-            paths[curr->conflict->a2] ->at(curr->conflict->t).occupations.front() != -1
+            paths[curr->conflict->a1] ->at(curr->conflict->t-1).occupations.front().location == -1 &&
+            paths[curr->conflict->a1] ->at(curr->conflict->t).occupations.front().location != -1 &&
+            paths[curr->conflict->a2] ->at(curr->conflict->t-1).occupations.front().location == -1 &&
+            paths[curr->conflict->a2] ->at(curr->conflict->t).occupations.front().location != -1
             ){
                 children.resize(1);
                 if (curr->conflict->a1 > curr->conflict->a2){
@@ -1472,7 +1427,7 @@ bool MultiMapICBSSearch<Map>::search(){
                 if (curr->conflict->m2)
                     num_standard_m2++;
                 if (curr->conflict->t >  paths[curr->conflict->a1]->size())
-                    if (curr->conflict->v1 == search_engines[curr->conflict->a1]->goal_location)
+                    if (curr->conflict->v1 == search_engines[curr->conflict->a1]->goal_location.location)
                         num_target_std++;
                     else
                         num_parking_std++;
@@ -1561,7 +1516,7 @@ bool MultiMapICBSSearch<Map>::search(){
                 for (auto p: curr->children[i]->paths){
                     cout<<"Agent id: "<<p.first<<" :";
                     for (auto loc: p.second){
-                        cout << "("<<loc.location<<")->";
+                        cout << "("<<loc.Loc.location<<")->";
                     }
                     cout<<endl;
                 }
@@ -1632,6 +1587,7 @@ bool MultiMapICBSSearch<Map>::search(){
 template<class Map>
 bool MultiMapICBSSearch<Map>::runICBSSearch() 
 {
+    std::cerr<<std::endl<<"hello"<<std::endl;
     start = std::clock();
     initializeDummyStart();
     if (option.pairAnalysis){
@@ -1930,8 +1886,11 @@ MultiMapICBSSearch<Map>::MultiMapICBSSearch(Map* ml, AgentsLoader& al, double f_
 	for (int i = 0; i < num_of_agents; i++) {
 		if (debug_mode)
 			cout << "initializing agent "<< i << endl;
-		int init_loc = ml->linearize_coordinate((al.initial_locations[i]).first, (al.initial_locations[i]).second);
-		int goal_loc = ml->linearize_coordinate((al.goal_locations[i]).first, (al.goal_locations[i]).second);
+		int _init_loc = ml->linearize_coordinate((al.initial_locations[i]).first, (al.initial_locations[i]).second);
+		int _goal_loc = ml->linearize_coordinate((al.goal_locations[i]).first, (al.goal_locations[i]).second);
+
+        Location init_loc = Location(_init_loc, -1);
+        Location goal_loc = Location(_goal_loc, -1);
 
         ComputeHeuristic<Map> ch(init_loc, goal_loc, ml, al.headings[i]);
         search_engines[i] = new SingleAgentICBS<Map>(init_loc, goal_loc, ml,i,option, al.headings[i],al.k[i]);
@@ -1964,7 +1923,7 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 		//cout << "******************************" << endl;
 		//cout << "Agent: " << i << endl;
 		if (search_engines[i]->findPath(paths_found_initially[i], focal_w, constraintTable, res_table, dummy_start->makespan + 1, 0,0,0,option.lltp_only) == false && !analysisInstance)
-			cout << "NO SOLUTION EXISTS";
+			cout <<"agent "<<i<<": NO SOLUTION EXISTS"<<std::endl;
 		if(option.lltp_only)
 		    num_lltp++;
 		else
@@ -2020,7 +1979,7 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 	    for (int i = 0; i<paths.size();i++){
 	        cout<<"Agent id: " << i<<": ";
 	        for (auto p : *paths[i]){
-	            cout<<"("<<p.location <<")->";
+	            cout<<"("<<p.Loc.location <<")->";
 	        }
 	        cout<<endl;
 	    }
@@ -2176,7 +2135,7 @@ template<class Map>
 void MultiMapICBSSearch<Map>::updateConstraintTable(ICBSNode* curr, int agent_id)
 {
 	constraintTable.clear();
-	constraintTable.goal_location = search_engines[agent_id]->goal_location;
+	constraintTable.goal_location = search_engines[agent_id]->goal_location.location;
 	int constraint_amount = 0;
 	int layer = 0;
 	while (curr != NULL)
@@ -2259,8 +2218,8 @@ void MultiMapICBSSearch<Map>::classifyConflicts(ICBSNode &parent)
 		else if (paths[a1]->at(0).singles.empty())
 		{
             if(con->train_conflict) {
-                for (int l: paths[a1]->at(timestep).occupations) {
-                    if (l == loc1 || l == loc2) {
+                for (Location & l: paths[a1]->at(timestep).occupations) {
+                    if (l.location == loc1 || l.location == loc2) {
                         break;
                     }
                     a1_p++;
@@ -2289,8 +2248,8 @@ void MultiMapICBSSearch<Map>::classifyConflicts(ICBSNode &parent)
 		else if (paths[a2]->at(0).singles.empty())
 		{
 		    if(con->train_conflict){
-                for (int l: paths[a2]->at(timestep).occupations){
-                    if (l == loc1 || l ==loc2){
+                for (Location & l: paths[a2]->at(timestep).occupations){
+                    if (l.location == loc1 || l.location ==loc2){
                         break;
                     }
                     a2_p++;
@@ -2318,7 +2277,7 @@ void MultiMapICBSSearch<Map>::classifyConflicts(ICBSNode &parent)
 		}
 
 
-		if (type == conflict_type::STANDARD && loc2 >= 0) // Edge conflict
+		if (con->type == conflict_type::STANDARD && loc2 >= 0) // Edge conflict
 		{
 		    assert(a1_p == a2_p && a2_p ==0);
 			cardinal1 = !paths[a1]->at(timestep).singles.empty() && paths[a1]->at(timestep).singles[0] && paths[a1]->at(timestep - 1).singles[0];
@@ -2474,21 +2433,21 @@ bool MultiMapICBSSearch<Map>::rectangleReasoning(const std::shared_ptr<Conflict>
     int action1, action2, action_diff;
     if (timestep != 0 ) {
 
-        action1 = getAction(paths.at(a1)->at(timestep).location, paths.at(a1)->at(timestep - 1).location, num_col);
+        action1 = getAction(paths.at(a1)->at(timestep).Loc.location, paths.at(a1)->at(timestep - 1).Loc.location, num_col);
     }
 
     if ((timestep == 0 || action1 == action::WAIT) && timestep+1 < paths.at(a1)->size()) {
 
-        action1 = getAction(paths.at(a1)->at(timestep + 1).location, paths.at(a1)->at(timestep).location, num_col);
+        action1 = getAction(paths.at(a1)->at(timestep + 1).Loc.location, paths.at(a1)->at(timestep).Loc.location, num_col);
     }
 
     if (timestep2 != 0 ) {
-        action2 = getAction(paths.at(a2)->at(timestep2).location, paths.at(a2)->at(timestep2 - 1).location, num_col);
+        action2 = getAction(paths.at(a2)->at(timestep2).Loc.location, paths.at(a2)->at(timestep2 - 1).Loc.location, num_col);
     }
 
     if ((timestep2 == 0 || action2 == action::WAIT) && timestep2+1 < paths.at(a2)->size()) {
 
-        action2 = getAction(paths.at(a2)->at(timestep2 + 1).location, paths.at(a2)->at(timestep2).location, num_col);
+        action2 = getAction(paths.at(a2)->at(timestep2 + 1).Loc.location, paths.at(a2)->at(timestep2).Loc.location, num_col);
     }
 
 
@@ -2524,10 +2483,10 @@ bool MultiMapICBSSearch<Map>::rectangleReasoning(const std::shared_ptr<Conflict>
                 cout<<"failed to extract rectangle starts or goals"<<endl;
             return false;
         }
-        s1 = paths[a1]->at(t1_start).location;
-        g1 = paths[a1]->at(t1_end).location;
-        s2 = paths[a2]->at(t2_start).location;
-        g2 = paths[a2]->at(t2_end).location;
+        s1 = paths[a1]->at(t1_start).Loc.location;
+        g1 = paths[a1]->at(t1_end).Loc.location;
+        s2 = paths[a2]->at(t2_start).Loc.location;
+        g2 = paths[a2]->at(t2_end).Loc.location;
 
 
         //calculate areas and so on. Rg and Rs are D and E in the paper.
@@ -2812,5 +2771,4 @@ bool MultiMapICBSSearch<Map>::rectangleReasoning(const std::shared_ptr<Conflict>
 
 
 template class MultiMapICBSSearch<MapLoader>;
-template class MultiMapICBSSearch<FlatlandLoader>;
 

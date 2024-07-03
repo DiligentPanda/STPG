@@ -52,8 +52,6 @@ add_executable (CBS-K
 			egraph_reader.h
 			common.h
 			common.cpp
-			flat_map_loader.cpp
-			flat_map_loader.h
 			# ../mapVisualiser/Visualiser.h
 			# ../mapVisualiser/Visualiser.cpp
 			MDDNode.h

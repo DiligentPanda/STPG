@@ -4,11 +4,9 @@
 #include <string>
 #include <vector>
 #include "common.h"
+#include "Path.h"
 
 using namespace std;
-
-
-
 
 class MapLoader 
 {
@@ -36,7 +34,7 @@ class MapLoader
   MapLoader(int rows, int cols); // initialize new [rows x cols] empty map
   MapLoader();
 
-  vector<pair<int, int>> get_transitions(int loc, int heading, int noWait) const;
+  vector<pair<Location, int>> get_transitions(Location loc, int heading, int noWait) const;
   bool getLoc(int loc) ;
   inline bool is_blocked (int row, int col) const { return my_map[row * this->cols + col]; }
   inline bool is_blocked (int loc) const { return my_map[loc]; }

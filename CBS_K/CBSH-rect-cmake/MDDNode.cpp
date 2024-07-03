@@ -4,7 +4,7 @@
 #include "MDDNode.h"
 
 
-MDDNode::MDDNode(std::list<int> currlocs, MDDNode* parent, bool train)
+MDDNode::MDDNode(std::list<Location> currlocs, MDDNode* parent, bool train)
 {
     locs = currlocs;
     this->parent = parent;

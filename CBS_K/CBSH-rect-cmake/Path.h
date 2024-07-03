@@ -7,20 +7,25 @@
 #define CBS_K_PATH_H
 
 #include "Conflict.h"
+#include "common.h"
 
 struct PathEntry
-        {
-
-    int location;
-    list<int> occupations;
+{
+    Location Loc;
+    list<Location> occupations;
     vector<bool> singles;
     int heading;
     bool single;
     int actionToHere;
     int timeStep;
     int self_conflict;
-    PathEntry(int loc = -1) { location = loc; single = false; }
-    std::list<int> locations; // all possible locations at the same time step
+    PathEntry():Loc(-1,-1) {}
+    PathEntry(Location loc):Loc(loc) { }
+    bool operator== (const PathEntry& other) const
+    {
+        return (this->Loc == other.Loc);
+    }
+    std::list<Location> locations; // all possible locations at the same time step
     std::list<Conflict> conflist;
 };
 

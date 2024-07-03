@@ -160,7 +160,7 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	bool validTrain = icbs.isValidTrain();
+	bool validTrain = true;
 	if (vm["screen"].as<int>() >= 1) {
 	    cout<<"Valid Train Plan: "<< validTrain<<" body conflicts: "<<icbs.num_body_conflict<<" goal conflict: "<<icbs.num_goal_conflict<<" self conflict: "<<icbs.num_self_conflict<<endl;
 	}

@@ -8,15 +8,14 @@
 #include <iostream>
 #include <list>
 #include <vector>
-
-
+#include "common.h"
 
 class MDDNode
 {
 public:
-    MDDNode(std::list<int> currlocs, MDDNode* parent, bool train);
+    MDDNode(std::list<Location> currlocs, MDDNode* parent, bool train);
 
-    std::list<int> locs;
+    std::list<Location> locs;
     int row;
     int col;
     int level;
