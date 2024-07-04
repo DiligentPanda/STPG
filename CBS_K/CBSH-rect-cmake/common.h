@@ -53,6 +53,10 @@ namespace N
 
 
 struct hvals {
+    hvals() {};
+    hvals(int v) {
+        heading[-1]=v;
+    }
     boost::unordered_map<int, int> heading;
     int get_hval(int direction) {
         if (heading.count(direction)) {
@@ -133,6 +137,25 @@ public:
     }
 };
 
+namespace std {
+template <>
+struct hash<Location>
+{
+    size_t operator()(const Location& l) const
+    {
+        auto hash1 = hash<int>{}(l.location);
+        auto hash2 = hash<int>{}(l.index);
+
+        if (hash1 != hash2) {
+            return hash1 ^ hash2;             
+        }
+        
+        // If hash1 == hash2, their XOR is zero.
+        return hash1;
+    }
+};
+
+};
 
 int getMahattanDistance(int loc1_x, int loc1_y, int loc2_x, int loc2_y);
 int getArea(int loc1_x, int loc1_y, int loc2_x, int loc2_y);

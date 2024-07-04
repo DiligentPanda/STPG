@@ -3,6 +3,7 @@
 #include "CorridorReasoning.h"
 #include <ctime>
 #include <iostream>
+#include "constrained_agents_loader.h"
 
 #define MAX_K_VERTEX_COVER_EDGES 10
 
@@ -1120,21 +1121,21 @@ void ICBSSearch::printStrategy() const
 		break;
 	case constraint_strategy::ICBS:
 		cout << "     ICBS: ";
-		break;
+		break; 
 	case constraint_strategy::CBSH:
-		cout << "     CBSH:";
+		cout << "     CBSH: ";
 		break;
 	case constraint_strategy::CBSH_R:
-		cout << "   CBSH-R:";
+		cout << "   CBSH-R: ";
 		break;
 	case constraint_strategy::CBSH_CR:
-		cout << "  CBSH-CR:";
+		cout << "  CBSH-CR: ";
 		break;
 	case constraint_strategy::CBSH_RM:
-		cout << "  CBSH-RM:";
+		cout << "  CBSH-RM: ";
 		break;
 	case constraint_strategy::CBSH_GR:
-		cout << "  CBSH-GR:";
+		cout << "  CBSH-GR: ";
 		break;
 	default:
 		exit(10);
@@ -1196,8 +1197,8 @@ bool MultiMapICBSSearch<Map>::search(){
 
     if (debug_mode)
         cout << "Start searching:" << endl;
-    if (screen >= 3)
-        al.printAgentsInitGoal();
+    // if (screen >= 3)
+    //     al.printAgentsInitGoal();
     while (!focal_list.empty() && !solution_found)
     {
         runtime = (std::clock() - start);
@@ -1587,7 +1588,6 @@ bool MultiMapICBSSearch<Map>::search(){
 template<class Map>
 bool MultiMapICBSSearch<Map>::runICBSSearch() 
 {
-    std::cerr<<std::endl<<"hello"<<std::endl;
     start = std::clock();
     initializeDummyStart();
     if (option.pairAnalysis){
@@ -1853,7 +1853,10 @@ MultiMapICBSSearch<Map>::~MultiMapICBSSearch()
 }
 
 template<class Map>
-MultiMapICBSSearch<Map>::MultiMapICBSSearch(Map* ml, AgentsLoader& al, double f_w, constraint_strategy c, int time_limit, int screen, int kDlay, options options1)
+MultiMapICBSSearch<Map>::MultiMapICBSSearch(
+    Map* ml, 
+    ConstrainedAgentsLoader & al, 
+    double f_w, constraint_strategy c, int time_limit, int screen, int kDlay, options options1)
 {
 	this->option = options1;
 	this->focal_w = f_w;
@@ -1886,19 +1889,21 @@ MultiMapICBSSearch<Map>::MultiMapICBSSearch(Map* ml, AgentsLoader& al, double f_
 	for (int i = 0; i < num_of_agents; i++) {
 		if (debug_mode)
 			cout << "initializing agent "<< i << endl;
-		int _init_loc = ml->linearize_coordinate((al.initial_locations[i]).first, (al.initial_locations[i]).second);
-		int _goal_loc = ml->linearize_coordinate((al.goal_locations[i]).first, (al.goal_locations[i]).second);
+		// int _init_loc = ml->linearize_coordinate((al.initial_locations[i]).first, (al.initial_locations[i]).second);
+		// int _goal_loc = ml->linearize_coordinate((al.goal_locations[i]).first, (al.goal_locations[i]).second);
 
-        Location init_loc = Location(_init_loc, -1);
-        Location goal_loc = Location(_goal_loc, -1);
+        // Location init_loc = Location(_init_loc, -1);
+        // Location goal_loc = Location(_goal_loc, -1);
 
-        ComputeHeuristic<Map> ch(init_loc, goal_loc, ml, al.headings[i]);
-        search_engines[i] = new SingleAgentICBS<Map>(init_loc, goal_loc, ml,i,option, al.headings[i],al.k[i]);
+        // ComputeHeuristic<Map> ch(al.initial_locations[i], al.goal_locations[i], ml, al.headings[i]);
+        search_engines[i] = new SingleAgentICBS<Map>(al.initial_locations[i], al.goal_locations[i], ml,i,option, al.headings[i],al.k[i]);
         if(ml->flatland)
             search_engines[i]->departure_time = al.departure_times[i];
         if (debug_mode)
             cout << "initializing heuristics for "<< i << endl;
-        ch.getHVals(search_engines[i]->my_heuristic);
+        // ch.getHVals(i,search_engines[i]->my_heuristic);
+
+        search_engines[i]->compute_postDelay_heuristics(ml->postDelayPlan[i]);
 
 
 	}
@@ -2085,7 +2090,7 @@ bool MultiMapICBSSearch<Map>::findPathForSingleAgent(ICBSNode*  node, int ag, do
     // build reservation table
 	size_t max_plan_len = node->makespan + 1;
 
-	ReservationTable* res_table = new ReservationTable(map_size, &paths,&al, ag);  // initialized to false
+	ReservationTable* res_table = new ReservationTable(map_size, &paths, &al, ag);  // initialized to false
 
 	// find a path
 	vector<PathEntry> newPath;
@@ -2770,5 +2775,5 @@ bool MultiMapICBSSearch<Map>::rectangleReasoning(const std::shared_ptr<Conflict>
 
 
 
-template class MultiMapICBSSearch<MapLoader>;
+template class MultiMapICBSSearch<ConstrainedMapLoader>;
 

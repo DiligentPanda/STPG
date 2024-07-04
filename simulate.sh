@@ -3,7 +3,7 @@ set -ex
 ./compile.sh
 
 OUTPUT_FOLDER="output/"
-ALGO="cg"
+ALGO="search"
 BRANCH_ORDER="largest_diff"
 GROUPING_METHOD="simple"
 HEURISTIC="wcg_greedy"
@@ -20,6 +20,6 @@ mkdir -p $OUTPUT_FOLDER
 #  -t 90 -a $ALGO -b ${BRANCH_ORDER} -g ${GROUPING_METHOD} -h ${HEURISTIC} -e ${EARLY_TERMINATION} -o ${OUTPUT_FOLDER}${ALGO}_stats.txt -n ${OUTPUT_FOLDER}${ALGO}_new_paths.txt --w_focal ${W_FOCAL} -i ${INCREMENTAL}
 
 ./build/simulate \
- -m data/map/random-32-32-10.map -c data/scen/scen-even/random-32-32-10-even-12.scen \
- -p data/benchmark/test_PBS2_delay_p01/path/map_random-32-32-10_ins_12_an_100.path -s data/benchmark/test_PBS2_delay_p01/sit/map_random-32-32-10_ins_12_an_100_sit_1.json  \
+ -m data/map/random-32-32-10.map -c data/scen/scen-even/random-32-32-10-even-1.scen \
+ -p data/benchmark/test/map_random-32-32-10_ins_1_an_1.path -s data/benchmark/test/map_random-32-32-10_ins_1_an_1_sit_0.json  \
  -t 90 -a $ALGO -b ${BRANCH_ORDER} -g ${GROUPING_METHOD} -h ${HEURISTIC} -e ${EARLY_TERMINATION} -o ${OUTPUT_FOLDER}${ALGO}_stats.txt -n ${OUTPUT_FOLDER}${ALGO}_new_paths.txt --w_focal ${W_FOCAL} -i ${INCREMENTAL}

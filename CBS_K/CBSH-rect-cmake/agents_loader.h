@@ -2,9 +2,7 @@
 // First line: number of agents
 // Second line and onward, (x_init,y_init),(x_goal,y_goal) of each agent (one per line)
 
-#ifndef AGENTSLOADER_H
-#define AGENTSLOADER_H
-
+#pragma once
 #include <string>
 #include <vector>
 #include <utility>
@@ -43,4 +41,3 @@ class AgentsLoader {
   ~AgentsLoader();
 };
 
-#endif

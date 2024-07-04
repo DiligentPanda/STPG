@@ -45,7 +45,7 @@ public:
 	Map* ml;
 	int map_size;
 	int num_col;
-	std::vector<hvals> my_heuristic;  // this is the precomputed heuristic for this agent
+	unordered_map<Location,hvals> my_heuristic;  // this is the precomputed heuristic for this agent
 
 	int kRobust;
 
@@ -58,8 +58,8 @@ public:
 
 	options option;
 
-
-
+	void compute_postDelay_heuristics(Path &path);
+	
 	//Checks if a vaild path found (wrt my_map and constraints)
 	//Note -- constraint[timestep] is a list of pairs. Each pair is a disallowed <loc1,loc2> (loc2=-1 for vertex constraint).
 	//bool isConstrained(int curr_id, int next_id, int next_timestep, const std::vector< std::list< std::pair<int, int> > >* cons) const;

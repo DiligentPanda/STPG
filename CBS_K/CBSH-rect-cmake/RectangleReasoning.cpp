@@ -4,8 +4,7 @@
 #include <ctime> //std::time
 #include <boost/heap/fibonacci_heap.hpp>
 #include <boost/unordered_set.hpp>
-
-
+#include "constrained_map_loader.h"
 
 /*
  * This part check the relationship between MDD and barriers.
@@ -1499,9 +1498,9 @@ void generalizedRectangle(const std::vector<PathEntry>& path1, const std::vector
 	return;
 }
 
-template void generalizedRectangle<MapLoader>(const std::vector<PathEntry>& path1, const std::vector<PathEntry>& path2, const MDD<MapLoader>& mdd1, const MDD<MapLoader>& mdd2,
+template void generalizedRectangle<ConstrainedMapLoader>(const std::vector<PathEntry>& path1, const std::vector<PathEntry>& path2, const MDD<ConstrainedMapLoader>& mdd1, const MDD<ConstrainedMapLoader>& mdd2,
 	const std::list<Constraint>::const_iterator& b1, const std::list<Constraint>::const_iterator& b2,
 	const std::list<Constraint>& B1, const std::list<Constraint>& B2, int timestep, int num_col,
 	int& best_type, std::pair<int, int>& best_Rs, std::pair<int, int>& best_Rg, int time_limit, std::set<std::pair<int, int>> &visitedRs);
-template bool blockedNodes<MapLoader>(const MDD<MapLoader>& mdd, const Constraint b, int num_col);
-template bool ExtractBarriers<MapLoader>(const MDD<MapLoader>& mdd, int dir1, int dir2, int start, int goal, int start_time, int num_col, std::list<Constraint>& B);
+template bool blockedNodes<ConstrainedMapLoader>(const MDD<ConstrainedMapLoader>& mdd, const Constraint b, int num_col);
+template bool ExtractBarriers<ConstrainedMapLoader>(const MDD<ConstrainedMapLoader>& mdd, int dir1, int dir2, int start, int goal, int start_time, int num_col, std::list<Constraint>& B);

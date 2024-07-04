@@ -5,6 +5,7 @@
 #include <iostream>
 #include "LLNode.h"
 #include <limits.h>
+#include "constrained_map_loader.h"
 
 
 using google::dense_hash_map;      // namespace where class lives by default
@@ -29,8 +30,10 @@ ComputeHeuristic<Map>::ComputeHeuristic(Location start_location, Location goal_l
 
 
 template<class Map>
-void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
+void ComputeHeuristic<Map>::getHVals(int agent_idx,vector<hvals>& res,int limit)
 {
+	ml->set_agent_idx(agent_idx);
+
 	Location & root_location = goal_location;
 	res.resize(map_rows * map_cols);
 		
@@ -158,5 +161,5 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 template<class Map>
 ComputeHeuristic<Map>::~ComputeHeuristic() {}
 
-template class ComputeHeuristic<MapLoader>;
+template class ComputeHeuristic<ConstrainedMapLoader>;
 

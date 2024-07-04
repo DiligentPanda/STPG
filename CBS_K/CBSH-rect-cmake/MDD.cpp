@@ -1,10 +1,12 @@
 #include "MDD.h"
-
+#include "constrained_map_loader.h"
 #include <iostream>
 
 template<class Map>
 bool MDD<Map>::buildMDD( ConstraintTable& constraints, int numOfLevels, SingleAgentICBS<Map> & solver, bool train, bool shrink)
 {
+	solver.ml->set_agent_idx(solver.agent_id);
+
 	MDDNode* root = new MDDNode(std::list<Location>(), nullptr,train); // Root
 	root->locs.resize(solver.kRobust+1, solver.start_location);
 	root->heading = solver.start_heading;
@@ -55,7 +57,7 @@ bool MDD<Map>::buildMDD( ConstraintTable& constraints, int numOfLevels, SingleAg
 
 			if(!open.empty() )
 			{
-			    cout << " Expand node: " << node->locs.front().location<<","<< node->locs.back().location<<","<<node->locs.size() << " heading: " << node->heading<<" h "<< solver.my_heuristic[node->locs.front().location].get_hval(node->heading)<<", level: "<<node->level << endl;
+			    cout << " Expand node: " << node->locs.front().location<<","<< node->locs.back().location<<","<<node->locs.size() << " heading: " << node->heading<<" h "<< solver.my_heuristic[node->locs.front()].get_hval(node->heading)<<", level: "<<node->level << endl;
 				while (!open.empty())
 				{
 					MDDNode* n = open.front();
@@ -64,7 +66,7 @@ bool MDD<Map>::buildMDD( ConstraintTable& constraints, int numOfLevels, SingleAg
 					for(auto loc: n->locs){
 					    cout<<loc.location<<"|";
 					}
-					cout <<" level: "<< n->level << " heading: " << n->heading<<" h "<< solver.my_heuristic[n->locs.front().location].get_hval(n->heading) <<", level: "<<n->level<< endl;
+					cout <<" level: "<< n->level << " heading: " << n->heading<<" h "<< solver.my_heuristic[n->locs.front()].get_hval(n->heading) <<", level: "<<n->level<< endl;
 
 				}
 				
@@ -133,7 +135,7 @@ bool MDD<Map>::buildMDD( ConstraintTable& constraints, int numOfLevels, SingleAg
                 heuristicBound = numOfLevels - node->level - 2+ 0.001;
 
             int heuristic;
-            heuristic = solver.my_heuristic[newLoc.location].get_hval(new_heading);
+            heuristic = solver.my_heuristic[newLoc].get_hval(new_heading);
 
             assert(newLoc == solver.goal_location || heuristic!=0);
 
@@ -366,6 +368,6 @@ MDD<Map>::~MDD()
 	clear();
 }
 
-template class MDD<MapLoader>;
+template class MDD<ConstrainedMapLoader>;
 
 

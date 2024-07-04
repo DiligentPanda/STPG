@@ -6,6 +6,8 @@ cmake_minimum_required (VERSION 3.8)
 # Add source to this project's executable.
 project(CBS-K)
 
+# set(CMAKE_BUILD_TYPE Debug)
+
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 elseif()
@@ -20,43 +22,52 @@ set (CMAKE_CXX_STANDARD 14)
 
 
 include_directories(../mapVisualiser/)
+include_directories(".")
 
-add_executable (CBS-K
-			driver.cpp
-			agents_loader.h
-			compute_heuristic.h
-			ICBSNode.h
-			ICBSSearch.h
-			LLNode.h
-			map_loader.h
-			MDD.h
-			RectangleReasoning.h
-			SingleAgentICBS.h
-			agents_loader.cpp
-			compute_heuristic.cpp
-			ICBSNode.cpp
-			ICBSSearch.cpp
-			LLNode.cpp
-			map_loader.cpp
-			MDD.cpp
-			RectangleReasoning.cpp
-			SingleAgentICBS.cpp
-			ReservationTable.h
-			ReservationTable.cpp
-			Conflict.h
-			Conflict.cpp
-			ConstraintTable.cpp
-			ConstraintTable.h
-			CorridorReasoning.cpp
-			CorridorReasoning.h
-			egraph_reader.h
-			common.h
-			common.cpp
-			# ../mapVisualiser/Visualiser.h
-			# ../mapVisualiser/Visualiser.cpp
-			MDDNode.h
-			MDDNode.cpp
-			ICBSHSearchPairAnalysis.cpp ICBSHSearchPairAnalysis.h Path.h)
+
+file(GLOB_RECURSE SOURCES "*.cpp")
+add_executable(CBS-K ${SOURCES})
+
+# add_executable (CBS-K
+# 			constrained_agents_loader.h
+# 			constrained_agents_loader.cpp
+# 			constrained_map_loader.h
+# 			constrained_map_loader.cpp
+# 			driver.cpp
+# 			agents_loader.h
+# 			compute_heuristic.h
+# 			ICBSNode.h
+# 			ICBSSearch.h
+# 			LLNode.h
+# 			map_loader.h
+# 			MDD.h
+# 			RectangleReasoning.h
+# 			SingleAgentICBS.h
+# 			agents_loader.cpp
+# 			compute_heuristic.cpp
+# 			ICBSNode.cpp
+# 			ICBSSearch.cpp
+# 			LLNode.cpp
+# 			map_loader.cpp
+# 			MDD.cpp
+# 			RectangleReasoning.cpp
+# 			SingleAgentICBS.cpp
+# 			ReservationTable.h
+# 			ReservationTable.cpp
+# 			Conflict.h
+# 			Conflict.cpp
+# 			ConstraintTable.cpp
+# 			ConstraintTable.h
+# 			CorridorReasoning.cpp
+# 			CorridorReasoning.h
+# 			egraph_reader.h
+# 			common.h
+# 			common.cpp
+# 			# ../mapVisualiser/Visualiser.h
+# 			# ../mapVisualiser/Visualiser.cpp
+# 			MDDNode.h
+# 			MDDNode.cpp
+# 			ICBSHSearchPairAnalysis.cpp ICBSHSearchPairAnalysis.h Path.h)
 
 
 

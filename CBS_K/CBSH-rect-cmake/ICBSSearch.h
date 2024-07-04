@@ -6,7 +6,7 @@
 #include "ICBSNode.h"
 #include "SingleAgentICBS.h"
 #include "compute_heuristic.h"
-#include "agents_loader.h"
+#include "constrained_agents_loader.h"
 #include "RectangleReasoning.h"
 #include "CorridorReasoning.h"
 #include "ConstraintTable.h"
@@ -16,10 +16,6 @@
 #include <unordered_map>
 //#include <boost/python.hpp>
 #include <fstream>
-
-
-
-
 
 
 class ICBSSearch
@@ -117,7 +113,7 @@ public:
 
 
     ICBSSearch() {};
-    AgentsLoader al;
+    ConstrainedAgentsLoader al;
 
 
 protected:
@@ -146,7 +142,7 @@ protected:
 	vector<vector<PathEntry>*> paths;
 	vector<vector<PathEntry>> paths_found_initially;  // contain initial paths found
 	
-	virtual bool findPathForSingleAgent(ICBSNode*  node, int ag, double lowerbound = 0) {};
+	virtual bool findPathForSingleAgent(ICBSNode*  node, int ag, double lowerbound = 0) {return true;};
 	virtual void  classifyConflicts(ICBSNode &parent) {};
 	void findTargetConflicts(int a1, int a2, ICBSNode& curr);
 
@@ -213,7 +209,7 @@ class MultiMapICBSSearch :public ICBSSearch
 {
 public:
     MultiMapICBSSearch(){};
-	MultiMapICBSSearch(Map * ml, AgentsLoader & al, double f_w, constraint_strategy c, int time_limit, int screen,int kDlay, options options1);	
+	MultiMapICBSSearch(Map * ml, ConstrainedAgentsLoader & al, double f_w, constraint_strategy c, int time_limit, int screen,int kDlay, options options1);	
 	// build MDD
 	MDD<Map>* buildMDD(ICBSNode& node, int id, int k=0, bool train = false);
 	void updateConstraintTable(ICBSNode* cTurr, int agent_id);
@@ -255,7 +251,7 @@ public:
     MultiMapICBSSearch<Map>* analysisEngine = NULL;
     void startPairAnalysis(ICBSNode* node,int agent1, int agent2);
     virtual void clear(){};
-    virtual bool pairedAnalysis(ICBSNode* node,int agent1, int agent2){};
+    virtual bool pairedAnalysis(ICBSNode* node,int agent1, int agent2){return true;};
     void countNodes(int amount);
     void printConstraints(ICBSNode* node,int agent_id,ofstream& out);
     void print_data();

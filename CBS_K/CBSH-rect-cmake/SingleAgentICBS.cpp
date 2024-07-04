@@ -1,5 +1,5 @@
 #include "SingleAgentICBS.h"
-
+#include "constrained_map_loader.h"
 #include <iostream>
 #include <ctime>
 
@@ -59,12 +59,34 @@ void SingleAgentICBS<Map>::updatePath(LLNode* goal, std::vector<PathEntry> &path
 
 }
 
-
-
-
-
-
-
+template<class Map>
+void SingleAgentICBS<Map>::compute_postDelay_heuristics(Path &path)
+{
+    // heuristic is simply number of steps to goal in original path
+    this->ml->set_agent_idx(this->agent_id);
+    // std::cout << "computing heuristics for agent " << instance->agent_idx << std::endl;
+    // my_heuristic.resize((size_t)(ml->rows*ml->cols), hvals(MAX_COST));
+    int value = 0;
+    for (auto ritr = path.rbegin(); ritr != path.rend(); ++ritr )
+    {
+        // std::cout << (*ritr).Loc.location << "-->" << value << std::endl;
+        my_heuristic[(*ritr).Loc] = hvals(value);
+        // if (instance->agent_idx == 12)
+        // {
+        //     std::cout << "h: " << (*ritr).Loc.location << " --> " << my_heuristic[(*ritr).Loc.location] << std::endl;
+        // }
+        value++;
+    }
+    // int index = 0;
+    // start_location.index = 0;
+    // // while we are at it, make sure to change indices
+    // for (auto itr = path.begin(); itr != path.end(); ++itr )
+    // {
+    //     (*itr).Loc.index = index;
+    //     index++;
+    // }
+    // goal_location.index = index;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // return true if a path found (and updates vector<int> path) or false if no path exists
@@ -75,6 +97,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
     // std::cout<<start_location.location<<","<<start_location.index<<std::endl;
     // std::cout<<goal_location.location<<","<<goal_location.index<<std::endl;
 
+    ml->set_agent_idx(agent_id);
 
 	if (constraint_table.is_constrained(start_location.location, 0)) {
 		return false;
@@ -84,8 +107,16 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 	hashtable_t::iterator it;  // will be used for find()
 
+    // std::cout<<"agent "<<agent_id<<", h-start:"<<my_heuristic[start_location].get_hval(start_heading)<<std::endl;
+
+    // std::cout<<"path: "<<ml->postDelayPlan[agent_id].size()<<" ";
+    // for (auto & pe: ml->postDelayPlan[agent_id]){
+    //     std::cout<<pe.Loc.location<<",";
+    // }
+    // std::cout<<std::endl;
+
 	 // generate start and add it to the OPEN list
-	LLNode* start = new LLNode(list<Location>(), 0, my_heuristic[start_location.location].get_hval(start_heading),
+	LLNode* start = new LLNode(list<Location>(), 0, my_heuristic[start_location].get_hval(start_heading),
 	        NULL, 0, 0, false, train);
     
     start->locs.resize(kRobust+1,start_location);
@@ -235,9 +266,9 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
             int next_h_val;
             if (ml->flatland && next_id.location == -1)
-                next_h_val = my_heuristic[start_location.location].get_hval(next_heading) ;
+                next_h_val = my_heuristic[start_location].get_hval(next_heading) ;
             else
-                next_h_val = my_heuristic[next_id.location].get_hval(next_heading);
+                next_h_val = my_heuristic[next_id].get_hval(next_heading);
 
             if (option.shrink)
                 next_h_val = next_h_val + next_locs.size() - 1;
@@ -494,4 +525,4 @@ SingleAgentICBS<Map>::~SingleAgentICBS()
     }
 }
 
-template class SingleAgentICBS<MapLoader>;
+template class SingleAgentICBS<ConstrainedMapLoader>;

@@ -1,5 +1,5 @@
 #include "CorridorReasoning.h"
-
+#include "constrained_map_loader.h"
 
 bool validMove(int curr, int next, int map_cols, int map_size)
 {
@@ -106,6 +106,7 @@ template<class Map>
         int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, int> blocked, Map* my_map, int num_col, int map_size,
                                                     ConstraintTable& constraint_table, int upper_bound,SingleAgentICBS<Map>* solver, int start_heading, int end_heading, int k)
 {
+	solver->ml->set_agent_idx(solver->agent_id);
 	int length = INT_MAX;
 	// // generate a heap that can save nodes (and a open_handle)
 	// boost::heap::fibonacci_heap< LLNode*, boost::heap::compare<LLNode::compare_node> > heap;
@@ -284,4 +285,4 @@ bool isConstrained(int curr_id, int next_id, int next_timestep, const std::vecto
 	}
 	return false;
 };
-template class CorridorReasoning<MapLoader>;
+template class CorridorReasoning<ConstrainedMapLoader>;

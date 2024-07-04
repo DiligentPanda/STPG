@@ -51,6 +51,6 @@ class MapLoader
   int getDegree(int loc);
   bool notCorner(int loc);
 
-    bool isFullyBlocked(int start, int end);//check does map block entire area from start to end;
+  bool isFullyBlocked(int start, int end);//check does map block entire area from start to end;
   ~MapLoader();
 };

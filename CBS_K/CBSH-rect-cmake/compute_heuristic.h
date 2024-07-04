@@ -26,7 +26,7 @@ class ComputeHeuristic
  
  bool validMove(int curr, int next) const;
 
- void getHVals(vector<hvals>& res,int limit = INT_MAX);
+ void getHVals(int agent_idx,vector<hvals>& res,int limit = INT_MAX);
 
 
   ~ComputeHeuristic();

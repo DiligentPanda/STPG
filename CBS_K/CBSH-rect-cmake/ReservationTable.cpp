@@ -1,12 +1,12 @@
 #include "ReservationTable.h"
 #include <iostream>
 
-ReservationTable::ReservationTable(int mapSize,AgentsLoader* agentsLoader) {
+ReservationTable::ReservationTable(int mapSize, ConstrainedAgentsLoader* agentsLoader) {
 	res_table = map_table(mapSize);
 	this->agentsLoader = agentsLoader;
 }
 
-ReservationTable::ReservationTable(int mapSize, vector<vector<PathEntry>*>* paths,AgentsLoader* agentsLoader, int exclude) {
+ReservationTable::ReservationTable(int mapSize, vector<vector<PathEntry>*>* paths, ConstrainedAgentsLoader* agentsLoader, int exclude) {
 
 	res_table = map_table(mapSize);
 	this->agentsLoader = agentsLoader;

@@ -9,6 +9,7 @@
 #include <fstream>
 #include "MDDNode.h"
 #include "common.h"
+#include "constrained_map_loader.h"
 
 class MDDEmpty {
 public:
@@ -22,11 +23,11 @@ public:
 		int loc2_y = loc2 % map_cols;
 		return std::abs(loc1_x - loc2_x) + std::abs(loc1_y - loc2_y);
 	}
-	virtual bool buildMDD( ConstraintTable& constraint_table,
-		int numOfLevels, SingleAgentICBS<MapLoader>& solver, bool train) {return true;};
+	virtual bool buildMDD(ConstraintTable& constraint_table,
+		int numOfLevels, SingleAgentICBS<ConstrainedMapLoader>& solver, bool train) {return true;};
     virtual bool getOccupations(list<Location>& next_locs, int next_id, MDDNode* curr, int k){ return true;};
 	
-	virtual MDDNode* find(list<int> locs, int level) {};
+	virtual MDDNode* find(list<int> locs, int level) {return nullptr;};
 	virtual void deleteNode(MDDNode* node) {};
 	virtual void clear() {};
 	virtual void print() {};

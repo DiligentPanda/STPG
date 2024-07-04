@@ -7,32 +7,19 @@
 #include <memory>
 #include <tuple>
 #include <utility>
+#include "nlohmann/json.hpp"
 
 using namespace boost;
 using namespace std;
 
-namespace ConstrainedGraph {
+using json=nlohmann::json;
 
 vector<pair<Location, int>> ConstrainedMapLoader::get_transitions(Location loc, int heading, int noWait) const {
-    // vector<pair<int, int>> transitions;
-    // int moveRange = 5;
-
-    // for (int direction = 0; direction < moveRange; direction++)
-    // {
-    //     pair<int, int> move;
-    //     int next_loc = loc + moves_offset[direction];
-    //     move.first = next_loc;
-    //     move.second = -1; //-1 means no heading
-    //     if (validMove(loc, next_loc) && !my_map[next_loc])
-    //     {
-    //         transitions.push_back(move);
-
-    //     }
-
-    // }
-
-    // return transitions;
-
+  vector<pair<Location, int>> transitions;
+  for (auto &p: cgGraphMaps[agent_idx].at(loc)) {
+    transitions.emplace_back(p, -1);
+  }
+  return transitions;
 }
 
 // <coordinates>
@@ -107,13 +94,21 @@ std::shared_ptr<_Paths> parse_soln(const string & fileName) {
 
 
 ConstrainedMapLoader::ConstrainedMapLoader(
-  const string& map_fp, 
-  const std::string & scen_fp,
+  const std::string & map_fp, 
   const std::string & path_fp,
-  const std::vector<int> & states,
-  const std::vector<int> & delay_steps
+  const std::string & sit_fp
 ):MapLoader(map_fp) {
+
+    // read in states and delay steps
+    std::ifstream in(sit_fp);
+    json data=json::parse(in);
+
+    vector<int> states=data.at("states").get<vector<int> >();
+    vector<int> delay_steps=data.at("delay_steps").get<vector<int> >();
+
     int num_of_agents=(int) states.size();
+
+    postDelayPlan.resize(num_of_agents);
 
     auto compressed_paths_ptr = parse_soln(path_fp.c_str());
 
@@ -124,21 +119,21 @@ ConstrainedMapLoader::ConstrainedMapLoader(
         int delay_step = delay_steps[a];
         
         int idx=0;
-		for (int k=0;k<delay_step;k++)
-		{
-			int location=compressed_path[start].first.first*cols+compressed_path[start].first.second;
-			Location loc(location, idx);
-			postDelayPlan[a].emplace_back(loc);
-			++idx;
-		}
+        for (int k=0;k<delay_step;k++)
+        {
+          int location=compressed_path[start].first.first*cols+compressed_path[start].first.second;
+          Location loc(location, idx);
+          postDelayPlan[a].emplace_back(loc);
+          ++idx;
+        }
 
         for (int j = start; j < compressed_path.size(); j++)
-		{
-			int location=compressed_path[j].first.first*cols+compressed_path[j].first.second;
-			Location loc(location, idx);
-			postDelayPlan[a].emplace_back(loc);
-			++idx;
-		}
+        {
+          int location=compressed_path[j].first.first*cols+compressed_path[j].first.second;
+          Location loc(location, idx);
+          postDelayPlan[a].emplace_back(loc);
+          ++idx;
+        }
     }
 
     cgGraphMaps.resize(num_of_agents, {});
@@ -149,14 +144,13 @@ ConstrainedMapLoader::ConstrainedMapLoader(
       for (int k = 0; k < postDelayPlan[a].size(); k++)
       {
         Location curr = postDelayPlan[a][k].Loc;
-        if ( postDelayPlan[a].back().Loc.index > (curr.index ) ) {
-                  cgGraphMaps[a].insert({curr, {postDelayPlan[a][curr.index + 1].Loc, curr}});
+        if ( postDelayPlan[a].size()-1 > (curr.index ) ) {
+          cgGraphMaps[a].insert({curr, {postDelayPlan[a][curr.index + 1].Loc, curr}});
+        } else if (curr.index <= delay_steps[a]) {
+          cgGraphMaps[a].insert({curr, {postDelayPlan[a][curr.index + 1].Loc}});
         } else {
           cgGraphMaps[a].insert({curr, {curr}});
         }
       }
     }
 }
-
-
-};
