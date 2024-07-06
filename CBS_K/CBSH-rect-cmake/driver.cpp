@@ -19,6 +19,10 @@
 #include<boost/tokenizer.hpp>
 #include <chrono>
 
+#include "nlohmann/json.hpp"
+
+using json=nlohmann::json;
+
 int main(int argc, char** argv) 
 {
 	namespace po = boost::program_options;
@@ -35,7 +39,7 @@ int main(int argc, char** argv)
 		("path_fp", po::value<std::string>()->required(), "input file for map")
 		("sit_fp", po::value<std::string>()->required(), "input file for map")
 		// ("agents,a", po::value<std::string>()->required(), "input file for agents")
-		("output,o", po::value<std::string>()->required(), "output file for schedule")
+		// ("output,o", po::value<std::string>()->required(), "output file for schedule")
 		("solver,s", po::value<std::string>()->required(), "solvers (CBS, ICBS, CBSH, CBSH-CR, CBSH-R, CBSH-RM, CBSH-GR")
 		// ("agentNum,k", po::value<int>()->default_value(0), "number of agents")
 		("cutoffTime,t", po::value<float>()->default_value(7200), "cutoff time (seconds)")
@@ -60,6 +64,7 @@ int main(int argc, char** argv)
 		("writePath",po::value<std::string>()->default_value(""),"the path of a file to write paths")
 		("exitOnNoSolution",po::value<bool>()->default_value(false),"if there is no solution, return -1")
 		("f_w",po::value<float>()->default_value(1.0),"suboptimal factor>=1.0")
+		("stat_ofp", po::value<std::string>()->required(), "output file for statistics")
 
             ;
 
@@ -76,16 +81,20 @@ int main(int argc, char** argv)
 	int max_k = vm["kDelay"].as<int>();
 	bool diff_k = vm.count("diff-k");
 
+	int time_limit=vm["cutoffTime"].as<float>();
+	string map_fp=vm["map_fp"].as<string>();
+	string path_fp=vm["path_fp"].as<string>();
+	string sit_fp=vm["sit_fp"].as<string>();
+
 	if (vm["screen"].as<int>() == 2) {
 		cout << "[CBS] Loading map and agents " << endl;
 	}
 
-	
 	// read the map file and construct its two-dim array
 	ConstrainedMapLoader* ml = new ConstrainedMapLoader(
-		vm["map_fp"].as<string>(),
-		vm["path_fp"].as<string>(),
-		vm["sit_fp"].as<string>()
+		map_fp,
+		path_fp,
+		sit_fp
 	);
 
 	// read agents' start and goal locations
@@ -162,18 +171,81 @@ int main(int argc, char** argv)
         icbs.analysisOutput<<"["<<endl;
     }
 	
+
+	string stat_ofp=vm["stat_ofp"].as<string>();
+	json stats;
+
+	// basic information
+	stats["algo"]="ccbs";
+	// useless
+	stats["branch_order"]="largest_diff";
+	stats["grouping_method"]="all";
+	stats["heuristic"]="wcg_greedy";
+	stats["early_termination"]=true;
+	stats["incremental"]=true;
+	stats["w_astar"]=1.0;
+	stats["w_focal"]=1.0;
+	stats["horizon"]=-1;
+	stats["random_seed"]=0;
+	stats["time_limit"]=time_limit*1000000; // in micro-seconds
+	stats["path_fp"]=path_fp;
+	stats["sit_fp"]=sit_fp;
+
+	// default status
+	stats["status"]="Fail";
+	stats["search_time"]=time_limit*1000000; // in micro-seconds
+	stats["total_time"]=time_limit*1000000; // in micro-seconds
+	stats["original_cost"]=nullptr;
+	// implication: fail to replan, just use the original one
+	stats["cost"]=nullptr;
+	stats["explored_node"]=nullptr;
+	stats["pruned_node"]=nullptr;
+	stats["added_node"]=nullptr;
+	stats["vertex"]=nullptr;
+	stats["sw_edge"]=nullptr;
+	stats["extra_heuristic_time"]=nullptr;
+	stats["heuristic_time"]=nullptr;
+	stats["branch_time"]=nullptr;
+	stats["sort_time"]=nullptr;
+	stats["priority_queue_time"]=nullptr;
+	stats["copy_free_graphs_time"]=nullptr;
+	stats["termination_time"]=nullptr;
+	stats["dfs_time"]=nullptr;
+	stats["grouping_time"]=nullptr;
+	stats["group"]=nullptr;
+	stats["group_merge_edge"]=nullptr;
+	stats["group_size_max"]=nullptr;
+	stats["group_size_min"]=nullptr;
+	stats["group_size_avg"]=nullptr;
+	
+	std::ofstream out(stat_ofp);
+	out<<stats.dump(4)<<std::endl;
+	out.close();
+	
 	bool res;
 	res = icbs.runICBSSearch();
 
-	if (!res && vm["exitOnNoSolution"].as<bool>()) {
+	if (!res) {
 		if (icbs.isTimeout()) {
+			stats["status"]="Timeout";
 			cout<<"Solution not found. Timeout: "<<vm["cutoffTime"].as<float>()<<" seconds"<<std::endl;
 		}
-		else if (!res) {
+		else {
 			cout<<"Solution not found. No Solution?"<<std::endl;
 		}
-		return -1;
+		if (vm["exitOnNoSolution"].as<bool>())
+			return -1;
+	} else {
+		// update cost
+		stats["status"]="Succ";
+		stats["cost"]=icbs.solution_cost;
+		stats["search_time"]=icbs.runtime;
+		stats["total_time"]=icbs.runtime;
 	}
+
+	out.open(stat_ofp);
+	out<<stats.dump(4)<<std::endl;
+	out.close();
 
 	bool validTrain = true;
 	if (vm["screen"].as<int>() >= 1) {
@@ -217,6 +289,8 @@ int main(int argc, char** argv)
 
     if (vm["screen"].as<int>() == 2)
 		cout << "Done!!" << endl;
+
+	delete ml;
 	return 0;
 
 }

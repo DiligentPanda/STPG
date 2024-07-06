@@ -15,8 +15,16 @@ class ConstrainedMapLoader: public MapLoader
 {
  public:
   int agent_idx=-1;
-  std::vector<boost::unordered_map<Location, list<Location>, std::hash<Location>>> cgGraphMaps;
+  // the delayed plan
+  std::vector<int> states;
+  std::vector<int> delay_steps;
   std::vector<Path> postDelayPlan;
+  bool use_icg=true;
+  // CG
+  std::vector<boost::unordered_map<Location, list<Location>, std::hash<Location>>> cgGraphMaps;
+  // ICG
+  std::vector<Location> rep_points_;
+  std::vector<boost::unordered_map<Location, list<Location>, std::hash<Location>>> icgGraphMaps;
 
   ConstrainedMapLoader(
     const std::string & map_fp, 
@@ -30,4 +38,8 @@ class ConstrainedMapLoader: public MapLoader
 	void set_agent_idx(int _agent_idx) {agent_idx=_agent_idx;}
   std::vector<std::pair<Location, int>> get_transitions(Location loc, int heading, int noWait) const;
   
+	void calcRepresentativePoints();
+	void fillicgGraphMap();
+	void fillcgGraphMap();
+
 };

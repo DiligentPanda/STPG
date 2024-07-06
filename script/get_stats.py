@@ -78,8 +78,11 @@ milp_setting2=["milp","default","simple","zero","true","true",1.0]
 milp_setting1=["milp","default","all","zero","true","true",1.0]        
 old_setting=["search","default","simple","zero","true","true",1.0]
 new_setting=["search","largest_diff","all","wcg_greedy","true","true",1.0]
-        
+
 settings=[old_setting,new_setting,milp_setting1,milp_setting2]
+
+ccbs_setting=["ccbs","largest_diff","all","wcg_greedy","true","true",1.0]
+settings=[ccbs_setting]  
 # settings=[]
 # for algo in algos:
 #     for branch_order in branch_orders:
@@ -128,6 +131,8 @@ for idx in range(len(path_list)):
             data.append(datum)
 
 df=pd.DataFrame(data,columns=headers)
+
+print(df)
 
 for column in df.columns:
     if column.find("time")!=-1:
