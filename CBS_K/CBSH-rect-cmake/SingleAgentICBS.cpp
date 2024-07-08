@@ -70,7 +70,11 @@ void SingleAgentICBS<Map>::compute_postDelay_heuristics(Path &path)
     for (auto ritr = path.rbegin(); ritr != path.rend(); ++ritr )
     {
         // std::cout << (*ritr).Loc.location << "-->" << value << std::endl;
-        my_heuristic[(*ritr).Loc] = hvals(value);
+        my_heuristic[ritr->Loc] = hvals(value);
+
+        // only record the last one.
+        if (my_heuristic_i.find(ritr->Loc.location) == my_heuristic_i.end())
+            my_heuristic_i[ritr->Loc.location] = hvals(value);
         // if (instance->agent_idx == 12)
         // {
         //     std::cout << "h: " << (*ritr).Loc.location << " --> " << my_heuristic[(*ritr).Loc.location] << std::endl;

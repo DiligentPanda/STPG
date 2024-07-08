@@ -46,6 +46,7 @@ public:
 	int map_size;
 	int num_col;
 	unordered_map<Location,hvals> my_heuristic;  // this is the precomputed heuristic for this agent
+	unordered_map<int,hvals> my_heuristic_i;
 
 	int kRobust;
 
