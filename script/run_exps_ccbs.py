@@ -5,12 +5,12 @@ import pandas as pd
 import subprocess
 
 exe_path="./CBS_K/build/CBSH-rect-cmake/CBS-K"
-root_folder="data/benchmark/test_PBS2_delay_p01"
+root_folder="data/benchmark/test_PBS2_delay_p002"
 map_folder="data/map"
 path_folder=os.path.join(root_folder,"path")
 sit_folder=os.path.join(root_folder,"sit")
 file_names_fp=os.path.join(root_folder,"path_file_names.csv")
-exp_desc="exp_comparison_p01_ccbs" # describe the experiments
+exp_desc="exp_comparison_p002_ccbs_add_corridor" # describe the experiments
 
 timestamp=time.strftime("%Y_%m_%d_%H_%M_%S")
 exp_name="{}_{}".format(timestamp,exp_desc)
@@ -160,7 +160,7 @@ for map_name,setting in maps.items():
             # we only require 1-robust, so --kDelay 1
             cmd = f"ulimit -Sv {MAX_VIRTUAL_MEMORY} &&" \
                 f" {exe_path} --map_fp {map_file_path} --path_fp {path_file_path} --sit_fp {sit_file_path}" \
-                f" -s CBSH-RM -t {time_limit} --kDelay 1 --target True --no-train-classify --ignore-train --stat_ofp {stat_ofp}" 
+                f" -s CBSH-RM -t {time_limit} --kDelay 1 --target True --corridor True --no-train-classify --ignore-train --stat_ofp {stat_ofp}" 
                 
             cmds.append(cmd)
             

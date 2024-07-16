@@ -82,7 +82,17 @@ new_setting=["search","largest_diff","all","wcg_greedy","true","true",1.0]
 settings=[old_setting,new_setting,milp_setting1,milp_setting2]
 
 ccbs_setting=["ccbs","largest_diff","all","wcg_greedy","true","true",1.0]
-settings=[ccbs_setting]  
+settings=[ccbs_setting] + settings
+
+print("here",len(settings))
+
+# oldest_setting1=["search","default","none","zero","true","false",1.0]
+# oldest_setting2=["search","default","none","zero","true","true",1.0]
+# oldest_setting3=["search","default","simple","zero","true","false",1.0]
+        
+# oldest_settings=[oldest_setting1,oldest_setting2,oldest_setting3]
+
+
 # settings=[]
 # for algo in algos:
 #     for branch_order in branch_orders:
@@ -132,7 +142,7 @@ for idx in range(len(path_list)):
 
 df=pd.DataFrame(data,columns=headers)
 
-print(df)
+print(df.head(10))
 
 for column in df.columns:
     if column.find("time")!=-1:
@@ -142,7 +152,6 @@ df["status"]=df["status"].apply(lambda x: 1 if x=="Succ" else 0)
         
 if only_all_solved:
     d=df.groupby(by=["map_name","agent_num","instance_idx","sit_idx"])
-    print(only_all_solved,d["status"].sum())
     selected=(d["status"].sum()==len(settings)).reset_index(name='selected')
     df=df.merge(selected,on=["map_name","agent_num","instance_idx","sit_idx"],how="inner")
     df = df[df["selected"]].drop("selected",axis=1)
@@ -154,7 +163,7 @@ if group_agent_num:
     grouping_keys.remove("agent_num")
 
 summary=df.groupby(by=grouping_keys).mean().reset_index()
-print(summary)
+# print(summary)
 summary.to_csv(stat_summary_ofp)
 
 print(df.groupby(by=grouping_keys)["total_time"].quantile([0.4,0.6]))

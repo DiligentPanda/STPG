@@ -1,9 +1,9 @@
 result_csv="output/0709_exp_comparison_p002_all/stats_all.csv"
 # map_names = ["lak303d"]#,"lak303d"]
 # map_labels = ["lak303d"]#, "lak303d (37-45 agents)"]
-map_names = ["random-32-32-10"]#,"lak303d"]
-map_labels = ["random-32-32-10"]#, "lak303d (37-45 agents)"]
-output_fp="analysis/temp/0709_compare/success_rates_{}_p03.png".format(map_labels[0])
+map_names = ["warehouse-10-20-10-2-1"]#,"lak303d"]
+map_labels = ["warehouse-10-20-10-2-1"]#, "lak303d (37-45 agents)"]
+output_fp="analysis/temp/0709_compare/success_rates_{}_p002.png".format(map_labels[0])
 
 import matplotlib.pyplot as plt
 import matplotlib
@@ -13,16 +13,16 @@ df = pd.read_csv(result_csv,index_col="index")
 
 headers=["algo","branch_order","grouping_method","heuristic","incremental","w_focal","agent_num"]
 algorithms={
-    "ccbs (70)": ["ccbs", "largest_diff", "all", "wcg_greedy", True, 1.0, 70],
-    "milp + simple g (70)": ["milp", "default","simple","zero",True,1.0,70],
-    "milp + all g (70)": ["milp", "default","all","zero",True,1.0,70],
-    "search default* (70)": ["search", "default","simple","zero",True,1.0,70],
-    "search best (70)": ["search", "largest_diff","all","wcg_greedy",True,1.0,70],
-    "ccbs (100)": ["ccbs", "largest_diff", "all", "wcg_greedy", True, 1.0, 100],
-    "milp + simple g (100)": ["milp", "default","simple","zero",True,1.0,100],
-    "milp + all g (100)": ["milp", "default","all","zero",True,1.0,100],
-    "search default* (100)": ["search", "default","simple","zero",True,1.0,100],
-    "search best (100)": ["search", "largest_diff","all","wcg_greedy",True,1.0,100],
+    "ccbs (120)": ["ccbs", "largest_diff", "all", "wcg_greedy", True, 1.0, 120],
+    "milp + simple g (120)": ["milp", "default","simple","zero",True,1.0,120],
+    "milp + all g (120)": ["milp", "default","all","zero",True,1.0,120],
+    "search default* (120)": ["search", "default","simple","zero",True,1.0,120],
+    "search best (120)": ["search", "largest_diff","all","wcg_greedy",True,1.0,120],
+    "ccbs (150)": ["ccbs", "largest_diff", "all", "wcg_greedy", True, 1.0, 150],
+    "milp + simple g (150)": ["milp", "default","simple","zero",True,1.0,150],
+    "milp + all g (150)": ["milp", "default","all","zero",True,1.0,150],
+    "search default* (150)": ["search", "default","simple","zero",True,1.0,150],
+    "search best (150)": ["search", "largest_diff","all","wcg_greedy",True,1.0,150],
 }
 
 plt.rcParams.update({'font.size': 15})
@@ -60,7 +60,7 @@ for map_name in map_names:
         else:
             marker="o"
         
-        if name.find("70")!=-1:
+        if name.find("120")!=-1:
             color='r'
         else:
             color='b'
