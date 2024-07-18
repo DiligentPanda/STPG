@@ -5,12 +5,12 @@ import pandas as pd
 import subprocess
 
 exe_path="./build/generate"
-root_folder="data/benchmark/test_PBS2_delay_p002"
+root_folder="data/benchmark/test_PBS2_delay_p03"
 path_folder=os.path.join(root_folder,"path")
 file_names_fp=os.path.join(root_folder,"path_file_names.csv")
 output_folder=root_folder
 
-delay_prob=0.002
+delay_prob=0.03
 delay_steps_low=10
 delay_steps_high=20
 time_limit=90

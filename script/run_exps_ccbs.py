@@ -5,12 +5,12 @@ import pandas as pd
 import subprocess
 
 exe_path="./CBS_K/build/CBSH-rect-cmake/CBS-K"
-root_folder="data/benchmark/test_PBS2_delay_p002"
+root_folder="data/benchmark/test_PBS2_delay_p03"
 map_folder="data/map"
 path_folder=os.path.join(root_folder,"path")
 sit_folder=os.path.join(root_folder,"sit")
 file_names_fp=os.path.join(root_folder,"path_file_names.csv")
-exp_desc="exp_comparison_p002_ccbs_add_corridor" # describe the experiments
+exp_desc="exp_comparison_p03_ccbs" # describe the experiments
 
 timestamp=time.strftime("%Y_%m_%d_%H_%M_%S")
 exp_name="{}_{}".format(timestamp,exp_desc)

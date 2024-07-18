@@ -1,11 +1,12 @@
 import os
 import shutil
 import pandas as pd
+import subprocess
 
-output_folder="output/0709_exp_comparison_p03_all"
+output_folder="output/0717_exp_comparison_p002"
 input_folders = [
-    "output/2024_06_05_12_49_41_exp_comparison_p03",
-    "output/2024_07_07_23_34_27_exp_comparison_p03_ccbs_add_corridor"
+    "output/2024_07_17_18_38_01_paper_exp_comparison_p002",
+    "output/2024_07_18_00_35_41_exp_comparison_p002_ccbs"
 ]
 
 dfs=[]
@@ -24,3 +25,5 @@ for input_folder in input_folders:
 df=pd.concat(dfs, axis=0, ignore_index=True).drop_duplicates().reset_index()
 
 df.to_csv(os.path.join(output_folder,"path_file_names.csv"),index_label="index")
+
+subprocess.check_output(f"python script/get_stats.py -f {output_folder} -a", shell=True) 

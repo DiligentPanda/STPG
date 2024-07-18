@@ -75,16 +75,17 @@ path_list=pd.read_csv(path_list_fp,index_col="index")
 # print(path_list)
 
 milp_setting2=["milp","default","simple","zero","true","true",1.0]           
-milp_setting1=["milp","default","all","zero","true","true",1.0]        
-old_setting=["search","default","simple","zero","true","true",1.0]
+# milp_setting1=["milp","default","all","zero","true","true",1.0]        
+#old_setting=["search","default","simple","zero","true","true",1.0]
 new_setting=["search","largest_diff","all","wcg_greedy","true","true",1.0]
 
-settings=[old_setting,new_setting,milp_setting1,milp_setting2]
+oldest_setting1=["search","default","none","zero","true","false",1.0]
+# oldest_setting2=["search","default","none","zero","true","true",1.0]
+# oldest_setting3=["search","default","simple","zero","true","false",1.0]
 
 ccbs_setting=["ccbs","largest_diff","all","wcg_greedy","true","true",1.0]
-settings=[ccbs_setting] + settings
-
-print("here",len(settings))
+        
+settings=[oldest_setting1,new_setting,milp_setting2,ccbs_setting]
 
 # oldest_setting1=["search","default","none","zero","true","false",1.0]
 # oldest_setting2=["search","default","none","zero","true","true",1.0]

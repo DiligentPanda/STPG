@@ -5,11 +5,11 @@ import pandas as pd
 import subprocess
 
 exe_path="./build/simulate"
-root_folder="data/benchmark/test_PBS2_delay_p01"
+root_folder="data/benchmark/test_PBS2_delay_p002"
 path_folder=os.path.join(root_folder,"path")
 sit_folder=os.path.join(root_folder,"sit")
 file_names_fp=os.path.join(root_folder,"path_file_names.csv")
-exp_desc="exp_comparison_p01_oldest" # describe the experiments
+exp_desc="paper_exp_comparison_p002" # describe the experiments
 
 timestamp=time.strftime("%Y_%m_%d_%H_%M_%S")
 exp_name="{}_{}".format(timestamp,exp_desc)
@@ -109,15 +109,15 @@ def run(cmd,output_name):
         log_fail(output_name,exception=traceback.format_exc())
 
 milp_setting2=["milp","default","simple","zero","true","true",1.0]           
-milp_setting1=["milp","default","all","zero","true","true",1.0]        
-old_setting=["search","default","simple","zero","true","true",1.0]
+# milp_setting1=["milp","default","all","zero","true","true",1.0]        
+#old_setting=["search","default","simple","zero","true","true",1.0]
 new_setting=["search","largest_diff","all","wcg_greedy","true","true",1.0]
 
 oldest_setting1=["search","default","none","zero","true","false",1.0]
-oldest_setting2=["search","default","none","zero","true","true",1.0]
-oldest_setting3=["search","default","simple","zero","true","false",1.0]
+# oldest_setting2=["search","default","none","zero","true","true",1.0]
+# oldest_setting3=["search","default","simple","zero","true","false",1.0]
         
-settings=[oldest_setting1,oldest_setting2,oldest_setting3]
+settings=[oldest_setting1,new_setting,milp_setting2]
 #settings=[old_setting,new_setting,milp_setting1,milp_setting2]
 # settings=[]
 # for algo in algos:

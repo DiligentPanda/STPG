@@ -24,10 +24,10 @@ instance_idxs=list(range(1,25+1)) # this is the number provided by the benchmark
 
 # setting: [agent_num_start, agent_num_end, agent_num_step, max_process_num]
 maps = {
-        # "random-32-32-10":[65,150,5,32],
-        "warehouse-10-20-10-2-1":[120,150,10,32],
+        "random-32-32-10":[60,60,5,32],
+        "warehouse-10-20-10-2-1":[110,110,10,32],
         # "Paris_1_256": [250,300,10,32],
-        # "lak303d": [129,169,4,32]
+        "lak303d": [41,41,4,32]
        }
 
 # Maximal virtual memory for subprocesses (in bytes).
