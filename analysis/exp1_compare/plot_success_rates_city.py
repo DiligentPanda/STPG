@@ -1,36 +1,39 @@
-result_csv="output/0709_exp_comparison_p002_all/stats_all.csv"
-# map_names = ["lak303d"]#,"lak303d"]
-# map_labels = ["lak303d"]#, "lak303d (37-45 agents)"]
-map_names = ["Paris_1_256"]#,"lak303d"]
-map_labels = ["Paris_1_256"]#, "lak303d (37-45 agents)
-output_fp="analysis/temp/0709_compare/success_rates_{}_p002.png".format(map_labels[0])
-
 import matplotlib.pyplot as plt
-import matplotlib
+import matplotlib as mpl
 import pandas as pd
+import os
 
-df = pd.read_csv(result_csv,index_col="index")
 
-headers=["algo","branch_order","grouping_method","heuristic","incremental","w_focal","agent_num"]
-algorithms={
-    "ccbs (120)": ["ccbs", "largest_diff", "all", "wcg_greedy", True, 1.0, 120],
-    "milp + simple g (120)": ["milp", "default","simple","zero",True,1.0,120],
-    "milp + all g (120)": ["milp", "default","all","zero",True,1.0,120],
-    "search default* (120)": ["search", "default","simple","zero",True,1.0,120],
-    "search best (120)": ["search", "largest_diff","all","wcg_greedy",True,1.0,120],
-    "ccbs (180)": ["ccbs", "largest_diff", "all", "wcg_greedy", True, 1.0, 180],
-    "milp + simple g (180)": ["milp", "default","simple","zero",True,1.0,180],
-    "milp + all g (180)": ["milp", "default","all","zero",True,1.0,180],
-    "search default* (180)": ["search", "default","simple","zero",True,1.0,180],
-    "search best (180)": ["search", "largest_diff","all","wcg_greedy",True,1.0,180],
-}
+cmap=mpl.colormaps["Set1"]
 
-plt.rcParams.update({'font.size': 15})
-fig1, ax1=plt.subplots(figsize=(10,6))
+for prob in ["002","01","03"]:
+    result_csv=f"output/baseline_comparison_0717/0717_exp_comparison_p{prob}/stats_all.csv"
+    map_name = "Paris_1_256"
+    map_label = "City"
+    output_fp = f"analysis/temp/baseline_comparison_0717/success_rates_{map_label}_p{prob}.png"
+    
+    output_folder = os.path.split(output_fp)[0]
+    os.makedirs(output_folder,exist_ok=True)
 
-time_limits=[0.125,0.25,0.5,1.0,2.0,4.0,8.0,16.0]
+    df = pd.read_csv(result_csv,index_col="index")
 
-for map_name in map_names:
+    headers=["algo","branch_order","grouping_method","heuristic","incremental","w_focal","agent_num"]
+    algorithms={
+        "CCBS (120)": ["ccbs", "largest_diff", "all", "wcg_greedy", True, 1.0, 120],
+        "MILP (120)": ["milp", "default","simple","zero",True,1.0,120],
+        "GBS  (120)": ["search", "default","none","zero",False,1.0,120],
+        "EGBS (120)": ["search", "largest_diff","all","wcg_greedy",True,1.0,120],
+        "CCBS (200)": ["ccbs", "largest_diff", "all", "wcg_greedy", True, 1.0, 200],
+        "MILP (200)": ["milp", "default","simple","zero",True,1.0,200],
+        "GBS  (200)": ["search", "default","none","zero",False,1.0,200],
+        "EGBS (200)": ["search", "largest_diff","all","wcg_greedy",True,1.0,200],
+    }
+
+    plt.rcParams.update({'font.size': 15})
+    fig1, ax1=plt.subplots(figsize=(10,6))
+
+    time_limits=[0.5,1.0,2.0,4.0,8.0,16.0]
+
     df1 = df[(df["map_name"]==map_name)] # & (df["agent_num"]==110)]
     success_rates={}
     for name, settings in algorithms.items():
@@ -50,38 +53,35 @@ for map_name in map_names:
     for name, success_rates in success_rates.items():
         # label = "{} on {}".format(name,map_labels[map_names.index(map_name)])
         label = name
-        if name.find("milp")!=-1:
-            linestyle='--'
-        else:
-            linestyle="-"
-            
-        if name.find("simple")!=-1 or name.find("default")!=-1:
-            marker='x'
-        else:
-            marker="o"
-        
         if name.find("120")!=-1:
-            color='r'
+            color=cmap(0)
+            linestyle="-"
         else:
-            color='b'
+            color=cmap(1)
+            linestyle="--"
         
-        if name.find("ccbs")!=-1:
-            marker='v'
-            linestyle=":"
+        markers={
+            "GBS": "o",
+            "CCBS": "s",
+            "MILP": "d",
+            "EGBS": "^",
+        }
+        
+        marker=markers[name.split()[0]]
         
         plt.plot(time_limits,success_rates,label=label,marker=marker,linestyle=linestyle,color=color)
-    
-plt.xscale("log")
-plt.xticks(time_limits)    
-ax1.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
-ax1.get_xaxis().set_tick_params(which='minor', size=0)
-ax1.get_xaxis().set_tick_params(which='minor', width=0) 
+        
+    plt.xscale("log")
+    plt.xticks(time_limits)    
+    ax1.get_xaxis().set_major_formatter(mpl.ticker.ScalarFormatter())
+    ax1.get_xaxis().set_tick_params(which='minor', size=0)
+    ax1.get_xaxis().set_tick_params(which='minor', width=0) 
 
-plt.legend()
-plt.title("{}".format(map_labels[0]))
-plt.xlabel("Time Limit (s)")
-plt.ylabel("Success Rate")
-plt.xlim(0,17)
-plt.ylim(-0.1,1.1)
+    plt.legend(fontsize=12)
+    plt.title("{}".format(map_label))
+    plt.xlabel("Time Limit (s)")
+    plt.ylabel("Success Rate")
+    plt.xlim(0,17)
+    plt.ylim(-0.1,1.1)
 
-plt.savefig(output_fp, bbox_inches='tight', dpi=300)
+    plt.savefig(output_fp, bbox_inches='tight', dpi=300)
