@@ -5,6 +5,7 @@ import os
 
 
 cmap=mpl.colormaps["Set1"]
+ignore_num_agents = True
 
 for prob in ["002","01","03"]:
     result_csv=f"output/baseline_comparison_0717/0717_exp_comparison_p{prob}/stats_all.csv"
@@ -17,20 +18,29 @@ for prob in ["002","01","03"]:
 
     df = pd.read_csv(result_csv,index_col="index")
 
-    headers=["algo","branch_order","grouping_method","heuristic","incremental","w_focal","agent_num"]
-    algorithms={
-        "CCBS (120)": ["ccbs", "largest_diff", "all", "wcg_greedy", True, 1.0, 120],
-        "MILP (120)": ["milp", "default","simple","zero",True,1.0,120],
-        "GBS  (120)": ["search", "default","none","zero",False,1.0,120],
-        "EGBS (120)": ["search", "largest_diff","all","wcg_greedy",True,1.0,120],
-        "CCBS (200)": ["ccbs", "largest_diff", "all", "wcg_greedy", True, 1.0, 200],
-        "MILP (200)": ["milp", "default","simple","zero",True,1.0,200],
-        "GBS  (200)": ["search", "default","none","zero",False,1.0,200],
-        "EGBS (200)": ["search", "largest_diff","all","wcg_greedy",True,1.0,200],
-    }
+    if ignore_num_agents:
+        headers=["algo","branch_order","grouping_method","heuristic","incremental","w_focal"]
+        algorithms={
+            "CCBS": ["ccbs", "largest_diff", "all", "wcg_greedy", True, 1.0],
+            "MILP": ["milp", "default","simple","zero",True,1.0],
+            "GBS": ["search", "default","none","zero",False,1.0],
+            "EGBS": ["search", "largest_diff","all","wcg_greedy",True,1.0],
+        }  
+    else:
+        headers=["algo","branch_order","grouping_method","heuristic","incremental","w_focal","agent_num"]
+        algorithms={
+            "CCBS (120)": ["ccbs", "largest_diff", "all", "wcg_greedy", True, 1.0, 120],
+            "MILP (120)": ["milp", "default","simple","zero",True,1.0,120],
+            "GBS  (120)": ["search", "default","none","zero",False,1.0,120],
+            "EGBS (120)": ["search", "largest_diff","all","wcg_greedy",True,1.0,120],
+            "CCBS (200)": ["ccbs", "largest_diff", "all", "wcg_greedy", True, 1.0, 200],
+            "MILP (200)": ["milp", "default","simple","zero",True,1.0,200],
+            "GBS  (200)": ["search", "default","none","zero",False,1.0,200],
+            "EGBS (200)": ["search", "largest_diff","all","wcg_greedy",True,1.0,200],
+        }
 
     plt.rcParams.update({'font.size': 15})
-    fig1, ax1=plt.subplots(figsize=(10,6))
+    fig1, ax1=plt.subplots(figsize=(8,8))
 
     time_limits=[0.5,1.0,2.0,4.0,8.0,16.0]
 
@@ -51,23 +61,36 @@ for prob in ["002","01","03"]:
     print(success_rates)
 
     for name, success_rates in success_rates.items():
-        # label = "{} on {}".format(name,map_labels[map_names.index(map_name)])
-        label = name
-        if name.find("120")!=-1:
-            color=cmap(0)
-            linestyle="-"
-        else:
-            color=cmap(1)
+        if ignore_num_agents:
+            label = name
             linestyle="--"
+            marker="x"
+            colors={
+                "GBS": cmap(0),
+                "CCBS": cmap(1),
+                "MILP": cmap(2),
+                "EGBS": cmap(3),
+            }
+            color=colors[name.split()[0]]
+            
+        else:
+            # label = "{} on {}".format(name,map_labels[map_names.index(map_name)])
+            label = name
+            if name.find("120")!=-1:
+                color=cmap(0)
+                linestyle="-"
+            else:
+                color=cmap(1)
+                linestyle="--"
+            
+            markers={
+                "GBS": "o",
+                "CCBS": "x",
+                "MILP": "d",
+                "EGBS": "^",
+            }
         
-        markers={
-            "GBS": "o",
-            "CCBS": "s",
-            "MILP": "d",
-            "EGBS": "^",
-        }
-        
-        marker=markers[name.split()[0]]
+            marker=markers[name.split()[0]]
         
         plt.plot(time_limits,success_rates,label=label,marker=marker,linestyle=linestyle,color=color)
         
@@ -77,7 +100,7 @@ for prob in ["002","01","03"]:
     ax1.get_xaxis().set_tick_params(which='minor', size=0)
     ax1.get_xaxis().set_tick_params(which='minor', width=0) 
 
-    plt.legend(fontsize=12)
+    plt.legend()
     plt.title("{}".format(map_label))
     plt.xlabel("Time Limit (s)")
     plt.ylabel("Success Rate")
