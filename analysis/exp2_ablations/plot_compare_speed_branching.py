@@ -1,19 +1,23 @@
 import matplotlib.pyplot as plt
 import matplotlib
+import matplotlib as mpl
 import pandas as pd
 
-result_csv="output/2024_07_17_07_54_42_paper_exp_comparison_p01/stats_all.csv"
+result_csv="output/ablations_0721/2024_07_20_16_00_56_paper_exp_comparison_p01_ablation_branching/stats_all.csv"
+output_fp = "analysis/temp/ablations_0721/compare_speed_branching.png"
 map_names=["random-32-32-10","warehouse-10-20-10-2-1","lak303d","Paris_1_256"]  
-map_labels=["random", "warehouse","game","city"]
+map_labels=["Random", "Warehouse","Game","City"]
 color=["blue","red","green","purple","orange","brown","pink","gray","olive","cyan","magenta","yellow","black"]
+
+cmap=mpl.colormaps["Blues"]
 
 df = pd.read_csv(result_csv,index_col="index")
 
 headers=["algo","branch_order","grouping_method","heuristic","incremental","w_focal"]
 
 algorithms=[
-    ("EGBS", ["search", "largest_diff", "all", "wcg_greedy", True, 1.0]),
-    ("GBS", ["search", "default", "none", "zero", False, 1.0])
+    ("Agent-First", ["search", "default", "all", "wcg_greedy", True, 1.0]),
+    ("Larged-Edge-Difference", ["search", "largest_diff", "all", "wcg_greedy", True, 1.0])
 ]
 
 plt.rcParams.update({'font.size': 25})
@@ -42,7 +46,7 @@ for idx,map_name in enumerate(map_names):
         ys.append(df_alg1.at[i,"total_time"])
         xs.append(df_alg2.at[i,"total_time"])
         
-    plt.scatter(xs,ys,label=map_labels[idx], c=color[idx], alpha=0.5, s=10)
+    plt.scatter(xs,ys,label=map_labels[idx], c=color[idx], alpha=0.25, s=10)
 
 # plt.xscale('log')
 # plt.yscale('log')
@@ -52,7 +56,10 @@ plt.xticks([0,4,8,12,16])
 plt.yticks([0,4,8,12,16])
 plt.xlabel(algorithms[1][0]+" (s)")
 plt.ylabel(algorithms[0][0]+" (s)")
-plt.plot([-0.5,16.5],[-0.5,16.5],c="black",linestyle="--",label='line y=x')
+plt.plot([0,16],[0,16],c=cmap(255),linestyle="--",label='line y=x')
+plt.plot([0,16/2.0],[0,16],c=cmap(255-32),linestyle="--",label='line y=2x')
+plt.plot([0,16/4.0],[0,16],c=cmap(255-64),linestyle="--",label='line y=4x')
+plt.plot([0,16/8.0],[0,16],c=cmap(255-96),linestyle="--",label='line y=8x')
 plt.legend(markerscale=3)
-plt.savefig("analysis/temp/compare_speed.png")
+plt.savefig(output_fp, bbox_inches='tight', dpi=300)
 
