@@ -4,7 +4,7 @@ import matplotlib as mpl
 import pandas as pd
 
 result_csv="output/ablations_0721/2024_07_18_23_17_48_paper_exp_comparison_p01_ablation_grouping/stats_all.csv"
-output_fp = "analysis/temp/ablations_0721/compare_speed_grouping.png"
+output_fp = "analysis/temp/ablations_0721/compare_speed_grouping.pdf"
 map_names=["random-32-32-10","warehouse-10-20-10-2-1","lak303d","Paris_1_256"]  
 map_labels=["Random", "Warehouse","Game","City"]
 color=["blue","green","orange","purple""brown","pink","gray","olive","cyan","magenta","yellow","black","red"]

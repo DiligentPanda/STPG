@@ -9,7 +9,7 @@ map_names = ["random-32-32-10","warehouse-10-20-10-2-1","Paris_1_256","lak303d"]
 map_labels = ["random","warehouse","city","game"]#, "lak303d (37-45 agents)"]
 
 for map_name, map_label in zip(map_names, map_labels):
-    output_fp="analysis/temp/milp_compare/success_rates_{}_abalation.png".format(map_label)
+    output_fp="analysis/temp/milp_compare/success_rates_{}_abalation.pdf".format(map_label)
 
     df = pd.read_csv(result_csv,index_col="index")
 

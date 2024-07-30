@@ -10,7 +10,7 @@ for prob in ["002","01","03"]:
     result_csv=f"output/baseline_comparison_0717/0717_exp_comparison_p{prob}/stats_all.csv"
     map_name = "lak303d"
     map_label = "Game"
-    output_fp = f"analysis/temp/baseline_comparison_0717/execution_times_{map_label}_p{prob}.png"
+    output_fp = f"analysis/temp/baseline_comparison_0717/execution_times_{map_label}_p{prob}.pdf"
     
     output_folder = os.path.split(output_fp)[0]
     os.makedirs(output_folder,exist_ok=True)
@@ -32,6 +32,8 @@ for prob in ["002","01","03"]:
 
     df1 = df[(df["map_name"]==map_name)] # & (df["agent_num"]==110)]
     execution_times={}
+    lower_quantiles={}
+    upper_quantiles={}
     for name, settings in algorithms.items():
         print("processing algorithm {}".format(name))
         df2 = df1.copy()
@@ -40,8 +42,12 @@ for prob in ["002","01","03"]:
         df2 = df2.reset_index(drop=True)
         
         execution_times[name] = []
+        lower_quantiles[name] = []
+        upper_quantiles[name] = []
         for num_agent in num_agents: 
             execution_time = df2[df2["agent_num"]==num_agent]["total_time"].mean()
+            lower_quantiles[name].append(df2[df2["agent_num"]==num_agent]["total_time"].quantile(0.4))
+            upper_quantiles[name].append(df2[df2["agent_num"]==num_agent]["total_time"].quantile(0.6))
             execution_times[name].append(execution_time)
 
     for name, _execution_times in execution_times.items():
@@ -58,6 +64,7 @@ for prob in ["002","01","03"]:
         color=colors[name.split()[0]]
             
         plt.plot(num_agents,_execution_times,label=label,marker=marker,linestyle=linestyle,color=color)
+        plt.fill_between(num_agents, lower_quantiles[name], upper_quantiles[name], color=color, alpha=0.1)
         
     #plt.xscale("log")
     plt.xticks(num_agents)    
@@ -68,7 +75,7 @@ for prob in ["002","01","03"]:
     plt.legend()
     plt.title("{}".format(map_label))
     plt.xlabel("Number of Agents")
-    plt.ylabel("Execution Time (s)")
+    plt.ylabel("Optimization Time (s)")
     plt.xlim(num_agents[0]*1.1-num_agents[-1]*0.1,num_agents[-1]*1.1-num_agents[0]*0.1)
     plt.ylim(-0.5,16.5)
 

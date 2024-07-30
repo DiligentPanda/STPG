@@ -7,7 +7,7 @@ stats_files={
     # "default_group": "output/graph_stats_no_inc_default.txt"
 }
 
-output_file="analysis/temp/f_min_vals_no_group.png"
+output_file="analysis/temp/f_min_vals_no_group.pdf"
 
 import matplotlib.pyplot as plt
 import json

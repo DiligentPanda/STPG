@@ -11,7 +11,7 @@ for prob in ["002","01","03"]:
     result_csv=f"output/baseline_comparison_0717/0717_exp_comparison_p{prob}/stats_all.csv"
     map_name = "lak303d"
     map_label = "Game"
-    output_fp = f"analysis/temp/baseline_comparison_0717/success_rates_{map_label}_p{prob}.png"
+    output_fp = f"analysis/temp/baseline_comparison_0717/success_rates_{map_label}_p{prob}.pdf"
     
     output_folder = os.path.split(output_fp)[0]
     os.makedirs(output_folder,exist_ok=True)
