@@ -46,10 +46,13 @@ stat_summary_ofp=os.path.join(
 path_list_fp=os.path.join(result_folder,"path_file_names.csv")
 num_sits=6
 
+num_repeats_start=0
+num_repeats_end=8
+
 # algos=["search"] # ["search"]
-# branch_orders=["largest_diff","default"] #,"random","earliest"]
+# branch_orders=["largest_diff"] #,"random","earliest"]
 # grouping_methods=["simple","all"]
-# heuristics=["wcg_greedy","zero"]
+# heuristics=["wcg_greedy"]
 # early_terminations=["true"]
 # incrementals=["true"]
 # w_focals=[1.0]
@@ -63,29 +66,47 @@ num_sits=6
 #                     for incremental in incrementals:
 #                         for w_focal in w_focals:
 #                             settings.append([algo,branch_order,use_grouping,heuristic,early_termination,incremental,w_focal])   
+                            
+# comparison                            
+IGBS=["search","largest_diff","all","wcg_greedy","true","true",1.0]
+GBS=["search","default","none","zero","true","false",1.0]
+MILP=["milp","default","simple","zero","true","true",1.0]
+# CBSD=["ccbs","largest_diff","all","wcg_greedy","true","true",1.0]
+
+# ablation setting
+NO_HEURISTIC=["search","largest_diff","all","zero","true","true",1.0]
+NO_INCREMENTAL=["search","largest_diff","all","wcg_greedy","true","false",1.0]
+NO_GROUPING=["search","largest_diff","none","wcg_greedy","true","true",1.0]
+SIMPLE_GROUPING=["search","largest_diff","simple","wcg_greedy","true","true",1.0]
+EARLIEST_BRANCH=["search","earliest","all","wcg_greedy","true","true",1.0]
+RANDOM_BRANCH=["search","random","all","wcg_greedy","true","true",1.0]
+DEFAULT_BRANCH=["search","default","all","wcg_greedy","true","true",1.0]
+
+settings=[IGBS,GBS,MILP,NO_HEURISTIC,NO_INCREMENTAL,NO_GROUPING,SIMPLE_GROUPING,EARLIEST_BRANCH,RANDOM_BRANCH,DEFAULT_BRANCH]
 
 
-exp_headers=["map_name","agent_num","instance_idx","sit_idx"]
+exp_headers=["repeat_idx","map_name","agent_num","instance_idx","sit_idx"]
 result_headers=["algo","branch_order","grouping_method","heuristic","w_focal","w_astar","early_termination","incremental","random_seed","status","search_time","total_time","original_cost","cost",
          "explored_node","pruned_node","added_node","vertex","sw_edge","heuristic_time","extra_heuristic_time","branch_time",
-         "sort_time","priority_queue_time","copy_free_graphs_time","termination_time","dfs_time","grouping_time","group","group_merge_edge","group_size_max","group_size_min","group_size_avg"]
+         "sort_time","priority_queue_time","copy_free_graphs_time","termination_time","dfs_time","grouping_time","group","group_merge_edge","group_size_max","group_size_min","group_size_avg",
+         "forward_updated_node_num","forward_visited_pred_num","forward_visited_succ_num","backward_updated_node_num","backward_visited_pred_num","backward_visited_succ_num"]
 headers=exp_headers+result_headers
 
 path_list=pd.read_csv(path_list_fp,index_col="index")
 # print(path_list)
 
-milp_setting2=["milp","default","simple","zero","true","true",1.0]           
-# milp_setting1=["milp","default","all","zero","true","true",1.0]        
-#old_setting=["search","default","simple","zero","true","true",1.0]
-new_setting=["search","largest_diff","all","wcg_greedy","true","true",1.0]
+# milp_setting2=["milp","default","simple","zero","true","true",1.0]           
+# # milp_setting1=["milp","default","all","zero","true","true",1.0]        
+# #old_setting=["search","default","simple","zero","true","true",1.0]
+# new_setting=["search","largest_diff","all","wcg_greedy","true","true",1.0]
 
-oldest_setting1=["search","default","none","zero","true","false",1.0]
-# oldest_setting2=["search","default","none","zero","true","true",1.0]
-# oldest_setting3=["search","default","simple","zero","true","false",1.0]
+# oldest_setting1=["search","default","none","zero","true","false",1.0]
+# # oldest_setting2=["search","default","none","zero","true","true",1.0]
+# # oldest_setting3=["search","default","simple","zero","true","false",1.0]
 
-ccbs_setting=["ccbs","largest_diff","all","wcg_greedy","true","true",1.0]
+# ccbs_setting=["ccbs","largest_diff","all","wcg_greedy","true","true",1.0]
         
-settings=[oldest_setting1,new_setting,milp_setting2,ccbs_setting]
+# settings=[oldest_setting1,new_setting,milp_setting2,ccbs_setting]
 
 # oldest_setting1=["search","default","none","zero","true","false",1.0]
 # oldest_setting2=["search","default","none","zero","true","true",1.0]

@@ -3,13 +3,22 @@ import time
 import multiprocessing
 import pandas as pd
 import subprocess
+import sys
+
+root_folder=sys.argv[1]
+exp_desc=sys.argv[2]
+
+print(root_folder, exp_desc)
 
 exe_path="./build/simulate"
-root_folder="data/benchmark/test_PBS2_delay_p002"
+# root_folder="data/benchmark/test_PBS2_delay_p002"
 path_folder=os.path.join(root_folder,"path")
 sit_folder=os.path.join(root_folder,"sit")
 file_names_fp=os.path.join(root_folder,"path_file_names.csv")
-exp_desc="paper_exp_comparison_p002" # describe the experiments
+# exp_desc="paper_exp_comparison_p01_debug_grouping" # describe the experiments
+
+num_repeats_start=0
+num_repeats_end=1
 
 timestamp=time.strftime("%Y_%m_%d_%H_%M_%S")
 exp_name="{}_{}".format(timestamp,exp_desc)
@@ -22,11 +31,11 @@ path_list_ofp=os.path.join(output_folder,"path_file_names.csv")
 # delay_steps_high=20
 time_limit=16
 # algos=["search"] # ["search"]
-# branch_orders=["largest_diff","default"] #,"random","earliest"]
-# grouping_methods=["simple","all"]
-# heuristics=["wcg_greedy","zero"]
+# branch_orders=["largest_diff"] #,"random","earliest"]
+# grouping_methods=["simple","all","none"]
+# heuristics=["wcg_greedy"]
 # early_terminations=["true"]
-# incrementals=["true","false"]
+# incrementals=["true"]
 # w_focals=[1.0]
 MAX_VIRTUAL_MEMORY = 16 * 1024 * 1024 # 8 GB
 skip=False
@@ -108,17 +117,18 @@ def run(cmd,output_name):
         print("[EXCEPTION]", traceback.format_exc())
         log_fail(output_name,exception=traceback.format_exc())
 
-milp_setting2=["milp","default","simple","zero","true","true",1.0]           
-# milp_setting1=["milp","default","all","zero","true","true",1.0]        
-#old_setting=["search","default","simple","zero","true","true",1.0]
-new_setting=["search","largest_diff","all","wcg_greedy","true","true",1.0]
+# milp_setting2=["milp","default","simple","zero","true","true",1.0]           
+# # milp_setting1=["milp","default","all","zero","true","true",1.0]        
+# #old_setting=["search","default","simple","zero","true","true",1.0]
+# new_setting=["search","largest_diff","all","wcg_greedy","true","true",1.0]
 
-oldest_setting1=["search","default","none","zero","true","false",1.0]
-# oldest_setting2=["search","default","none","zero","true","true",1.0]
-# oldest_setting3=["search","default","simple","zero","true","false",1.0]
+# oldest_setting1=["search","default","none","zero","true","false",1.0]
+# # oldest_setting2=["search","default","none","zero","true","true",1.0]
+# # oldest_setting3=["search","default","simple","zero","true","false",1.0]
         
-settings=[oldest_setting1,new_setting,milp_setting2]
+# settings=[oldest_setting1,new_setting,milp_setting2]
 #settings=[old_setting,new_setting,milp_setting1,milp_setting2]
+
 # settings=[]
 # for algo in algos:
 #     for branch_order in branch_orders:
@@ -128,6 +138,23 @@ settings=[oldest_setting1,new_setting,milp_setting2]
 #                     for incremental in incrementals:
 #                         for w_focal in w_focals:
 #                             settings.append([algo,branch_order,grouping_method,heuristic,early_termination,incremental,w_focal])   
+
+# compare setting
+IGBS=["search","largest_diff","all","wcg_greedy","true","true",1.0]
+GBS=["search","default","none","zero","true","false",1.0]
+MILP=["milp","default","simple","zero","true","true",1.0]
+# CBSD=["cg","largest_diff","all","wcg_greedy","true","true",1.0]
+
+# ablation setting
+NO_HEURISTIC=["search","largest_diff","all","zero","true","true",1.0]
+NO_INCREMENTAL=["search","largest_diff","all","wcg_greedy","true","false",1.0]
+NO_GROUPING=["search","largest_diff","none","wcg_greedy","true","true",1.0]
+SIMPLE_GROUPING=["search","largest_diff","simple","wcg_greedy","true","true",1.0]
+EARLIEST_BRANCH=["search","earliest","all","wcg_greedy","true","true",1.0]
+RANDOM_BRANCH=["search","random","all","wcg_greedy","true","true",1.0]
+DEFAULT_BRANCH=["search","default","all","wcg_greedy","true","true",1.0]
+
+settings=[IGBS,GBS,MILP,NO_HEURISTIC,NO_INCREMENTAL,NO_GROUPING,SIMPLE_GROUPING,EARLIEST_BRANCH,RANDOM_BRANCH,DEFAULT_BRANCH]
 
 for map_name,setting in maps.items():
     print("processing map {}".format(map_name))
@@ -170,6 +197,8 @@ for map_name,setting in maps.items():
     #     print(output_name,cmd)
             
     pool.starmap(run,zip(cmds,output_names))
+    
+os.system(f"python script/run_exps_ccbs.py {root_folder} {output_folder}") 
     
 subprocess.check_output(f"python script/get_stats.py -f {output_folder}", shell=True) 
 subprocess.check_output(f"python script/get_stats.py -f {output_folder} -s", shell=True) 

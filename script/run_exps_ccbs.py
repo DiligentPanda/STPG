@@ -3,19 +3,23 @@ import time
 import multiprocessing
 import pandas as pd
 import subprocess
+import sys
+
+root_folder=sys.argv[1]
+output_folder=sys.argv[2]
 
 exe_path="./CBS_K/build/CBSH-rect-cmake/CBS-K"
-root_folder="data/benchmark/test_PBS2_delay_p03"
+# root_folder="data/benchmark/test_PBS2_delay_p03"
 map_folder="data/map"
 path_folder=os.path.join(root_folder,"path")
 sit_folder=os.path.join(root_folder,"sit")
 file_names_fp=os.path.join(root_folder,"path_file_names.csv")
-exp_desc="exp_comparison_p03_ccbs" # describe the experiments
+# exp_desc="exp_comparison_p03_ccbs" # describe the experiments
 
 timestamp=time.strftime("%Y_%m_%d_%H_%M_%S")
-exp_name="{}_{}".format(timestamp,exp_desc)
+# exp_name="{}_{}".format(timestamp,exp_desc)
 # TODO(rivers): merge output into one or separate them somehow?
-output_folder="output/{}".format(exp_name)
+# output_folder="output/{}".format(exp_name)
 path_list_ofp=os.path.join(output_folder,"path_file_names.csv")
 # the folllowing three are actually useless, because we will generate delay scenarios separately
 # delay_prob=10
@@ -35,7 +39,7 @@ skip=False
 instance_idxs=list(range(1,25+1)) # this is the number provided by the benchmark
 num_sits=6
 
-subprocess.check_output("./compile.sh", shell=True) 
+# subprocess.check_output("./compile.sh", shell=True) 
 
 # setting: [agent_num_start, agent_num_end, agent_num_step, max_process_num]
 maps = {
@@ -169,7 +173,7 @@ for map_name,setting in maps.items():
             
     pool.starmap(run,zip(cmds,output_names))
     
-subprocess.check_output(f"python script/get_stats.py -f {output_folder}", shell=True) 
-subprocess.check_output(f"python script/get_stats.py -f {output_folder} -s", shell=True) 
-subprocess.check_output(f"python script/get_stats.py -f {output_folder} -g", shell=True) 
-subprocess.check_output(f"python script/get_stats.py -f {output_folder} -s -g", shell=True) 
+# subprocess.check_output(f"python script/get_stats.py -f {output_folder}", shell=True) 
+# subprocess.check_output(f"python script/get_stats.py -f {output_folder} -s", shell=True) 
+# subprocess.check_output(f"python script/get_stats.py -f {output_folder} -g", shell=True) 
+# subprocess.check_output(f"python script/get_stats.py -f {output_folder} -s -g", shell=True) 
