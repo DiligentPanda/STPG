@@ -17,9 +17,6 @@ sit_folder=os.path.join(root_folder,"sit")
 file_names_fp=os.path.join(root_folder,"path_file_names.csv")
 # exp_desc="paper_exp_comparison_p01_debug_grouping" # describe the experiments
 
-num_repeats_start=0
-num_repeats_end=1
-
 timestamp=time.strftime("%Y_%m_%d_%H_%M_%S")
 exp_name="{}_{}".format(timestamp,exp_desc)
 # TODO(rivers): merge output into one or separate them somehow?

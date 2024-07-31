@@ -46,9 +46,6 @@ stat_summary_ofp=os.path.join(
 path_list_fp=os.path.join(result_folder,"path_file_names.csv")
 num_sits=6
 
-num_repeats_start=0
-num_repeats_end=8
-
 # algos=["search"] # ["search"]
 # branch_orders=["largest_diff"] #,"random","earliest"]
 # grouping_methods=["simple","all"]
@@ -71,7 +68,7 @@ num_repeats_end=8
 IGBS=["search","largest_diff","all","wcg_greedy","true","true",1.0]
 GBS=["search","default","none","zero","true","false",1.0]
 MILP=["milp","default","simple","zero","true","true",1.0]
-# CBSD=["ccbs","largest_diff","all","wcg_greedy","true","true",1.0]
+CBSD=["ccbs","largest_diff","all","wcg_greedy","true","true",1.0]
 
 # ablation setting
 NO_HEURISTIC=["search","largest_diff","all","zero","true","true",1.0]
@@ -82,10 +79,10 @@ EARLIEST_BRANCH=["search","earliest","all","wcg_greedy","true","true",1.0]
 RANDOM_BRANCH=["search","random","all","wcg_greedy","true","true",1.0]
 DEFAULT_BRANCH=["search","default","all","wcg_greedy","true","true",1.0]
 
-settings=[IGBS,GBS,MILP,NO_HEURISTIC,NO_INCREMENTAL,NO_GROUPING,SIMPLE_GROUPING,EARLIEST_BRANCH,RANDOM_BRANCH,DEFAULT_BRANCH]
+settings=[IGBS,GBS,MILP,CBSD,NO_HEURISTIC,NO_INCREMENTAL,NO_GROUPING,SIMPLE_GROUPING,EARLIEST_BRANCH,RANDOM_BRANCH,DEFAULT_BRANCH]
 
 
-exp_headers=["repeat_idx","map_name","agent_num","instance_idx","sit_idx"]
+exp_headers=["map_name","agent_num","instance_idx","sit_idx"]
 result_headers=["algo","branch_order","grouping_method","heuristic","w_focal","w_astar","early_termination","incremental","random_seed","status","search_time","total_time","original_cost","cost",
          "explored_node","pruned_node","added_node","vertex","sw_edge","heuristic_time","extra_heuristic_time","branch_time",
          "sort_time","priority_queue_time","copy_free_graphs_time","termination_time","dfs_time","grouping_time","group","group_merge_edge","group_size_max","group_size_min","group_size_avg",
