@@ -3,8 +3,8 @@ import matplotlib
 import matplotlib as mpl
 import pandas as pd
 
-result_csv="output/ablations_0721/2024_07_18_23_17_48_paper_exp_comparison_p01_ablation_grouping/stats_all.csv"
-output_fp = "analysis/temp/ablations_0721/compare_speed_grouping.pdf"
+result_csv="output/0728_grouping/0728_grouping/2024_07_28_11_15_16_paper_exp_comparison_p01_ablation_grouping/stats_all.csv"
+output_fp = "analysis/temp/ablations_0721/compare_groups_grouping.pdf"
 map_names=["random-32-32-10","warehouse-10-20-10-2-1","lak303d","Paris_1_256"]  
 map_labels=["Random", "Warehouse","Game","City"]
 color=["blue","green","orange","purple""brown","pink","gray","olive","cyan","magenta","yellow","black","red"]
@@ -21,7 +21,7 @@ fig, ax=plt.subplots(figsize=(10,10))
 
 algorithms=[
     ("Simple Edge Grouping", ["search", "largest_diff", "simple", "wcg_greedy", True, 1.0]),
-    ("No Edge Grouping ", ["search", "largest_diff", "none", "wcg_greedy", True, 1.0])
+    ("No Edge Grouping ", ["search", "largest_diff", "all", "wcg_greedy", True, 1.0])
 ]
 
 speedups=[]
@@ -47,11 +47,15 @@ for idx,map_name in enumerate(map_names):
     for i in range(len(df_alg1)):
         y = df_alg1.at[i,"total_time"]
         x = df_alg2.at[i,"total_time"]
-        ys.append(y)
-        xs.append(x)
+        
+        yg = df_alg1.at[i,"group"]
+        xg = df_alg2.at[i,"sw_edge"]
+        
+        ys.append(yg)
+        xs.append(xg)
         
         if y<time_limit or x<time_limit:
-            speedups.append(y/x)
+            speedups.append(yg/xg)
         
     plt.scatter(xs,ys, c=color[1], alpha=0.1, s=10)
 
@@ -59,9 +63,9 @@ avg_speedup = sum(speedups)/len(speedups)
 print("Average speedup of {} vs {}:".format(algorithms[1][0],algorithms[0][0]),avg_speedup)
 label="{} ({:.02f})".format(algorithms[1][0],avg_speedup)
 if avg_speedup>1.0:
-    plt.plot([0,16/avg_speedup],[0,16],c=color[1],linestyle="--",label=label)
+    plt.plot([0,100000/avg_speedup],[0,100000],c=color[1],linestyle="--",label=label)
 else:
-    plt.plot([0,16],[0,16*avg_speedup],c=color[1],linestyle="--",label=label)
+    plt.plot([0,100000],[0,100000*avg_speedup],c=color[1],linestyle="--",label=label)
     
     
     
@@ -94,11 +98,15 @@ for idx,map_name in enumerate(map_names):
     for i in range(len(df_alg1)):
         y = df_alg1.at[i,"total_time"]
         x = df_alg2.at[i,"total_time"]
-        ys.append(y)
-        xs.append(x)
+        
+        yg = df_alg1.at[i,"group"]
+        xg = df_alg2.at[i,"group"]
+        
+        ys.append(yg)
+        xs.append(xg)
         
         if y<time_limit or x<time_limit:
-            speedups.append(y/x)
+            speedups.append(yg/xg)
         
     plt.scatter(xs,ys,c=color[0], alpha=0.1, s=10)
 
@@ -106,23 +114,23 @@ avg_speedup = sum(speedups)/len(speedups)
 print("Average speedup of {} vs {}:".format(algorithms[1][0],algorithms[0][0]),avg_speedup)
 label="{} ({:.02f})".format(algorithms[1][0],avg_speedup)
 if avg_speedup>1.0:
-    plt.plot([0,16/avg_speedup],[0,16],c=color[0],linestyle="--",label=label)
+    plt.plot([0,100000/avg_speedup],[0,100000],c=color[0],linestyle="--",label=label)
 else:
-    plt.plot([0,16],[0,16*avg_speedup],c=color[0],linestyle="--",label=label)
+    plt.plot([0,100000],[0,100000*avg_speedup],c=color[0],linestyle="--",label=label)
 
 
 plt.xscale('log')
 plt.yscale('log')
-plt.xlim(0.0625/8,17)
-plt.ylim(0.0625/8,17)
-plt.xticks([0.01,0.06,0.25,1,4,16],["0.01","0.06","0.25","1","4","16"])
+plt.xlim(1,100000)
+plt.ylim(1,100000)
+# plt.xticks([0.01,0.06,0.25,1,4,16],["0.01","0.06","0.25","1","4","16"])
 plt.xticks([],minor=True)
-plt.yticks([0.01,0.06,0.25,1,4,16],["0.01","0.06","0.25","1","4","16"])
+# plt.yticks([0.01,0.06,0.25,1,4,16],["0.01","0.06","0.25","1","4","16"])
 plt.yticks([],minor=True)
-plt.xlabel("Other Method (s)")
-plt.ylabel("Baseline Method (s)")
+plt.xlabel("Other Method (Number of Groups)")
+plt.ylabel("Baseline Method (Number of Groups)")
 label="{} ({:.02f})".format(algorithms[0][0],1)
-plt.plot([0,16],[0,16],c='r',linestyle="--",label=label)
+plt.plot([0,100000],[0,100000],c='r',linestyle="--",label=label)
 # plt.plot([0,16/2.0],[0,16],c=cmap(255-32),linestyle="--",label='line y=2x')
 # plt.plot([0,16/4.0],[0,16],c=cmap(255-64),linestyle="--",label='line y=4x')
 # plt.plot([0,16/8.0],[0,16],c=cmap(255-96),linestyle="--",label='line y=8x')

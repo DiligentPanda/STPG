@@ -3,7 +3,7 @@ result_csv="output/2024_05_09_09_37_54_exp/stats_all.csv"
 # map_labels = ["lak303d"]#, "lak303d (37-45 agents)"]
 map_names = ["Paris_1_256"]#,"lak303d"]
 map_labels = ["Paris_1_256"]#, "lak303d (37-45 agents)"]
-output_fp="analysis/temp/milp_compare/success_rates_{}.png".format(map_labels[0])
+output_fp="analysis/temp/milp_compare/success_rates_{}.pdf".format(map_labels[0])
 
 import matplotlib.pyplot as plt
 import matplotlib

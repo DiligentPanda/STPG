@@ -51,5 +51,5 @@ ax.set_xlim(0,m.width)
 ax.set_ylim(0,m.height)
 ax.invert_yaxis()
 
-plt.savefig("analysis/temp/map.png", dpi=300, bbox_inches='tight')
+plt.savefig("analysis/temp/map.pdf", dpi=300, bbox_inches='tight')
 
