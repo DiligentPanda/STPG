@@ -155,6 +155,12 @@ void simulate(
   stats["group_size_max"]=nullptr;
   stats["group_size_min"]=nullptr;
   stats["group_size_avg"]=nullptr;
+  stats["forward_updated_node_num"]=nullptr;
+  stats["forward_visited_pred_num"]=nullptr;
+  stats["forward_visited_succ_num"]=nullptr;
+  stats["backward_updated_node_num"]=nullptr;
+  stats["backward_visited_pred_num"]=nullptr;
+  stats["backward_visited_succ_num"]=nullptr;
   
   std::ofstream out(stat_ofp);
   out<<stats.dump(4)<<std::endl;

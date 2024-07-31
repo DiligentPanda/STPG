@@ -75,6 +75,14 @@ class Astar: public Solver {
     int pruned_node_cnt = 0;
     int added_node_cnt = 0;
 
+    int forward_updated_node_num=0;
+    int forward_visited_pred_num=0;
+    int forward_visited_succ_num=0;
+
+    int backward_updated_node_num=0;
+    int backward_visited_pred_num=0;
+    int backward_visited_succ_num=0;
+
     vector<COST_TYPE> open_list_min_f_vals;
     vector<tuple<int,int,int> > selected_edges;
 

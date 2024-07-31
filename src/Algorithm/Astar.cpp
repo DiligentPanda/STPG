@@ -253,6 +253,14 @@ void Astar::write_stats(nlohmann::json & stats) {
   }
   // stats["open_list_f_min_vals"]=open_list_min_f_vals;
   // stats["selected_edges"]=selected_edges;
+
+  stats["forward_updated_node_num"]=forward_updated_node_num;
+  stats["forward_visited_pred_num"]=forward_visited_pred_num;
+  stats["forward_visited_succ_num"]=forward_visited_succ_num;
+  stats["backward_updated_node_num"]=backward_updated_node_num;
+  stats["backward_visited_pred_num"]=backward_visited_pred_num;
+  stats["backward_visited_succ_num"]=backward_visited_succ_num;
+
 }
 
   auto start_graph_free = high_resolution_clock::now();
@@ -320,7 +328,8 @@ int Astar::count_switchable_edge_groups(const shared_ptr<Graph> & graph, const s
 COST_TYPE Astar::compute_partial_execution_time(const shared_ptr<Graph> & graph) {
   shared_ptr<vector<COST_TYPE> > fake_ptr(nullptr);
   vector<std::pair<int,int> > fake_edges;
-  auto longest_path_lengths = compute_longest_paths(fake_ptr, graph, fake_edges, false);
+  int updated_node_num=0, vistited_pred_num=0, visited_succ_num=0;
+  auto longest_path_lengths = compute_longest_paths(fake_ptr, graph, fake_edges, false, updated_node_num, vistited_pred_num, visited_succ_num);
 
   COST_TYPE g = 0;
   for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
@@ -351,7 +360,11 @@ void Astar::add_node(const shared_ptr<Graph> & graph, const shared_ptr<SearchNod
   // auto node_values = make_shared<vector<int> >(parent_node->longest_path_lengths);
   // compute the longest path length from any current vertices to an agent's goal vertex.
   // auto g = heuristic_graph(graph, newts_tv, node_values);
-  auto longest_path_lengths = compute_longest_paths(parent_node->longest_path_lengths, graph, fixed_edges, incremental);
+  int updated_node_num=0, vistited_pred_num=0, visited_succ_num=0;
+  auto longest_path_lengths = compute_longest_paths(parent_node->longest_path_lengths, graph, fixed_edges, incremental, updated_node_num, vistited_pred_num, visited_succ_num);
+  forward_updated_node_num+=updated_node_num;
+  forward_visited_pred_num+=vistited_pred_num;
+  forward_visited_succ_num+=visited_succ_num;
 
   // auto longest_path_lengths2 = compute_longest_paths(parent_node->longest_path_lengths, graph, fixed_edges, false);
 
@@ -383,7 +396,11 @@ void Astar::add_node(const shared_ptr<Graph> & graph, const shared_ptr<SearchNod
   COST_TYPE h;
   shared_ptr<vector<shared_ptr<map<int,COST_TYPE> > > > reverse_longest_path_lengths;
   if (heuristic_manager->type==HeuristicType::WCG_GREEDY) {
-    reverse_longest_path_lengths=compute_reverse_longest_paths(parent_node->reverse_longest_path_lengths, longest_path_lengths, graph, fixed_edges, incremental);
+    int updated_node_num=0, vistited_pred_num=0, visited_succ_num=0;
+    reverse_longest_path_lengths=compute_reverse_longest_paths(parent_node->reverse_longest_path_lengths, longest_path_lengths, graph, fixed_edges, incremental, updated_node_num, vistited_pred_num, visited_succ_num);
+    backward_updated_node_num+=updated_node_num;
+    backward_visited_pred_num+=vistited_pred_num;
+    backward_visited_succ_num+=visited_succ_num;
   }
   h = heuristic_manager->computeInformedHeuristics(graph, longest_path_lengths, reverse_longest_path_lengths, 0, fast_approximate);
 

@@ -119,11 +119,11 @@ sortResult topologicalSort(Graph & graph, sortResult state, vector<int> & starts
 }
 
 
-shared_ptr<vector<COST_TYPE> > compute_longest_paths(const shared_ptr<vector<COST_TYPE> > & old_longest_path_lengths_ptr, const shared_ptr<Graph> & graph, vector<pair<int,int> > & fixed_edges, bool incremental) {
+shared_ptr<vector<COST_TYPE> > compute_longest_paths(const shared_ptr<vector<COST_TYPE> > & old_longest_path_lengths_ptr, const shared_ptr<Graph> & graph, vector<pair<int,int> > & fixed_edges, bool incremental, int & updated_node_num, int & visited_pred_num, int & visited_succ_num) {
     if (incremental) {
         // BUG(rivers): NOTE: here we start from the initial state, which is not necessary or even buggy. We should start from the current state
         if (fixed_edges.size() == 0) {
-            return compute_longest_paths(old_longest_path_lengths_ptr, graph, fixed_edges, false);
+            return compute_longest_paths(old_longest_path_lengths_ptr, graph, fixed_edges, false, updated_node_num, visited_pred_num, visited_succ_num);
         }
   
         bool no_need_to_update=true;
@@ -150,6 +150,8 @@ shared_ptr<vector<COST_TYPE> > compute_longest_paths(const shared_ptr<vector<COS
 
         for (auto & p: fixed_edges) {
             visited[p.second] = true;
+            // the previous longest path length is used as the topological sort order here.
+            // we will update earlier node first
             pq.emplace(longest_path_lengths[p.second], p.second);
         }
 
@@ -158,7 +160,9 @@ shared_ptr<vector<COST_TYPE> > compute_longest_paths(const shared_ptr<vector<COS
             pq.pop();
             int state = top.second;
 
-            // update the 
+            ++updated_node_num;
+
+            // update the longest path length of the current node based on its predecessors
             auto && predecessors = graph->get_in_neighbor_global_ids(state);
             for (auto predecessor: predecessors) {
                 COST_TYPE edge_cost=graph->edge_manager->get_edge(predecessor, state).cost;
@@ -166,6 +170,7 @@ shared_ptr<vector<COST_TYPE> > compute_longest_paths(const shared_ptr<vector<COS
                     longest_path_lengths[state] = longest_path_lengths[predecessor]+edge_cost;
                 }
             }
+            visited_pred_num+=predecessors.size();
 
             auto && successors = graph->get_out_neighbor_global_ids(state);
             for (auto successor: successors) {
@@ -175,6 +180,7 @@ shared_ptr<vector<COST_TYPE> > compute_longest_paths(const shared_ptr<vector<COS
                     pq.emplace(longest_path_lengths[successor], successor);
                 }
             }
+            visited_succ_num+=successors.size();
         }
 
         return longest_path_lengths_ptr;
@@ -197,6 +203,8 @@ shared_ptr<vector<COST_TYPE> > compute_longest_paths(const shared_ptr<vector<COS
 
         while (!q.empty()) {
             auto state=q.front();
+            ++updated_node_num;
+
             q.pop();
             COST_TYPE longest_lenghth=0;
             auto && predecessors = graph->get_in_neighbor_global_ids(state);
@@ -204,6 +212,7 @@ shared_ptr<vector<COST_TYPE> > compute_longest_paths(const shared_ptr<vector<COS
                 COST_TYPE edge_cost=graph->edge_manager->get_edge(predecessor, state).cost;
                 longest_lenghth=max(longest_lenghth, (*longest_path_lengths_ptr)[predecessor]+edge_cost);
             }
+            visited_pred_num+=predecessors.size();
             (*longest_path_lengths_ptr)[state]=longest_lenghth;
 
             auto && successors = graph->get_out_neighbor_global_ids(state);
@@ -217,6 +226,7 @@ shared_ptr<vector<COST_TYPE> > compute_longest_paths(const shared_ptr<vector<COS
                     }
                 }
             }
+            visited_succ_num+=successors.size();
         }
 
         return longest_path_lengths_ptr;
@@ -228,13 +238,14 @@ shared_ptr<vector<shared_ptr<map<int,COST_TYPE> > > > compute_reverse_longest_pa
     const shared_ptr<vector<COST_TYPE> > & longest_path_lengths_ptr, // we use the new longest_path_lengths, which is essentially the topoligical order for efficient udpate.
     const shared_ptr<Graph> & graph, 
     vector<pair<int,int> > & fixed_edges,
-    bool incremental
+    bool incremental,
+    int & updated_node_num, int & visited_pred_num, int & visited_succ_num
     ) {
 
     if (incremental) {
         // BUG(rivers): NOTE: here we start from the initial state, which is not necessary or even buggy. We should start from the current state
         if (fixed_edges.size() == 0) {
-            return compute_reverse_longest_paths(old_reverse_longest_path_lengths_ptr, longest_path_lengths_ptr, graph, fixed_edges, false);
+            return compute_reverse_longest_paths(old_reverse_longest_path_lengths_ptr, longest_path_lengths_ptr, graph, fixed_edges, false, updated_node_num, visited_pred_num, visited_succ_num);
         }
 
         bool no_need_to_update=true;
@@ -274,6 +285,8 @@ shared_ptr<vector<shared_ptr<map<int,COST_TYPE> > > > compute_reverse_longest_pa
             pq.pop();
             int state = top.second;
 
+            ++ updated_node_num;
+
             // update the 
             auto && successors = graph->get_out_neighbor_global_ids(state);
             for (auto successor: successors) {
@@ -289,6 +302,7 @@ shared_ptr<vector<shared_ptr<map<int,COST_TYPE> > > > compute_reverse_longest_pa
                     }
                 }
             }
+            visited_succ_num+=successors.size();
 
             auto && predecessors = graph->get_in_neighbor_global_ids(state);
             for (auto predecessor: predecessors) {
@@ -310,6 +324,7 @@ shared_ptr<vector<shared_ptr<map<int,COST_TYPE> > > > compute_reverse_longest_pa
                     pq.emplace(longest_path_lengths[predecessor], predecessor);
                 }
             }
+            visited_pred_num+=predecessors.size();
         }
 
         return reverse_longest_path_lengths_ptr;
@@ -335,6 +350,8 @@ shared_ptr<vector<shared_ptr<map<int,COST_TYPE> > > > compute_reverse_longest_pa
         }
 
         for (auto &p: topo_orders) {
+            ++updated_node_num;
+            
             int state=p.second;
             auto && successors = graph->get_out_neighbor_global_ids(state);
             // all successors must be computed
@@ -347,6 +364,7 @@ shared_ptr<vector<shared_ptr<map<int,COST_TYPE> > > > compute_reverse_longest_pa
                     }
                 }
             }
+            visited_succ_num+=successors.size();
         }
 
         return reverse_longest_path_lengths_ptr;
