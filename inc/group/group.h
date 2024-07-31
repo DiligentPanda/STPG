@@ -46,8 +46,6 @@ public:
             grouping_method=GroupingMethod::SIMPLE;
         } else if (_grouping_method=="simple_merge") {
             grouping_method=GroupingMethod::SIMPLE_MERGE;
-            std::cout<<"simple merge is not supported now"<<std::endl;
-            exit(19);
         } else if (_grouping_method=="all") {
             grouping_method=GroupingMethod::ALL;
         } else {
@@ -67,19 +65,17 @@ public:
         }
 
         // we need to add reversed group
-        // this is used for repeated delays
-        // in v1 paper, we don't consider this.
-        // auto groups_copy=groups;
-        // for (auto & group: groups_copy) {
-        //     Group reversed_group;
-        //     int group_id=groups.size();
-        //     for (long edge_id: group) {
-        //         auto reversed_edge_id=get_edge_id(get_in_idx(edge_id)+1,get_out_idx(edge_id)-1);
-        //         reversed_group.insert(reversed_edge_id);
-        //         edge_id2group_id[reversed_edge_id]=group_id;
-        //     }
-        //     groups.push_back(reversed_group);
-        // }
+        auto groups_copy=groups;
+        for (auto & group: groups_copy) {
+            Group reversed_group;
+            int group_id=groups.size();
+            for (long edge_id: group) {
+                auto reversed_edge_id=get_edge_id(get_in_idx(edge_id)+1,get_out_idx(edge_id)-1);
+                reversed_group.insert(reversed_edge_id);
+                edge_id2group_id[reversed_edge_id]=group_id;
+            }
+            groups.push_back(reversed_group);
+        }
     };
 
     // BUG(rivers): don't use int to encode, would overflow in the future.
@@ -298,16 +294,7 @@ public:
             }
         }
 
-
-        // we will not support simple merge now
-        // directly register edge 
-        for (auto & group in groups) {
-            for (long edge_id: group) {
-                edge_id2group_id[edge_id]=groups.size();
-            }
-        }
-
-        // merge_groups(unmerged_groups);
+        merge_groups(unmerged_groups);
     }
 
     void find_simple_patterns_starting_with(

@@ -239,30 +239,16 @@ void Astar::write_stats(nlohmann::json & stats) {
   stats["dfs_time"]=dfsT.count();
   stats["search_time"]=searchT.count();
   if (use_grouping) {
-    auto & groups=group_manager->groups;
-    stats["group"]=groups.size();
+    stats["group"]=sw_edge_group_cnt;
     stats["group_merge_edge"]=group_manager->group_merge_edge_cnt;
-    double group_size_max=0;
-    double group_size_avg=0;
-    double group_size_min=sw_edge_cnt;
-    for (int i=0;i<(int)groups.size();++i) {
-      if((int)groups[i].size()>group_size_max) {
-        group_size_max=groups[i].size();
-      }
-      if ((int)groups[i].size()<group_size_min) {
-        group_size_min=groups[i].size();
-      }
-      group_size_avg+=groups[i].size();
-    }
-    group_size_avg/=groups.size();
-    stats["group_size_max"]=group_size_max;
-    stats["group_size_min"]=group_size_min;
-    stats["group_size_avg"]=group_size_avg;
+    stats["group_size_max"]=-1; // not counted
+    stats["group_size_min"]=-1; // not counted
+    stats["group_size_avg"]=sw_edge_cnt/(double)sw_edge_group_cnt;
   } else {
     stats["group"]=sw_edge_cnt;
     stats["group_merge_edge"]=0;
-    stats["group_size_max"]=1;
-    stats["group_size_min"]=1;
+    stats["group_size_max"]=-1; // not counted
+    stats["group_size_min"]=-1; // not counted
     stats["group_size_avg"]=1;
   }
   // stats["open_list_f_min_vals"]=open_list_min_f_vals;
@@ -642,8 +628,43 @@ shared_ptr<Graph> Astar::solve(const shared_ptr<Graph> & _graph) {
   
   vertex_cnt = graph->get_num_states();
   sw_edge_cnt = graph->get_num_switchable_edges();
+
+  // for (auto agent=0;agent<graph->get_num_agents();++agent) {
+  //   int total_edges=0;
+  //   std::unordered_map<int,int> counter;
+  //   for (auto state=0;state<graph->get_num_states(agent);++state) {
+  //     auto global_state = graph->get_global_state_id(agent,state);
+  //     auto & neighbors = graph->switchable_type2_edges->get_out_neighbor_global_ids(global_state);
+  //     total_edges+=neighbors.size();
+  //     for (auto neighbor : neighbors) {
+  //       auto p = graph->get_agent_state_id(neighbor);
+  //       if (counter.find(p.first)==counter.end()) {
+  //         counter[p.first]=1;
+  //       } else {
+  //         counter[p.first]+=1;
+  //       }
+
+  //       if (agent==0 && p.first==1) {
+  //         auto loc=graph->paths->at(agent)[state].first;
+  //         auto y=loc.first;
+  //         auto x=loc.second;
+  //         std::cout<<"agent: "<<agent<<"-> agent: "<<p.first<<" "<<y<<","<<x<<std::endl;
+  //       }
+  //     }
+
+  //   }
+  //   std::cout<<"agent: "<<agent<<" total edges: "<<total_edges<<std::endl;
+  //   for (auto p:counter) {
+  //     std::cout<<"agent: "<<agent<<"-> agent: "<<p.first<<" edge count: "<<p.second<<std::endl;
+  //   }
+  // }
+
+
+
+
   agentCnt = graph->get_num_agents();
-  std::cout << "vertex_cnt = " << vertex_cnt << ", sw_edge_cnt = " << sw_edge_cnt<<", sw_edge_groups_cnt = "<< count_switchable_edge_groups(graph, group_manager) << "\n";
+  sw_edge_group_cnt = count_switchable_edge_groups(graph, group_manager);
+  std::cout << "vertex_cnt = " << vertex_cnt << ", sw_edge_cnt = " << sw_edge_cnt<<", sw_edge_groups_cnt = "<< sw_edge_group_cnt << "\n";
 
   /* Graph-Based Search */
   auto fake_parent=std::make_shared<SearchNode>(0);

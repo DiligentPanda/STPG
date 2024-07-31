@@ -80,6 +80,7 @@ class Astar: public Solver {
 
     int vertex_cnt = 0;
     int sw_edge_cnt = 0;
+    int sw_edge_group_cnt = 0;
     
     int timeout = 300;
 
