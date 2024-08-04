@@ -19,55 +19,55 @@ headers=["algo","branch_order","grouping_method","heuristic","incremental","w_fo
 plt.rcParams.update({'font.size': 25})
 fig, ax=plt.subplots(figsize=(10,10))
 
-algorithms=[
-    ("Simple Edge Grouping", ["search", "largest_diff", "simple", "wcg_greedy", True, 1.0]),
-    ("No Edge Grouping ", ["search", "largest_diff", "none", "wcg_greedy", True, 1.0])
-]
+# algorithms=[
+#     ("Simple Edge Grouping", ["search", "largest_diff", "simple", "wcg_greedy", True, 1.0]),
+#     ("No Edge Grouping ", ["search", "largest_diff", "none", "wcg_greedy", True, 1.0])
+# ]
 
-speedups=[]
-for idx,map_name in enumerate(map_names):
-    df_map = df[(df["map_name"]==map_name)]
+# speedups=[]
+# for idx,map_name in enumerate(map_names):
+#     df_map = df[(df["map_name"]==map_name)]
 
-    name1, settings1=algorithms[0]
-    df_alg1 = df_map.copy()
-    for i in range(len(headers)):
-        df_alg1= df_alg1[df_alg1[headers[i]]==settings1[i]]
-    df_alg1 = df_alg1.reset_index(drop=True)
+#     name1, settings1=algorithms[0]
+#     df_alg1 = df_map.copy()
+#     for i in range(len(headers)):
+#         df_alg1= df_alg1[df_alg1[headers[i]]==settings1[i]]
+#     df_alg1 = df_alg1.reset_index(drop=True)
     
-    name2, settings2=algorithms[1]
-    df_alg2 = df_map.copy()
-    for i in range(len(headers)):
-        df_alg2= df_alg2[df_alg2[headers[i]]==settings2[i]]
-    df_alg2 = df_alg2.reset_index(drop=True)
+#     name2, settings2=algorithms[1]
+#     df_alg2 = df_map.copy()
+#     for i in range(len(headers)):
+#         df_alg2= df_alg2[df_alg2[headers[i]]==settings2[i]]
+#     df_alg2 = df_alg2.reset_index(drop=True)
     
-    print(df_alg1,df_alg2)
+#     print(df_alg1,df_alg2)
     
-    ys=[]
-    xs=[]
-    for i in range(len(df_alg1)):
-        y = df_alg1.at[i,"total_time"]
-        x = df_alg2.at[i,"total_time"]
-        ys.append(y)
-        xs.append(x)
+#     ys=[]
+#     xs=[]
+#     for i in range(len(df_alg1)):
+#         y = df_alg1.at[i,"total_time"]
+#         x = df_alg2.at[i,"total_time"]
+#         ys.append(y)
+#         xs.append(x)
         
-        if y<time_limit or x<time_limit:
-            speedups.append(y/x)
+#         if y<time_limit or x<time_limit:
+#             speedups.append(y/x)
         
-    plt.scatter(xs,ys, c=color[1], alpha=0.1, s=10)
+#     plt.scatter(xs,ys, c=color[1], alpha=0.1, s=10)
 
-avg_speedup = sum(speedups)/len(speedups)
-print("Average speedup of {} vs {}:".format(algorithms[1][0],algorithms[0][0]),avg_speedup)
-label="{} ({:.02f})".format(algorithms[1][0],avg_speedup)
-if avg_speedup>1.0:
-    plt.plot([0,16/avg_speedup],[0,16],c=color[1],linestyle="--",label=label)
-else:
-    plt.plot([0,16],[0,16*avg_speedup],c=color[1],linestyle="--",label=label)
+# avg_speedup = sum(speedups)/len(speedups)
+# print("Average speedup of {} vs {}:".format(algorithms[1][0],algorithms[0][0]),avg_speedup)
+# label="{} ({:.02f})".format(algorithms[1][0],avg_speedup)
+# if avg_speedup>1.0:
+#     plt.plot([0,16/avg_speedup],[0,16],c=color[1],linestyle="--",label=label)
+# else:
+#     plt.plot([0,16],[0,16*avg_speedup],c=color[1],linestyle="--",label=label)
     
     
     
 
 algorithms=[
-    ("Simple Edge Grouping", ["search", "largest_diff", "simple", "wcg_greedy", True, 1.0]),
+    ("No Edge Grouping", ["search", "largest_diff", "none", "wcg_greedy", True, 1.0]),
     ("Full Edge Grouping ", ["search", "largest_diff", "all", "wcg_greedy", True, 1.0])
 ]
 
@@ -130,7 +130,7 @@ plt.plot([0,16],[0,16],c='r',linestyle="--",label=label)
 #get handles and labels
 handles, labels = plt.gca().get_legend_handles_labels()
 #specify order of items in legend
-order = [1,2,0]
+order = [0,1]
 #add legend to plot
 plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order],fontsize=20) 
 plt.savefig(output_fp, bbox_inches='tight', dpi=300)
