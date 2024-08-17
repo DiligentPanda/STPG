@@ -26,23 +26,23 @@ for prob in ["002","01","03"]:
         algorithms={
             "CBS-D": ["ccbs", "largest_diff", "all", "wcg_greedy", True, 1.0],
             "MILP": ["milp", "default","simple","zero",True,1.0],
-            "GBS": ["search", "default","none","zero",False,1.0],
-            "EGBS": ["search", "largest_diff","all","wcg_greedy",True,1.0],
+            "GSES": ["search", "default","none","zero",False,1.0],
+            "EGSES": ["search", "largest_diff","all","wcg_greedy",True,1.0],
         }  
     else:
         headers=["algo","branch_order","grouping_method","heuristic","incremental","w_focal","agent_num"]
         algorithms={
             "CBS-D (41)": ["ccbs", "largest_diff", "all", "wcg_greedy", True, 1.0, 41],
             "MILP (41)": ["milp", "default","simple","zero",True,1.0,41],
-            "GBS  (41)": ["search", "default","none","zero",False,1.0,41],
-            "EGBS (41)": ["search", "largest_diff","all","wcg_greedy",True,1.0,41],
+            "GSES  (41)": ["search", "default","none","zero",False,1.0,41],
+            "EGSES (41)": ["search", "largest_diff","all","wcg_greedy",True,1.0,41],
             "CBS-D (73)": ["ccbs", "largest_diff", "all", "wcg_greedy", True, 1.0, 73],
             "MILP (73)": ["milp", "default","simple","zero",True,1.0,73],
-            "GBS  (73)": ["search", "default","none","zero",False,1.0,73],
-            "EGBS (73)": ["search", "largest_diff","all","wcg_greedy",True,1.0,73],
+            "GSES  (73)": ["search", "default","none","zero",False,1.0,73],
+            "EGSES (73)": ["search", "largest_diff","all","wcg_greedy",True,1.0,73],
         }
 
-    plt.rcParams.update({'font.size': 15})
+    plt.rcParams.update({'font.size': 35})
     fig1, ax1=plt.subplots(figsize=(8,8))
 
     success_rates={}
@@ -67,7 +67,11 @@ for prob in ["002","01","03"]:
             df2 = df2.reset_index(drop=True)
             
             for time_limit in time_limits:
-                success_rate = ((df2["status"]>0) & (df2["search_time"]<=time_limit)).mean()
+                t=df2["total_time"]
+                if name!="CBS-D":
+                    t+=df2["grouping_time"]
+                success_rate = ((df2["status"]>0) & (t<=time_limit)).mean()
+                # print(time_limit,success_rate)
                 success_rates[name][time_limit].append(success_rate)
 
 
@@ -84,10 +88,10 @@ for prob in ["002","01","03"]:
             linestyle="--"
             marker="x"
             colors={
-                "GBS": cmap(0),
+                "GSES": cmap(0),
                 "CBS-D": cmap(1),
                 "MILP": cmap(2),
-                "EGBS": cmap(3),
+                "EGSES": cmap(3),
             }
             color=colors[name.split()[0]]
             
@@ -102,10 +106,10 @@ for prob in ["002","01","03"]:
                 linestyle="--"
             
             markers={
-                "GBS": "o",
+                "GSES": "o",
                 "CBS-D": "x",
                 "MILP": "d",
-                "EGBS": "^",
+                "EGSES": "^",
             }
         
             marker=markers[name.split()[0]]
@@ -123,11 +127,33 @@ for prob in ["002","01","03"]:
     ax1.get_xaxis().set_tick_params(which='minor', size=0)
     ax1.get_xaxis().set_tick_params(which='minor', width=0) 
 
-    plt.legend()
-    plt.title("{}".format(map_label))
+    # plt.legend()
+    # plt.title("{}".format(map_label))
     plt.xlabel("Time Limit (s)")
     plt.ylabel("Success Rate")
     plt.xlim(0,17)
     plt.ylim(-0.1,1.1)
+    
+    ax1.text(0.7, 0.9, "41-73 agents", horizontalalignment='center', verticalalignment='center', transform=ax1.transAxes, fontsize=30)
+
+    ax2 =ax1.inset_axes([0.0,0.7,0.3,0.3],zorder=-1)
+    # ax2.axis('off')
+    # ax2.plot([0,1],[0,1],c='r',linestyle="--",label="y=x")
+    ax2.get_xaxis().set_visible(False)
+    ax2.get_yaxis().set_visible(False)
+    map_path="data\map\lak303d.map"
+    from map import Map
+    m:Map=Map(map_path)
+    
+    extra_pad=0
+    width=m.width
+    height=m.height
+    max_len=max(width,height)
+    m.graph=np.pad(m.graph,(((max_len-height)//2+extra_pad,(max_len-height+1)//2+extra_pad),((max_len-width)//2+extra_pad,(max_len-width+1)//2+extra_pad)),"constant",constant_values=1)
+    ax2.imshow(1-m.graph, cmap='gray')
+    
+    # change all spines
+    for axis in ['top','bottom','left','right']:
+        ax2.spines[axis].set_linewidth(2)
 
     plt.savefig(output_fp, bbox_inches='tight', dpi=300)

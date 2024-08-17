@@ -18,8 +18,8 @@ for prob in ["002","01","03"]:
     algorithms={
         "CBS-D": ["ccbs", "largest_diff", "all", "wcg_greedy", True, 1.0],
         "MILP": ["milp", "default","simple","zero",True,1.0],
-        "GBS": ["search", "default","none","zero",False,1.0],
-        "EGBS": ["search", "largest_diff","all","wcg_greedy",True,1.0]
+        "GSES": ["search", "default","none","zero",False,1.0],
+        "EGSES": ["search", "largest_diff","all","wcg_greedy",True,1.0]
     }
 
     output_folder = os.path.split(output_fp)[0]
@@ -54,7 +54,10 @@ for prob in ["002","01","03"]:
             df2 = df2.reset_index(drop=True)
             
             for num_agent in num_agents: 
-                execution_time = df2[df2["agent_num"]==num_agent]["total_time"].mean()
+                if name!="CBS-D":
+                    execution_time = (df2[df2["agent_num"]==num_agent]["total_time"]+df2[df2["agent_num"]==num_agent]["grouping_time"]).mean()
+                else:
+                    execution_time = (df2[df2["agent_num"]==num_agent]["search_time"]).mean()
                 execution_times[name][num_agent].append(execution_time)
 
     for name in algorithms:
@@ -65,7 +68,7 @@ for prob in ["002","01","03"]:
             print(stds[name][num_agent])
             print(f"{name} {num_agent} {execution_times[name][num_agent]} {stds[name][num_agent]}")
 
-    plt.rcParams.update({'font.size': 15})
+    plt.rcParams.update({'font.size': 35})
     fig1, ax1=plt.subplots(figsize=(8,8))
 
     for name in algorithms:
@@ -74,10 +77,10 @@ for prob in ["002","01","03"]:
         linestyle="--"
         marker="x"
         colors={
-            "GBS": cmap(0),
+            "GSES": cmap(0),
             "CBS-D": cmap(1),
             "MILP": cmap(2),
-            "EGBS": cmap(3),
+            "EGSES": cmap(3),
         }
         color=colors[name.split()[0]]
             
@@ -94,10 +97,11 @@ for prob in ["002","01","03"]:
     ax1.get_xaxis().set_tick_params(which='minor', size=0)
     ax1.get_xaxis().set_tick_params(which='minor', width=0) 
 
-    plt.legend()
-    plt.title("{}".format(map_label))
+    # plt.legend()
+    # plt.title("{}".format(map_label))
+    plt.yticks([0,4,8,12,16])
     plt.xlabel("Number of Agents")
-    plt.ylabel("Optimization Time (s)")
+    plt.ylabel("Search Time (s)")
     plt.xlim(num_agents[0]*1.1-num_agents[-1]*0.1,num_agents[-1]*1.1-num_agents[0]*0.1)
     plt.ylim(-0.5,16.5)
 
