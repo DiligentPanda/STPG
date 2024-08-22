@@ -137,21 +137,42 @@ def run(cmd,output_name):
 #                             settings.append([algo,branch_order,grouping_method,heuristic,early_termination,incremental,w_focal])   
 
 # compare setting
-IGBS=["search","largest_diff","all","wcg_greedy","true","true",1.0]
-GBS=["search","default","none","zero","true","false",1.0]
-MILP=["milp","default","simple","zero","true","true",1.0]
+# IGBS=["search","largest_diff","all","wcg_greedy","true","true",1.0]
+# GBS=["search","default","none","zero","true","false",1.0]
+# MILP=["milp","default","simple","zero","true","true",1.0]
 # CBSD=["cg","largest_diff","all","wcg_greedy","true","true",1.0]
 
 # ablation setting
-NO_HEURISTIC=["search","largest_diff","all","zero","true","true",1.0]
-NO_INCREMENTAL=["search","largest_diff","all","wcg_greedy","true","false",1.0]
-NO_GROUPING=["search","largest_diff","none","wcg_greedy","true","true",1.0]
-SIMPLE_GROUPING=["search","largest_diff","simple","wcg_greedy","true","true",1.0]
-EARLIEST_BRANCH=["search","earliest","all","wcg_greedy","true","true",1.0]
-RANDOM_BRANCH=["search","random","all","wcg_greedy","true","true",1.0]
-DEFAULT_BRANCH=["search","default","all","wcg_greedy","true","true",1.0]
+# NO_HEURISTIC=["search","largest_diff","all","zero","true","true",1.0]
+# NO_INCREMENTAL=["search","largest_diff","all","wcg_greedy","true","false",1.0]
+# NO_GROUPING=["search","largest_diff","none","wcg_greedy","true","true",1.0]
+# SIMPLE_GROUPING=["search","largest_diff","simple","wcg_greedy","true","true",1.0]
+# EARLIEST_BRANCH=["search","earliest","all","wcg_greedy","true","true",1.0]
+# RANDOM_BRANCH=["search","random","all","wcg_greedy","true","true",1.0]
+# DEFAULT_BRANCH=["search","default","all","wcg_greedy","true","true",1.0]
 
-settings=[IGBS,GBS,MILP,NO_HEURISTIC,NO_INCREMENTAL,NO_GROUPING,SIMPLE_GROUPING,EARLIEST_BRANCH,RANDOM_BRANCH,DEFAULT_BRANCH]
+# settings=[IGBS,GBS,MILP,NO_HEURISTIC,NO_INCREMENTAL,NO_GROUPING,SIMPLE_GROUPING,EARLIEST_BRANCH,RANDOM_BRANCH,DEFAULT_BRANCH]
+
+# incremental setting
+GBS=["search","default","none","zero","true","false",1.0]
+GBS_SIMPLE_GROUPING=["search","default","simple","zero","true","false",1.0]
+GBS_FULL_GROUPING=["search","default","all","zero","true","false",1.0]
+GBS_FULL_GROUPING_EALRIEST_BRANCH=["search","earliest","all","zero","true","false",1.0]
+GBS_FULL_GROUPING_RANDOM_BRANCH=["search","random","all","zero","true","false",1.0]
+GBS_FULL_GROUPING_LARGEST_BRANCH=["search","largest_diff","all","zero","true","false",1.0]
+GBS_FULL_GROUPING_LARGEST_BRANCH_HEURISITC=["search","largest_diff","all","wcg_greedy","true","false",1.0]
+GBS_FULL_GROUPING_LARGEST_BRANCH_HEURISITC_INCRMENTAL=["search","largest_diff","all","wcg_greedy","true","true",1.0]
+
+settings=[
+    GBS,
+    GBS_SIMPLE_GROUPING,
+    GBS_FULL_GROUPING,
+    GBS_FULL_GROUPING_EALRIEST_BRANCH,
+    GBS_FULL_GROUPING_RANDOM_BRANCH,
+    GBS_FULL_GROUPING_LARGEST_BRANCH,
+    GBS_FULL_GROUPING_LARGEST_BRANCH_HEURISITC,
+    GBS_FULL_GROUPING_LARGEST_BRANCH_HEURISITC_INCRMENTAL
+]
 
 for map_name,setting in maps.items():
     print("processing map {}".format(map_name))
@@ -195,7 +216,7 @@ for map_name,setting in maps.items():
             
     pool.starmap(run,zip(cmds,output_names))
     
-os.system(f"python script/run_exps_ccbs.py {root_folder} {output_folder}") 
+# os.system(f"python script/run_exps_ccbs.py {root_folder} {output_folder}") 
     
 subprocess.check_output(f"python script/get_stats.py -f {output_folder}", shell=True) 
 subprocess.check_output(f"python script/get_stats.py -f {output_folder} -s", shell=True) 

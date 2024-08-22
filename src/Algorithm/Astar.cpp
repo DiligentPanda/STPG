@@ -343,6 +343,7 @@ COST_TYPE Astar::compute_partial_execution_time(const shared_ptr<Graph> & graph)
 
 // graph in parent_node might be changed by forward node, so don't use it.
 void Astar::add_node(const shared_ptr<Graph> & graph, const shared_ptr<SearchNode> & parent_node, vector<std::pair<int,int> > & fixed_edges) {
+  added_node_cnt += 1;
 
   auto start_sort = high_resolution_clock::now();
   // shared_ptr<vector<int> > newts_tv_init;
@@ -380,7 +381,6 @@ void Astar::add_node(const shared_ptr<Graph> & graph, const shared_ptr<SearchNod
   // if (err) {
   //   exit(200);
   // }
-
 
   COST_TYPE g = 0;
   for (int agent_id=0;agent_id<graph->get_num_agents();++agent_id) {
@@ -431,8 +431,6 @@ void Astar::add_node(const shared_ptr<Graph> & graph, const shared_ptr<SearchNod
     open_list->push(child_node);
     auto end_pq_push = high_resolution_clock::now();
     pqT += duration_cast<microseconds>(end_pq_push - start_pq_push);
-
-    added_node_cnt += 1;
   }
 }
 
@@ -625,11 +623,12 @@ shared_ptr<Graph> Astar::solve(const shared_ptr<Graph> & _graph) {
   searchT = microseconds(timeout*1000000);
   auto start_search = high_resolution_clock::now();
 
-  auto start_graph_free = high_resolution_clock::now();
+  // we don't count this copy/free time because it is not the copy/free we care about.
+  // auto start_graph_free = high_resolution_clock::now();
   // since many operations are in-place, should never operate on the original graph. make a copy first.
   auto graph=_graph->copy();
-  auto end_graph_free = high_resolution_clock::now();
-  copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
+  // auto end_graph_free = high_resolution_clock::now();
+  // copy_free_graphsT += duration_cast<microseconds>(end_graph_free - start_graph_free);
   // make the graph switchable
   if (horizon!=-1) {
     graph->make_switchable(horizon, group_manager);
@@ -637,14 +636,17 @@ shared_ptr<Graph> Astar::solve(const shared_ptr<Graph> & _graph) {
     graph->make_switchable();
   }
 
+  vertex_cnt = graph->get_num_states();
+  sw_edge_cnt = graph->get_num_switchable_edges();
+  agentCnt = graph->get_num_agents();
+  sw_edge_group_cnt = count_switchable_edge_groups(graph, group_manager);
+  std::cout << "vertex_cnt = " << vertex_cnt << ", sw_edge_cnt = " << sw_edge_cnt<<", sw_edge_groups_cnt = "<< sw_edge_group_cnt << "\n";
+
   // auto fixed_init_graph=init_graph->copy();
   // fixed_init_graph->fix_all_switchable_type2_edges();
   init_graph=_graph;
   init_cost=compute_partial_execution_time(init_graph);
   open_list=std::make_shared<OpenList>(w_focal);
-  
-  vertex_cnt = graph->get_num_states();
-  sw_edge_cnt = graph->get_num_switchable_edges();
 
   // for (auto agent=0;agent<graph->get_num_agents();++agent) {
   //   int total_edges=0;
@@ -674,14 +676,7 @@ shared_ptr<Graph> Astar::solve(const shared_ptr<Graph> & _graph) {
   //   for (auto p:counter) {
   //     std::cout<<"agent: "<<agent<<"-> agent: "<<p.first<<" edge count: "<<p.second<<std::endl;
   //   }
-  // }
-
-
-
-
-  agentCnt = graph->get_num_agents();
-  sw_edge_group_cnt = count_switchable_edge_groups(graph, group_manager);
-  std::cout << "vertex_cnt = " << vertex_cnt << ", sw_edge_cnt = " << sw_edge_cnt<<", sw_edge_groups_cnt = "<< sw_edge_group_cnt << "\n";
+  // } 
 
   /* Graph-Based Search */
   auto fake_parent=std::make_shared<SearchNode>(0);
