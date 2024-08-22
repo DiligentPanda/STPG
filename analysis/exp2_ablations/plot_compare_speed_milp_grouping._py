@@ -3,7 +3,7 @@ import matplotlib
 import matplotlib as mpl
 import pandas as pd
 
-result_csv="output/ablations_0722_milp_grouping/2024_07_22_06_26_23_paper_exp_comparison_p01_ablation_milp_grouping/stats_all.csv"
+result_csv="output/ablations_0722_milp_grouping/exp_comparison_p01_ablation_milp_grouping/stats_all.csv"
 output_fp = "analysis/temp/ablations_0721/compare_speed_milp_grouping.pdf"
 map_names=["random-32-32-10","warehouse-10-20-10-2-1","lak303d","Paris_1_256"]  
 map_labels=["Random", "Warehouse","Game","City"]
@@ -21,8 +21,8 @@ algorithms=[
     ("Full Edge Grouping ", ["milp", "largest_diff", "all", "wcg_greedy", True, 1.0])
 ]
 
-plt.rcParams.update({'font.size': 25})
-fig, ax=plt.subplots(figsize=(10,10))
+plt.rcParams.update({'font.size': 35})
+fig, ax=plt.subplots(figsize=(8,8))
 
 speedups=[]
 for idx,map_name in enumerate(map_names):
@@ -45,15 +45,15 @@ for idx,map_name in enumerate(map_names):
     ys=[]
     xs=[]
     for i in range(len(df_alg1)):
-        y = df_alg1.at[i,"total_time"]
-        x = df_alg2.at[i,"total_time"]
+        y = min(df_alg1.at[i,"total_time"]+df_alg1.at[i,"grouping_time"],time_limit)
+        x = min(df_alg2.at[i,"total_time"]+df_alg2.at[i,"grouping_time"],time_limit)
         ys.append(y)
         xs.append(x)
         
         if y<time_limit or x<time_limit:
             speedups.append(y/x)
         
-    plt.scatter(xs,ys,c=color[0], alpha=0.1, s=10)
+    plt.scatter(xs,ys,c=color[idx], alpha=0.1, s=10, label=map_labels[idx])
 
 avg_speedup = sum(speedups)/len(speedups)
 print("Average speedup of {} vs {}:".format(algorithms[1][0],algorithms[0][0]),avg_speedup)
@@ -71,8 +71,8 @@ plt.xticks([0.01,0.06,0.25,1,4,16],["0.01","0.06","0.25","1","4","16"])
 plt.xticks([],minor=True)
 plt.yticks([0.01,0.06,0.25,1,4,16],["0.01","0.06","0.25","1","4","16"])
 plt.yticks([],minor=True)
-plt.xlabel("Other Method (s)")
-plt.ylabel("Baseline Method (s)")
+plt.xlabel("IGSES (s)")
+plt.ylabel("Ablated Setting (s)")
 label="{} ({:.02f})".format(algorithms[0][0],1)
 plt.plot([0,16],[0,16],c='r',linestyle="--",label=label)
 # plt.plot([0,16/2.0],[0,16],c=cmap(255-32),linestyle="--",label='line y=2x')
