@@ -1,6 +1,0 @@
-[submodule "PBS"]
-	path = PBS
-	url = git@github.com:DiligentPanda/PBS.git
-[submodule "pybind11"]
-	path = pybind11
-	url = git@github.com:pybind/pybind11.git
