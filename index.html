@@ -52,39 +52,27 @@
       <div class="container is-max-desktop">
         <div class="columns is-centered">
           <div class="column has-text-centered">
-            <h1 class="title is-1 publication-title">Deploying Ten Thousand Robots: <br/> Scalable Imitation Learning for <br/> Lifelong Multi-Agent Path Finding</h1>
+            <h1 class="title is-1 publication-title">Speedup Techniques for Switchable Temporal Plan Graph Optimization</h1>
             <div class="is-size-5 publication-authors">
               <!-- Paper authors -->
               <span class="author-block">
-                <a href="FIRST AUTHOR PERSONAL LINK" target="_blank">He Jiang</a><sup>1*</sup>,
+                <a href="https://github.com/DiligentPanda" target="_blank">He Jiang</a>,
               </span>
 
               <span class="author-block">
-                <a href="SECOND AUTHOR PERSONAL LINK" target="_blank">Yutong Wang</a><sup>2*</sup>,
+                <a href="https://www.linkedin.com/in/muhan-lin-414723245/" target="_blank">Muhan Lin</a>,
               </span>
 
               <span class="author-block">
-                <a href="THIRD AUTHOR PERSONAL LINK" target="_blank">Rishi Veerapaneni</a><sup>1</sup>,
-              </span>
-
-              <span class="author-block">
-                <a href="FORTH AUTHOR PERSONAL LINK" target="_blank">Tanishq Duhan</a><sup>2</sup>,
-              </span>
-
-              <span class="author-block">
-                <a href="FIFTH AUTHOR PERSONAL LINK" target="_blank">Guillaume Sartoretti</a><sup>2</sup>,
-              </span>
-
-              <span class="author-block">
-                <a href="SIXTH AUTHOR PERSONAL LINK" target="_blank">Jiaoyang Li</a><sup>1</sup>
+                <a href="https://jiaoyangli.me/" target="_blank">Jiaoyang Li</a>
               </span>
             </div>
 
             <div class="is-size-5 publication-authors">
               <!-- <span class="author-block">Institution Name<br>Conferance name and year</span> -->
-              <span class="eql-cntrb"><small><br><sup>1</sup>The Robotics Institute, Carnegie Mellon University</small></span>
-              <span class="eql-cntrb"><small><br><sup>2</sup>The Department of Mechanical Engineering, National University of Singapore</small></span>
-              <span class="eql-cntrb"><small><br><sup>*</sup>Indicates Equal Contribution</small></span>
+              <span class="eql-cntrb"><small>The Robotics Institute, Carnegie Mellon University</small></span>
+              <!-- <span class="eql-cntrb"><small><br><sup>2</sup>The Department of Mechanical Engineering, National University of Singapore</small></span>
+              <span class="eql-cntrb"><small><br><sup>*</sup>Indicates Equal Contribution</small></span> -->
             </div>
 
             <!-- <div class="column has-text-centered">
@@ -139,19 +127,19 @@
 
 
 <!-- Teaser video-->
-<section class="hero teaser">
+<!-- <section class="hero teaser">
   <div class="container is-max-desktop">
     <div class="hero-body">
       <video poster="" id="tree" autoplay controls muted loop height="100%">
         <source src="static/videos/ICRA25.mp4"
         type="video/mp4">
       </video>
-      <!-- <h2 class="subtitle has-text-centered">
+      <h2 class="subtitle has-text-centered">
         Aliquam vitae elit ullamcorper tellus egestas pellentesque. Ut lacus tellus, maximus vel lectus at, placerat pretium mi. Maecenas dignissim tincidunt vestibulum. Sed consequat hendrerit nisl ut maximus. 
-      </h2> -->
+      </h2>
     </div>
   </div>
-</section>
+</section> -->
 <!-- End teaser video -->
 
 <!-- Paper abstract -->
@@ -162,7 +150,7 @@
         <h2 class="title is-3">Abstract</h2>
         <div class="content has-text-justified">
           <p>
-          Lifelong Multi-Agent Path Finding (LMAPF) is a variant of MAPF where agents are continually assigned new goals, necessitating frequent re-planning to accommodate these dynamic changes. Recently, this field has embraced learning-based methods, which reactively generate single-step actions based on individual local observations. However, it is still challenging for them to match the performance of the best search-based algorithms, especially in large-scale settings. This work proposes an imitation-learning-based LMAPF solver that introduces a novel communication module and systematic single-step collision resolution and global guidance techniques. Our proposed solver, Scalable Imitation Learning for LMAPF (SILLM), inherits the fast reasoning speed of learning-based methods and the high solution quality of search-based methods with the help of modern GPUs. Across six large-scale maps with up to 10,000 agents and varying obstacle structures, SILLM surpasses the best learning- and search-based baselines, achieving average throughput improvements of 137.7% and 16.0%, respectively. Furthermore, SILLM also beats the winning solution of the 2023 League of Robot Runners, an international LMAPF competition sponsored by Amazon Robotics. Finally, we validated SILLM with 10 real robots and 100 virtual robots in a mockup warehouse environment.          
+            Multi-Agent Path Finding (MAPF) involves planning collision-free paths for multiple agents. However, during the execution of a MAPF plan, agents may experience unexpected delays, leading to potential collisions or deadlocks. To address this, the Switchable Temporal Plan Graph framework offers a way to find an acyclic Temporal Plan Graph with minimum execution cost, ensuring deadlock- and collision-free execution. Existing optimal algorithms, such as Mixed Integer Linear Programming and Graph-Based Switchable Edge Search (GSES), are often too slow for practical use. This paper introduces Improved GSES, which accelerates GSES through four speedup techniques: stronger admissible heuristics, edge grouping, prioritized branching, and incremental implementation. Experiments conducted on four different map types with varying numbers of agents demonstrate that Improved GSES consistently achieves over twice the success rate of GSES and delivers up to a 30-fold speedup on instances where both methods find solutions.          
           </p>
         </div>
       </div>
@@ -270,8 +258,8 @@
     <div class="container">
       <h2 class="title">Appendix</h2>
 
-      <iframe  src="static/pdfs/appendix.pdf" width="100%" height="550">
-          </iframe>
+      <!-- <iframe  src="static/pdfs/appendix.pdf" width="100%" height="550">
+          </iframe> -->
         
       </div>
     </div>
